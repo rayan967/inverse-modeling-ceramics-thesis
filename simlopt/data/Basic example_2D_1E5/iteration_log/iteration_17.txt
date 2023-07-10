@@ -1,0 +1,525 @@
+---------------------------------- Iteration / Design: 17
+Current number of points: 21 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.86,2.  ]
+Hyperparameter experiment 1: [2.  ,1.91]
+Hyperparameter experiment 2: [2. ,1.7]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.00173
+Computational cost before optimization:      4054510.285
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.         0.55172414]
+ Use ith highest value   :            2
+ Value at index          :            0.0011997615216674928
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.01 seconds
+Last function value:  5.3744184062249235e-06
+
+
+Found solution with:
+[328792.37466191 328792.37469859 328792.37468722 328792.37411797
+ 328792.37464131 308794.37457925 290462.707898   273178.42218349
+ 256542.17218347 240275.5055168  224171.4055168  208067.21460771
+ 191828.73877438 175340.36331284 158498.59409141 141207.64435741
+ 123376.28994422 104915.53478704  85736.80581819  65750.49878749
+  44864.75794041  22984.41038633]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21]
+Simulation block done within: 0.0013 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00157337
+Computational cost after optimization:      4559957
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00157
+Computational cost after optimization:           4559957
+New budget for next design:                      5065404
+Used time:                                       0.01 seconds
+
+
+Prior incremental budget: 505447.02849929465
+New incremental budget:   555992
+
+
+Times used for a priori error estimate       : 0.25 seconds
+Times used for acquisition phase             : 3.13 seconds
+Times used for solving minimization problem  : 0.01 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.21 seconds
+Time used for complete design iteration      : 4.18 seconds
+
+
+---------------------------------- Iteration / Design: 17
+Current number of points: 21 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.86,2.  ]
+Hyperparameter experiment 1: [2.  ,1.91]
+Hyperparameter experiment 2: [2. ,1.7]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.00173
+Computational cost before optimization:      4054510.285
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.         0.55172414]
+ Use ith highest value   :            2
+ Value at index          :            0.0011997615216674928
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.02 seconds
+Last function value:  5.3744184062249235e-06
+
+
+Found solution with:
+[328792.37466191 328792.37469859 328792.37468722 328792.37411797
+ 328792.37464131 308794.37457925 290462.707898   273178.42218349
+ 256542.17218347 240275.5055168  224171.4055168  208067.21460771
+ 191828.73877438 175340.36331284 158498.59409141 141207.64435741
+ 123376.28994422 104915.53478704  85736.80581819  65750.49878749
+  44864.75794041  22984.41038633]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21]
+Simulation block done within: 0.0026 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00157337
+Computational cost after optimization:      4559957
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00157
+Computational cost after optimization:           4559957
+New budget for next design:                      5065404
+Used time:                                       0.02 seconds
+
+
+Prior incremental budget: 505447.02849929465
+New incremental budget:   555992
+
+
+Times used for a priori error estimate       : 0.53 seconds
+Times used for acquisition phase             : 4.61 seconds
+Times used for solving minimization problem  : 0.02 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.55 seconds
+Time used for complete design iteration      : 7.41 seconds
+
+
+---------------------------------- Iteration / Design: 17
+Current number of points: 21 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.86,2.  ]
+Hyperparameter experiment 1: [2.  ,1.91]
+Hyperparameter experiment 2: [2. ,1.7]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.00173
+Computational cost before optimization:      4054510.285
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.         0.55172414]
+ Use ith highest value   :            2
+ Value at index          :            0.0011997615216674928
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.01 seconds
+Last function value:  5.3744184062249235e-06
+
+
+Found solution with:
+[328792.37466191 328792.37469859 328792.37468722 328792.37411797
+ 328792.37464131 308794.37457925 290462.707898   273178.42218349
+ 256542.17218347 240275.5055168  224171.4055168  208067.21460771
+ 191828.73877438 175340.36331284 158498.59409141 141207.64435741
+ 123376.28994422 104915.53478704  85736.80581819  65750.49878749
+  44864.75794041  22984.41038633]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21]
+Simulation block done within: 0.0011 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00157337
+Computational cost after optimization:      4559957
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00157
+Computational cost after optimization:           4559957
+New budget for next design:                      5065404
+Used time:                                       0.01 seconds
+
+
+Prior incremental budget: 505447.02849929465
+New incremental budget:   555992
+
+
+Times used for a priori error estimate       : 0.23 seconds
+Times used for acquisition phase             : 3.17 seconds
+Times used for solving minimization problem  : 0.01 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.18 seconds
+Time used for complete design iteration      : 4.39 seconds
+
+
+---------------------------------- Iteration / Design: 17
+Current number of points: 21 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.86,2.  ]
+Hyperparameter experiment 1: [2.  ,1.91]
+Hyperparameter experiment 2: [2. ,1.7]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.00173
+Computational cost before optimization:      4054510.285
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.         0.55172414]
+ Use ith highest value   :            2
+ Value at index          :            0.0011997615216674928
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.01 seconds
+Last function value:  5.3744184062249235e-06
+
+
+Found solution with:
+[328792.37466191 328792.37469859 328792.37468722 328792.37411797
+ 328792.37464131 308794.37457925 290462.707898   273178.42218349
+ 256542.17218347 240275.5055168  224171.4055168  208067.21460771
+ 191828.73877438 175340.36331284 158498.59409141 141207.64435741
+ 123376.28994422 104915.53478704  85736.80581819  65750.49878749
+  44864.75794041  22984.41038633]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21]
+Simulation block done within: 0.0031 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00157337
+Computational cost after optimization:      4559957
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00157
+Computational cost after optimization:           4559957
+New budget for next design:                      5065404
+Used time:                                       0.01 seconds
+
+
+Prior incremental budget: 505447.02849929465
+New incremental budget:   555992
+
+
+Times used for a priori error estimate       : 0.40 seconds
+Times used for acquisition phase             : 4.57 seconds
+Times used for solving minimization problem  : 0.01 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.37 seconds
+Time used for complete design iteration      : 7.11 seconds
+
+
+---------------------------------- Iteration / Design: 17
+Current number of points: 21 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.86,2.  ]
+Hyperparameter experiment 1: [2.  ,1.91]
+Hyperparameter experiment 2: [2. ,1.7]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.00173
+Computational cost before optimization:      4054510.285
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.         0.55172414]
+ Use ith highest value   :            2
+ Value at index          :            0.0011997615216674928
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.02 seconds
+Last function value:  5.3744184062249235e-06
+
+
+Found solution with:
+[328792.37466191 328792.37469859 328792.37468722 328792.37411797
+ 328792.37464131 308794.37457925 290462.707898   273178.42218349
+ 256542.17218347 240275.5055168  224171.4055168  208067.21460771
+ 191828.73877438 175340.36331284 158498.59409141 141207.64435741
+ 123376.28994422 104915.53478704  85736.80581819  65750.49878749
+  44864.75794041  22984.41038633]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21]
+Simulation block done within: 0.0028 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00157337
+Computational cost after optimization:      4559957
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00157
+Computational cost after optimization:           4559957
+New budget for next design:                      5065404
+Used time:                                       0.02 seconds
+
+
+Prior incremental budget: 505447.02849929465
+New incremental budget:   555992
+
+
+Times used for a priori error estimate       : 0.33 seconds
+Times used for acquisition phase             : 4.22 seconds
+Times used for solving minimization problem  : 0.02 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.42 seconds
+Time used for complete design iteration      : 6.57 seconds
+
+
+---------------------------------- Iteration / Design: 17
+Current number of points: 21 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.86,2.  ]
+Hyperparameter experiment 1: [2.  ,1.91]
+Hyperparameter experiment 2: [2. ,1.7]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.00173
+Computational cost before optimization:      4054510.285
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.         0.55172414]
+ Use ith highest value   :            2
+ Value at index          :            0.0011997615216674928
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.01 seconds
+Last function value:  5.3744184062249235e-06
+
+
+Found solution with:
+[328792.37466191 328792.37469859 328792.37468722 328792.37411797
+ 328792.37464131 308794.37457925 290462.707898   273178.42218349
+ 256542.17218347 240275.5055168  224171.4055168  208067.21460771
+ 191828.73877438 175340.36331284 158498.59409141 141207.64435741
+ 123376.28994422 104915.53478704  85736.80581819  65750.49878749
+  44864.75794041  22984.41038633]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21]
+Simulation block done within: 0.0010 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00157337
+Computational cost after optimization:      4559957
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00157
+Computational cost after optimization:           4559957
+New budget for next design:                      5065404
+Used time:                                       0.01 seconds
+
+
+Prior incremental budget: 505447.02849929465
+New incremental budget:   555992
+
+
+Times used for a priori error estimate       : 0.21 seconds
+Times used for acquisition phase             : 3.11 seconds
+Times used for solving minimization problem  : 0.01 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.21 seconds
+Time used for complete design iteration      : 4.15 seconds
+
+
+---------------------------------- Iteration / Design: 17
+Current number of points: 21 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.88,2.  ]
+Hyperparameter experiment 1: [1.94,1.84]
+Hyperparameter experiment 2: [2.  ,1.71]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.00273
+Computational cost before optimization:      4054510.285
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.         0.48275862]
+ Use ith highest value   :            1
+ Value at index          :            0.0021772743444769573
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.01 seconds
+Last function value:  9.272867599886614e-06
+
+
+Found solution with:
+[328792.37537999 328792.37448816 328792.37513105 328792.37336498
+ 328792.37442516 308794.37459676 290462.70789814 273178.42218349
+ 256542.17218347 240275.5055168  224171.4055168  208067.21460771
+ 191828.73877438 175340.36331284 158498.59409141 141207.64435741
+ 123376.28994422 104915.53478704  85736.80581819  65750.49878749
+  44864.75794041  22984.41038633]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [ 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21]
+Simulation block done within: 0.0008 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00225307
+Computational cost after optimization:      4559957
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00225
+Computational cost after optimization:           4559957
+New budget for next design:                      5065404
+Used time:                                       0.01 seconds
+
+
+Prior incremental budget: 505447.02849929465
+New incremental budget:   555992
+
+
+Times used for a priori error estimate       : 0.17 seconds
+Times used for acquisition phase             : 2.68 seconds
+Times used for solving minimization problem  : 0.01 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.16 seconds
+Time used for complete design iteration      : 3.49 seconds
+
+
