@@ -2,6 +2,7 @@ import argparse
 
 import joblib
 import numpy as np
+import json
 
 
 def main(microstructure):
@@ -21,13 +22,8 @@ def main(microstructure):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Predict property')
-    parser.add_argument('prop', type=str,
-                        help='Expected property')
+    parser.add_argument('prop', type=json.loads,
+                        help='Expected property in JSON format')
     args = parser.parse_args()
 
-    import json
-
-    dict = json.loads(args.prop)
-    args = parser.parse_args()
-
-    main(dict)
+    main(args.prop)

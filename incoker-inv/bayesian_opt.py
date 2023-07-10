@@ -5,7 +5,7 @@ import joblib
 import numpy as np
 from training import extract_XY
 from skopt import Optimizer
-from scipy.optimize import minimize
+from scipy.optimize import minimize, LinearConstraint
 
 considered_features = [
     'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
@@ -47,6 +47,9 @@ def main(prop):
     # Define the search space dimensions based on the minimum and maximum values
     dimensions = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
 
+    # Ensure volume fractions sum to 1
+    constraint = LinearConstraint([1, 1, 1, 0, 0, 0, 0, 0, 0], lb=1, ub=1)
+
     # Initialize the Bayesian optimization algorithm with the objective function and search space
     optimizer = Optimizer(dimensions, base_estimator="GP", acq_func="EI")
 
@@ -64,7 +67,8 @@ def main(prop):
         optimizer.tell(x_next, y_next)
 
     # Obtain the optimal microstructure from the best solution found
-    res = minimize(lambda x: objective_function(x, prop, models), x0=optimizer.ask(), bounds=dimensions)
+    res = minimize(lambda x: objective_function(x, prop, models), x0=optimizer.ask(), bounds=dimensions,
+                   constraints=constraint)
     optimal_x = res.x
     optimal_microstructure = convert_x_to_microstructure(optimal_x)
 
