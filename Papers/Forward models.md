@@ -32,3 +32,11 @@ Another similar methodology to inverse modeling for design of electromagnetic (E
 - [A machine learning framework for real-time inverse modeling and multi-objective process optimization of composites for active manufacturing control](https://www.sciencedirect.com/science/article/abs/pii/S135983682100531X)
 
 A similar methodology to solve the inverse heat transfer problem, using a surrogate model for optimizing an inverse solution; parts of the paper are not accessible through uni credentials.
+
+- [A deep learning–based method for the design of microstructural materials](https://link.springer.com/article/10.1007/s00158-019-02424-2)
+
+A DNN application to inverse design of microstructures based on deep convolutional generative adversarial network (DCGAN) and convolutional neural network (CNN). The DCGAN is used to generate design candidates that satisfy geometrical constraints and the CNN is used as a surrogate model to link the microstructure to its properties. Once trained, the two networks are combined to form the design network which is utilized to for the inverse design.
+
+- [Multi-target regression via input space expansion: treating targets as inputs](https://link.springer.com/article/10.1007/s10994-016-5546-z)
+
+Multitarget regression by statistical dependencies between targets is exploited by building a separate model for each target on an expanded input space where other targets are treated as additional input variables (might not be relevant since there might not be any statistical dependence between variables).
