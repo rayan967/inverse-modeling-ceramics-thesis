@@ -40,8 +40,12 @@ def main():
     
     'Training data '
     testcase        = 1
+
+    # R - Xt should be our features, Xgrad can be set as None
     Xt,Xgrad        = standardpointdistributions(testcase)
+    # R - Xt should be a label, ideally iterate through the list of labels and make one model each, Ygrad can be set as None
     yt,ygrad,fun    = createdata("himmelblau",Xt)
+    # R - How would we create the error
     epsXt, epsXgrad = createerror(Xt,random=False,graddata=False)
     
     ' Initial problem constants '
@@ -72,10 +76,13 @@ def main():
     TOLFEM              = 0.0           # Reevaluation tolerance
     TOLAcqui            = 1.0           # Acquisition tolerance
     TOLrelchange        = 0             # Tolerance for relative change of global error estimation
+
+    # R - Find the observed variance in data for each dimension
     epsphys             = np.array([1E-1,1E-3,1E-2]) # Assumed or known variance of pyhs. measurement!
     adaptgrad           = False         # Toogle if gradient data should be adatped
-    
+
     ' Initial hyperparameter parameters '
+    # R - Adjust Hyperparameters for different dimensions
     region = ((0.01, 2),   (0.01, 2))
     assert len(region) == dim, "Too much or less hyperparameters for the given problem dimension"
     print("\n")
@@ -88,6 +95,7 @@ def main():
     if Xgrad is not None:
         gp = GPR(Xt, yt, Xgrad, ygrad, epsXt, epsXgrad)
     else:
+        # R - Most likely use GPR without gradients
         gp = GPR(Xt, yt, None, None, epsXt, None)
     gp.optimizehyperparameter(region, "mean", False)
     print("\n")
@@ -97,7 +105,8 @@ def main():
     print("Overall stopping tolerance:          {}".format(TOL))
     print("Hyperparameter bounds:               {}".format(region))
     print("\n")
-    
+
+    # Modify adapt to find the best candidate and choose the point closest to it in existing data
     GP_adapted = adapt(gp, totalbudget,incrementalbudget,parameterranges,
                 TOL,TOLFEM,TOLAcqui,TOLrelchange,epsphys,
                 runpath, execname, adaptgrad , fun)

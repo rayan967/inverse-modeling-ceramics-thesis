@@ -22,7 +22,7 @@ considered_properties = [
 ]
 
 
-def main(prop):
+def main(prop, property_name):
     print("starting opt")
 
     training_data = pathlib.Path('training_data_rve_database.npy')
@@ -37,9 +37,11 @@ def main(prop):
     print(f"loaded {data.shape[0]} training data pairs")
 
     data['thermal_expansion'] *= 1e6
-    X, Y = extract_XY(data)
 
     models = joblib.load("trained_models.joblib")["models"]
+
+    X, Y = extract_XY(data)
+
     # Compute the minimum and maximum values for each feature in the training data
     min_values = np.min(X, axis=0)
     max_values = np.max(X, axis=0)
@@ -49,6 +51,12 @@ def main(prop):
 
     # Ensure volume fractions sum to 1
     constraint = LinearConstraint([1, 1, 1, 0, 0, 0, 0, 0, 0], lb=1, ub=1)
+
+    # Constraint to ensure porosity value is below 0.01
+    porosity_constraint = LinearConstraint([0, 0, 1, 0, 0, 0, 0, 0, 0], lb=0, ub=0.01)
+
+    cons = [{'type': 'eq', 'fun': lambda x: x[0] + x[1] + x[2] - 1},
+            {'type': 'ineq', 'fun': lambda x: -x[2] + 0.01},]
 
     # Initialize the Bayesian optimization algorithm with the objective function and search space
     optimizer = Optimizer(dimensions, base_estimator="GP", acq_func="EI")
@@ -61,21 +69,22 @@ def main(prop):
         x_next = optimizer.ask()
 
         # Evaluate the objective function at the candidate point
-        y_next = objective_function(x_next, prop, models)
+        y_next = objective_function(x_next, prop, models, property_name)
 
         # Provide the observed point to the optimizer for updating the surrogate model
         optimizer.tell(x_next, y_next)
 
     # Obtain the optimal microstructure from the best solution found
-    res = minimize(lambda x: objective_function(x, prop, models), x0=optimizer.ask(), bounds=dimensions,
-                   constraints=constraint)
+    res = minimize(lambda x: objective_function(x, prop, models, property_name), x0=optimizer.ask(), bounds=dimensions,
+                   constraints=cons)
     optimal_x = res.x
     optimal_microstructure = convert_x_to_microstructure(optimal_x)
 
     # Evaluate the desired property using the optimal microstructure
-    optimal_property_value = predict_property('thermal_expansion', optimal_microstructure, models)
+    optimal_property_value = predict_property(property_name, optimal_microstructure, models)
 
     print(optimal_microstructure)
+    print("Error in optimisation: "+str(np.abs(prop - optimal_property_value)))
 
 
 def convert_x_to_microstructure(x):
@@ -105,12 +114,12 @@ def convert_x_to_microstructure(x):
     return microstructure
 
 
-def objective_function(x, desired_property, models):
+def objective_function(x, desired_property, models, property_name):
     # Convert the input vector x to a microstructure representation
     microstructure = convert_x_to_microstructure(x)
 
     # Predict the desired property using the trained GPR models
-    predicted_property = predict_property('thermal_expansion', microstructure, models)
+    predicted_property = predict_property(property_name, microstructure, models)
 
     # Calculate the difference between the predicted property and the desired property
     discrepancy = predicted_property - desired_property
@@ -134,6 +143,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Optimise microstructure for given property.')
     parser.add_argument('prop', type=float,
                         help='Expected property')
+    parser.add_argument('prop_name', type=str,
+                        help='Expected property')
     args = parser.parse_args()
 
-    main(args.prop)
+    main(args.prop, args.prop_name)

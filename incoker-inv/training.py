@@ -20,9 +20,9 @@ considered_features = [
 # material properties to consider in training
 considered_properties = [
     'thermal_conductivity',
+    'thermal_expansion',
     'young_modulus',
     'poisson_ratio',
-    'thermal_expansion',
 ]
 
 
@@ -41,11 +41,14 @@ def main(train_data_file, export_model_file):
 
     data['thermal_expansion'] *= 1e6
 
-    X, Y = extract_XY(data)
+    X = np.vstack(tuple(data[f] for f in considered_features)).T
+
+    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
 
     assert Y.shape[0] == X.shape[0], "number of samples does not match"
 
     models = {}
+
     for i, property_name in enumerate(considered_properties):
 
         # pick a single property

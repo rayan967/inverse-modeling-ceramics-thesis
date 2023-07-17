@@ -70,13 +70,16 @@ def adapt(gp, totalbudget, incrementalbudget, parameterranges,
     figurepath = os.path.join(runpath+"/", "iteration_plots/")
 
     ' Initial acquisition phase '
+    # R - number of points
     NMC = 30
+    # R - grid of points considered in acquisition
     XGLEE = createPD(NMC, dim, "grid", parameterranges)
     NGLEE = XGLEE.shape[0]
 
     dfXC  = gp.predictderivative(XGLEE, True)
     varXC = gp.predictvariance(XGLEE,True)
     normvar = np.linalg.norm(np.sqrt(varXC),2,axis=0)**2
+    # R - Weight factors based on gradients and variance observed by GPR
     w       = estiamteweightfactors(dfXC, epsphys)
     
     mcglobalinitial = MCGlobalEstimate(w,normvar,NGLEE,parameterranges)
@@ -165,7 +168,7 @@ def adapt(gp, totalbudget, incrementalbudget, parameterranges,
         """ ------------------------------Acquisition phase ------------------------------ """
         'Add new candidate points'
         print("--- Acquisition phase")
-        
+        # R - Find the best candidate and find the point in our data closest to it
         t0acqui = time.perf_counter()
         logger.addToFile("--- Acquisition phase")
         XC              = np.array([])
@@ -395,7 +398,8 @@ def adapt(gp, totalbudget, incrementalbudget, parameterranges,
             
             t1post = time.perf_counter()
             tpost = t1post - t0post
-            
+
+            # R - Find tolerance for each property
             if mcglobalerrorafter <= TOL:
                 print("--- Convergence")
                 print(" Desired tolerance is reached, adaptive phase is done.")
