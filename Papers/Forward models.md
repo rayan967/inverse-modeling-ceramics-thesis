@@ -40,3 +40,30 @@ A DNN application to inverse design of microstructures based on deep convolution
 - [Multi-target regression via input space expansion: treating targets as inputs](https://link.springer.com/article/10.1007/s10994-016-5546-z)
 
 Multitarget regression by statistical dependencies between targets is exploited by building a separate model for each target on an expanded input space where other targets are treated as additional input variables (might not be relevant since there might not be any statistical dependence between variables).
+
+- [Latin supercube sampling for very high-dimensional simulations](https://dl.acm.org/doi/abs/10.1145/272991.273010)
+
+- [Orthogonal-maximin latin hypercube designs](https://www.jstor.org/stable/24308251?casa_token=1fWZyBmRZ8oAAAAA%3AKiDlhe557GpFpPduSTlIwHXtVy9EW9cf2mYwXcZ-i1takK8ENVNutFZHUq3ctR9vRN3J_XOzYfH1wpYO7A2S5yXlLARqqKLuaDZ2g3L2LtKbYBLln5w)
+
+Literature on latin hypercube sampling, showcasing its use cases in high dimensional problems.
+
+- [Parameter Estimation and Inverse Problems](https://books.google.de/books?hl=en&lr=&id=VuRyDwAAQBAJ&oi=fnd&pg=PP1&dq=Parameter+Estimation+and+Inverse+Problems%5D(R.+Aster,+B.+Borchers,+and+C.+Thurber&ots=PFTUQ1Cx7-&sig=g5aZS8kBxauvu_pROXy0mZW01Ik&redir_esc=y#v=onepage&q=Parameter%20Estimation%20and%20Inverse%20Problems%5D(R.%20Aster%2C%20B.%20Borchers%2C%20and%20C.%20Thurber&f=false )
+
+- [An Introduction to Inverse Problems with Applications](https://books.google.de/books?hl=en&lr=&id=Oc8_N1PmYnYC&oi=fnd&pg=PP2&dq=F.+Neto+and+A.+da+Silva+Neto.+An+Introduction+to+Inverse+Problems+with+Applications.+Springer,+2012&ots=MmGjqNXOiu&sig=bSsbQOMc8ZMlMJsxNIUflrYSINs&redir_esc=y#v=onepage&q=F.%20Neto%20and%20A.%20da%20Silva%20Neto.%20An%20Introduction%20to%20Inverse%20Problems%20with%20Applications.%20Springer%2C%202012&f=false)
+
+Comprehensive books on the topic of inverse modeling.
+
+- [Surrogates: Gaussian Process Modeling, Design and Optimization for the Applied
+Sciences](https://books.google.de/books?hl=en&lr=&id=1w_WDwAAQBAJ&oi=fnd&pg=PP1&dq=Surrogates:+Gaussian+Process+Modeling,+Design+and+Optimization+for+the+Applied+Sciences&ots=vRrs7y7vGa&sig=klhPa8XSvYRPQT-TCEWMloBmoJo&redir_esc=y#v=onepage&q=Surrogates%3A%20Gaussian%20Process%20Modeling%2C%20Design%20and%20Optimization%20for%20the%20Applied%20Sciences&f=false)
+
+Comprehensive book on GPR, discussing the basic concepts, distributions, kernels, non-parametric models, etc.
+
+
+- [Adaptive sampling applied to multivariate, multiple
+output rational interpolation models with application to microwave circuits.](https://onlinelibrary.wiley.com/doi/abs/10.1002/mmce.10032)
+
+The paper presents an adaptive sampling algorithm for building multivariate, multiple output rational interpolation models as surrogate models.
+
+- [Using Gaussian process regression for efficient parameter reconstruction](https://arxiv.org/abs/1903.12128)
+
+Paper by Philipp-Immanuel Schneider and Martin Hammerschmidt on inverse modeling with bayesian optimization and gaussian process regressors.

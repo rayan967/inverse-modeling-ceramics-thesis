@@ -3,7 +3,7 @@ import pathlib
 
 import joblib
 import numpy as np
-from training import extract_XY
+from standard_training import extract_XY
 from skopt import Optimizer
 from scipy.optimize import minimize, LinearConstraint
 
