@@ -6,6 +6,7 @@ import time
 from timeit import default_timer as timer
 
 import scipy
+from matplotlib import pyplot as plt
 
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
@@ -38,6 +39,7 @@ def adapt(gp, totalbudget, incrementalbudget, parameterranges,
     counter   = 0
     totaltime = 0
     totalFEM  = 0
+    global_errors = []
 
     'Solver options'
     xtol = 1*1E-6    # Solver tolerance
@@ -389,6 +391,7 @@ def adapt(gp, totalbudget, incrementalbudget, parameterranges,
             normvar = np.linalg.norm(np.sqrt(np.abs(varGLEE)),2,axis=0)**2
 
             mcglobalerrorafter = MCGlobalEstimate(wpost,normvar,NGLEE,parameterranges)
+            global_errors.append(mcglobalerrorafter)
             file.write( str(mcglobalerrorafter))
             print("Global error estimate after optimization:   {:1.8f}".format(mcglobalerrorafter))
             print("Computational cost after optimization:      {:0.0f}".format(currentcost))
@@ -427,6 +430,7 @@ def adapt(gp, totalbudget, incrementalbudget, parameterranges,
 
                 file.close()
                 costerrorlog.close()
+                plot_global_errors(global_errors)
 
                 return gp
 
@@ -536,3 +540,13 @@ def adapt(gp, totalbudget, incrementalbudget, parameterranges,
         logger.addToFile("Time used for complete design iteration      : {:0.2f} seconds".format(t1design-t0design))
         logger.addToFile("\n")
         logger.closeOutputLog()
+
+
+def plot_global_errors(global_errors):
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, len(global_errors) + 1), global_errors, marker='o')
+    plt.xlabel('Iteration')
+    plt.ylabel('MC Global Error Estimate')
+    plt.title('MC Global Error Estimate per Iteration')
+    plt.grid(True)
+    plt.savefig('mc_global_error_plot.png')

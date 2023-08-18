@@ -376,3 +376,74 @@ Computational cost before optimization:      331040.000
  Value at index          :            0.02673004182872077
 
 
+---------------------------------- Iteration / Design: 3
+Current number of points: 7 
+Current number of candidate points: 1 
+
+
+--- Used hyperparameters
+Hyperparameter experiment 0: [1.84,2.  ]
+Hyperparameter experiment 1: [1.92,1.8 ]
+Hyperparameter experiment 2: [1.92,1.66]
+
+
+--- A posteriori error estimate
+Global error estimate before optimization:   0.01146
+Computational cost before optimization:      331040.000
+
+
+--- Acquisition phase
+ Number of possible candidate points: 1
+ Found canditate point(s):            [0.31034483 1.        ]
+ Use ith highest value   :            0
+ Value at index          :            0.02673004182872077
+
+
+--- Solve minimization problem
+Initial value for new point(s): [10.]
+
+
+Solution found within 2 iterations
+Used time:            0.01 seconds
+Last function value:  3.196392461100842e-05
+
+
+Found solution with:
+[72260.20319656 72260.20294762 72260.20230473 72260.20118155
+ 72260.20224173 52262.20241315 33930.53571462 16646.25000003]
+
+
+--- Start simulation block
+Sufficient change in the solutions is detected, optain new simulation values
+for point(s): [0 1 2 3 4 5 6 7]
+Simulation block done within: 0.0012 s
+
+
+--- A posteriori error estimate
+Global error estimate after optimization:   0.00868530
+Computational cost after optimization:      464140
+
+
+--- Adjust budget
+Relative change is sufficient - no necessary budget adjustments.
+
+
+--- New parameters
+Error estimate after optimization and filtering: 0.00869
+Computational cost after optimization:           464140
+New budget for next design:                      597240
+Used time:                                       0.01 seconds
+
+
+Prior incremental budget: 133100.00000000003
+New incremental budget:   146410
+
+
+Times used for a priori error estimate       : 0.21 seconds
+Times used for acquisition phase             : 3.08 seconds
+Times used for solving minimization problem  : 0.01 seconds
+Times used for solving fem simulation        : 0.00 seconds
+Times used for a posteriori error estimate   : 0.21 seconds
+Time used for complete design iteration      : 3.68 seconds
+
+

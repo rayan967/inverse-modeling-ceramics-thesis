@@ -2,6 +2,7 @@ import argparse
 import pathlib
 import joblib
 import numpy as np
+from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_validate, cross_val_score
@@ -9,6 +10,8 @@ from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, mean_a
 from sklearn.pipeline import make_pipeline
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
+from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF
+from sklearn.metrics import make_scorer
 
 
 considered_features = [
@@ -19,10 +22,10 @@ considered_features = [
 
 # material properties to consider in training
 considered_properties = [
-   # 'thermal_conductivity',
-    'thermal_expansion',
-   # 'young_modulus',
-   # 'poisson_ratio',
+    'thermal_conductivity',
+    #'thermal_expansion',
+    #'young_modulus',
+   #'poisson_ratio',
 ]
 
 
@@ -53,16 +56,17 @@ def main(train_data_file, export_model_file):
 
         # pick a single property
         y = Y[:, i]
+        y_float = np.array([float(val) if val != b'nan' else np.nan for val in y])
 
         # ignore NaNs in the data
-        clean_indices = np.argwhere(~np.isnan(y))
-        y_clean = y[clean_indices.flatten()]
+        clean_indices = np.argwhere(~np.isnan(y_float))
+        y_clean = y_float[clean_indices.flatten()]
         X_clean = X[clean_indices.flatten()]
 
         # create a pipeline object for training
         pipe = make_pipeline(
             StandardScaler(),   # scaler for data normalization
-            GaussianProcessRegressor(kernel=Matern(), random_state=0)
+            GaussianProcessRegressor(kernel=Matern(length_scale=1, nu=1.5) + WhiteKernel(noise_level=1), normalize_y=True)
         )
 
         # split in test and train data
@@ -84,12 +88,15 @@ def main(train_data_file, export_model_file):
         print("Model R-squared score on training set:", score)
 
         y_pred = pipe.predict(X_test)
+        min_pred_value = np.min(y_pred)
+        max_pred_value = np.max(y_pred)
+        print(min_pred_value, max_pred_value)
 
         print(f"Property {property_name}")
         print("   score on train set = ", pipe.score(X_train, y_train))
         print("   score on test  set = ", pipe.score(X_test, y_test))
 
-        print("Accuracy: ", accuracy_test(pipe, X_test, y_test))
+        print("Accuracy: ", metrics.r2_score(y_test, y_pred))
 
         # The mean squared error
         rmse = mean_squared_error(y_test, y_pred, squared=False)
@@ -98,8 +105,10 @@ def main(train_data_file, export_model_file):
         # The coefficient of determination: 1 is perfect prediction
         print("   Coefficient of determination: %.5f" % r2_score(y_test, y_pred))
 
+        custom_scorer = make_scorer(metrics.r2_score, greater_is_better=True)
+
         # cross validation
-        cv = cross_validate(pipe, X_clean, y_clean, cv=5)
+        cv = cross_validate(pipe, X_clean, y_clean, cv=5, scoring=custom_scorer)
         cv_score_mean = cv['test_score'].mean()
         cv_score_std = cv['test_score'].std()
         models[property_name]['cv_score_mean'] = cv_score_mean
@@ -147,7 +156,7 @@ def extract_XY(data):
     return X, Y
 
 
-def accuracy_test(model, X_test, y_test, tolerance=0.01):
+def accuracy_test(model, X_test, y_test, tolerance=1):
     """
     Parameters
     ----------

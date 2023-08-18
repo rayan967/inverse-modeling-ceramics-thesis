@@ -1,0 +1,20 @@
+Thermal Expansion:
+
+Best parameters found:  {'alpha': 1e-05, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)}
+Custom accuracy with best parameters:  0.9999841181548217
+
+
+Thermal Conductivity:
+
+Best parameters found:  {'alpha': 1e-05, 'kernel': Matern(length_scale=1, nu=1.5) * RBF(length_scale=1) + WhiteKernel(noise_level=1)}
+Custom accuracy with best parameters:  0.9952426472154716
+
+Young's modulus:
+
+Best parameters found:  {'alpha': 0.001, 'kernel': Matern(length_scale=1, nu=1.5) + WhiteKernel(noise_level=1)}
+Custom accuracy with best parameters:  0.9997991125782144
+
+Poisson ratio:
+
+Best parameters found:  {'alpha': 1e-05, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)}
+Custom accuracy with best parameters:  0.9999841181548217

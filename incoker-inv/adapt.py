@@ -23,24 +23,28 @@ from simlopt.IOlogging.iotofile import *
 
 from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.optimization.errormodel_new import MCGlobalEstimate, acquisitionfunction, estiamteweightfactors
+import matplotlib.pyplot as plt
+from adaptive_training import accuracy_test
 
 
-def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt):
+def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, selected_indices):
     # Initialization
     counter = 0
     N = gp.getdata[0]
     dim = gp.getdata[2]
     m = yt.shape[1]
-    NMC = 100
+    NMC = 200
     totaltime = 0
     totalFEM = 0
-    selected_indices = []
-
+    global_errors = []
+    accuracies = []
 
     print("---------------------------------- Start adaptive phase")
-    print("Number of initial points:          "+str(N))
+    print("Number of initial points:          "+str(len(selected_indices)))
     print("Desired tolerance:                 "+str(TOL))
     print("\n")
+
+    XGLEE_f = X_test
 
     # Main adaptive loop
     while True:
@@ -48,15 +52,21 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt)
         print(f"--- Iteration {counter}")
 
         # Generate candidate points
-        XGLEE = createPD(NMC, dim, "latin", parameterranges)
-
+        XGLEE = createPD(NMC, dim, "random", parameterranges)
         dfGLEE = gp.predictderivative(XGLEE, True)
         varGLEE = gp.predictvariance(XGLEE, True)
         normvar = np.linalg.norm(np.sqrt(np.abs(varGLEE)), 2, axis=0) ** 2
         w = estiamteweightfactors(dfGLEE, epsphys)
+
+
         # MC global error estimation
-        mcglobalerrorbefore = MCGlobalEstimate(w, normvar, NMC,
+        dfGLEE_f = gp.predictderivative(XGLEE_f, True)
+        varGLEE_f = gp.predictvariance(XGLEE_f, True)
+        normvar_f = np.linalg.norm(np.sqrt(np.abs(varGLEE_f)), 2, axis=0) ** 2
+        w_f = estiamteweightfactors(dfGLEE_f, epsphys)
+        mcglobalerrorbefore = MCGlobalEstimate(w_f, normvar_f, NMC,
                                                parameterranges)
+        print("Global error estimate before optimization:   {:1.5f}".format(mcglobalerrorbefore))
 
         """ ------------------------------Acquisition phase ------------------------------ """
         'Add new candidate points'
@@ -81,23 +91,28 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt)
             gp.adddatapoint(closest_point)
             gp.adddatapointvalue(closest_point_value)
             gp.addaccuracy(epsXc)
-            print("Size of data: ", str(gp.getdata[0]))
+            print("Size of data: ", str(len(selected_indices)))
         else:
             print("Something went wrong, no candidate point was found.")
             print("\n")
 
 
         # A posteriori MC global error estimation
-        dfGLEE = gp.predictderivative(XGLEE, True)
-        varGLEE = gp.predictvariance(XGLEE, True)
-        wpost = estiamteweightfactors(dfGLEE, epsphys)
-        normvar = np.linalg.norm(np.sqrt(np.abs(varGLEE)), 2, axis=0) ** 2
-        mcglobalerrorafter = MCGlobalEstimate(wpost, normvar, NMC, parameterranges)
+        dfGLEE_f = gp.predictderivative(XGLEE_f, True)
+        varGLEE_f = gp.predictvariance(XGLEE_f, True)
+        wpost_f = estiamteweightfactors(dfGLEE_f, epsphys)
+        normvar_f = np.linalg.norm(np.sqrt(np.abs(varGLEE_f)), 2, axis=0) ** 2
+        mcglobalerrorafter = MCGlobalEstimate(wpost_f, normvar_f, NMC, parameterranges)
+        global_errors.append(mcglobalerrorafter)
+
+        accuracies.append(accuracy_test(gp, X_test, y_test))
 
         # Check convergence
         if mcglobalerrorafter <= TOL:
             print("--- Convergence")
             print(" Desired tolerance is reached, adaptive phase is done.")
+            plot_global_errors(global_errors)
+            plot_accuracy(accuracies)
             return gp
 
         # Adjust budget
@@ -107,9 +122,23 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt)
             print("Relative change is below set threshold. Adjusting TOLAcqui.")
 
         # Check number of points
-        if counter >= 1715:
+        if len(selected_indices) >= 1815:
             print("--- Maximum number of points reached")
+            plot_global_errors(global_errors)
+            plot_accuracy(accuracies)
             return gp
+
+        Nmax = 50
+        N = gp.getdata[0]
+        if N < Nmax:
+            print("--- A priori hyperparameter adjustment")
+            region = [(0.01, 2) for _ in range(dim)]
+            gp.optimizehyperparameter(region, "mean", False)
+        else:
+            print("--- A priori hyperparameter adjustment")
+            print("Number of points is higher then "+str(Nmax))
+            print("No optimization is performed")
+        print("\n")
 
 
 def find_closest_point(Xt, yt, point, selected_indices):
@@ -121,3 +150,23 @@ def find_closest_point(Xt, yt, point, selected_indices):
             return Xt[index].reshape(1,-1), yt[index].reshape(1,-1), selected_indices
         else:
             distances[index] = np.inf
+
+
+def plot_global_errors(global_errors):
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, len(global_errors) + 1), global_errors, marker='o')
+    plt.xlabel('Iteration')
+    plt.ylabel('MC Global Error Estimate')
+    plt.title('MC Global Error Estimate per Iteration')
+    plt.grid(True)
+    plt.savefig('mc_global_error_plot.png')
+
+
+def plot_accuracy(accuracies):
+    plt.figure(figsize=(10, 6))
+    plt.plot(range(1, len(accuracies) + 1), accuracies, marker='o')
+    plt.xlabel('Iteration')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy per Iteration')
+    plt.grid(True)
+    plt.savefig('accuracy_plot.png')

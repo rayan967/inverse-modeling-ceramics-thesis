@@ -196,17 +196,19 @@ def acquisitionfunction(gp,df,std,w,XGLEE,epsphys,TOLAcqui):
    tol = 1e-5
   
    for i in range(sortedarry.shape[0]):
-       
-       """Take the ith value"""
-       tmpval =  sortedarry[i]                      #Current highest value
-       oldindex = np.where((acquisition==tmpval))   #Get the corresponding point
-       XC = XGLEE[oldindex]
-   
-       """ Check wether the found point is in the already known training data """ 
-       currentindex = np.where(np.linalg.norm(gp.getX-np.squeeze(XC),2,axis=1)<tol)
-       if currentindex[0].size == 0:
-           return XC,i,tmpval
-       else:
-           continue
+       try:
+            """Take the ith value"""
+            tmpval =  sortedarry[i]                      #Current highest value
+            oldindex = np.where((acquisition==tmpval))   #Get the corresponding point
+            XC = XGLEE[oldindex]
+
+            """ Check wether the found point is in the already known training data """
+            currentindex = np.where(np.linalg.norm(gp.getX-np.squeeze(XC),2,axis=1)<tol)
+            if currentindex[0].size == 0:
+                return XC,i,tmpval
+            else:
+                continue
+       except Exception:
+            continue
    return np.array([]),None,None
 

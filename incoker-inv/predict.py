@@ -7,8 +7,8 @@ import json
 
 def main(microstructure):
     models = joblib.load("trained_models.joblib")["models"]
-    model = models['thermal_expansion']['pipe']
-    features = models['thermal_expansion']['features']
+    model = models['thermal_conductivity']['pipe']
+    features = models['thermal_conductivity']['features']
 
     # Extract the features required by the specific property's GPR model
     microstructure_features = [microstructure[feature] for feature in features]

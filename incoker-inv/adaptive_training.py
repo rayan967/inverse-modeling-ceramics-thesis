@@ -2,8 +2,9 @@ import argparse
 from adapt import *
 from simlopt.gpr.gaussianprocess import *
 from simlopt.hyperparameter.utils.crossvalidation import *
+from simlopt.basicfunctions.utils.creategrid import createPD
 from pyDOE import lhs
-
+from sklearn.model_selection import train_test_split
 
 
 plt.close('all')
@@ -11,15 +12,15 @@ plt.ioff()
 
 considered_features = [
     'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
-    'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
-    'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
+#    'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
+#    'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
 ]
 
 # material properties to consider in training
 considered_properties = [
     #'thermal_conductivity',
-    'thermal_expansion',
-    #'young_modulus',
+    #'thermal_expansion',
+    'young_modulus',
     #'poisson_ratio',
 ]
 
@@ -74,7 +75,7 @@ def main(train_data_file, export_model_file):
         # Parameters for adaptive phase
         totalbudget         = 1E20          # Total budget to spend
         incrementalbudget   = 1E5           # Incremental budget
-        TOL                 = 1E-3          # Overall desired reconstruction tolerance
+        TOL                 = 1E-2          # Overall desired reconstruction tolerance
         TOLFEM              = 0.0           # Reevaluation tolerance
         TOLAcqui            = 1.0           # Acquisition tolerance
         TOLrelchange        = 0             # Tolerance for relative change of global error estimation
@@ -82,22 +83,15 @@ def main(train_data_file, export_model_file):
         epsphys             = np.var(yt)    # Assumed or known variance of physical measurement!
         adaptgrad           = False         # Toggle if gradient data should be adapted
 
-        # Number of initial samples
-        n_initial = 100
+        Xt, X_test, yt, y_test = train_test_split(Xt, yt, random_state=0)
 
-        # Generate LHS samples
-        lhs_samples = lhs(Xt.shape[1], samples=n_initial)
+        selected_indices = []
+        XGLEE = createPD(30, dim, "latin", parameterranges)
+        Xt_initial = np.zeros_like(XGLEE)
+        yt_initial = np.zeros((30, yt.shape[1]))
+        for i in range(30):
+            Xt_initial[i], yt_initial[i], selected_indices = find_closest_point(Xt, yt, XGLEE[i], selected_indices)
 
-        # Scale LHS samples to the range of your data
-        Xt_initial = np.zeros_like(lhs_samples)
-        for i in range(Xt.shape[1]):
-            Xt_initial[:, i] = lhs_samples[:, i] * (Xt[:, i].max() - Xt[:, i].min()) + Xt[:, i].min()
-
-        ind = []
-        # Find the corresponding y values
-        yt_initial = np.zeros((n_initial, yt.shape[1]))
-        for i in range(n_initial):
-            yt_initial[i] = find_closest_point(Xt, yt, Xt_initial[i], ind)[1]
 
         # Initial hyperparameter parameters
         region = [(0.01, 2) for _ in range(dim)]
@@ -117,10 +111,10 @@ def main(train_data_file, export_model_file):
         print("Overall stopping tolerance:          {}".format(TOL))
         print("Hyperparameter bounds:               {}".format(region))
         print("\n")
-        y_pred = gp.predictmean(Xt)
+        y_pred = gp.predictmean(X_test)
 
         # calculate MSE
-        mse = np.mean((y_pred - yt) ** 2)
+        mse = np.mean((y_pred - y_test) ** 2)
 
         # calculate RMSE
         rmse = np.sqrt(mse)
@@ -128,22 +122,23 @@ def main(train_data_file, export_model_file):
         print(property_name)
         print("MSE: ", mse)
         print("RMSE: ", rmse)
-        print("Accuracy: ", accuracy_test(gp, Xt, yt))
+        print("Accuracy: ", accuracy_test(gp, X_test, y_test))
 
-        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt)
+        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, selected_indices)
+        gp.optimizehyperparameter(region, "mean", False)
 
         print("-----Adaptive run complete:-----")
 
-        y_pred = GP_adapted.predictmean(Xt)
+        y_pred = GP_adapted.predictmean(X_test)
 
         # calculate MSE
-        mse = np.mean((y_pred - yt) ** 2)
+        mse = np.mean((y_pred - y_test) ** 2)
 
         # calculate RMSE
         rmse = np.sqrt(mse)
         print("MSE: ", mse)
         print("RMSE: ", rmse)
-        print("Accuracy: ", accuracy_test(GP_adapted, Xt, yt))
+        print("Accuracy: ", accuracy_test(GP_adapted, X_test, y_test))
 
 
 def createerror(Xt, random=False, graddata=False):
@@ -195,6 +190,25 @@ def accuracy_test(model, X_test, y_test, tolerance=1E-2):
     score = np.mean(correct) * 100
 
     return score
+
+
+def sample_boundary_points(Xt, yt, n_boundary_points):
+    # Generate a Latin Hypercube Sample
+    lhs_samples = lhs(Xt.shape[1], samples=n_boundary_points)
+
+    # Scale LHS samples to the range of your data
+    Xt_lhs = np.zeros_like(lhs_samples)
+    for i in range(Xt.shape[1]):
+        Xt_lhs[:, i] = lhs_samples[:, i] * (Xt[:, i].max() - Xt[:, i].min()) + Xt[:, i].min()
+
+    # Find the corresponding y values
+    Xt_initial = np.zeros_like(Xt_lhs)
+    yt_initial = np.zeros((n_boundary_points, yt.shape[1]))
+    selected_indices = []
+    for i in range(n_boundary_points):
+        Xt_initial[i], yt_initial[i], selected_indices = find_closest_point(Xt, yt, Xt_lhs[i], selected_indices)
+
+    return Xt_initial, yt_initial, selected_indices
 
 
 if __name__ == "__main__":
