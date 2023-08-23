@@ -23,7 +23,7 @@ considered_properties = ['young_modulus']
 custom_scorer = make_scorer(custom_accuracy, greater_is_better=True)
 
 # Load data
-training_data = pathlib.Path("training_data_rve_database.npy")
+training_data = pathlib.Path("models/3d-features.npy")
 data = np.load(training_data)
 data['thermal_expansion'] *= 1e6
 

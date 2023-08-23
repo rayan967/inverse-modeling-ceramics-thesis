@@ -7,3 +7,6 @@ In summary, the authors discuss a data-centric design framework for polymer nano
 - [mad-GP: automatic differentiation of Gaussian processes for molecules and materials](https://link.springer.com/article/10.1007/s10910-022-01334-x)
 
 A framework for automatic differentiation (compute exact derivatives of a function given its computational graph) of GP surrogate models.
+
+- [On automatic differentiation for the Matérn
+covariance](https://arxiv.org/pdf/2201.00262.pdf)

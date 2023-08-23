@@ -15,18 +15,29 @@ from sklearn.metrics import make_scorer
 
 
 considered_features = [
-    'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
-    'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
-    'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
+    'volume_fraction_4', 'volume_fraction_1',
+    'chord_length_mean_4', 'chord_length_mean_10',
+]
+
+actual_features = [
+    'volume_fraction_4', 'volume_fraction_1',
+    'chord_length_ratio'
 ]
 
 # material properties to consider in training
 considered_properties = [
     'thermal_conductivity',
-    #'thermal_expansion',
-    #'young_modulus',
-   #'poisson_ratio',
+    'thermal_expansion',
+    'young_modulus',
+    'poisson_ratio',
 ]
+
+BEST_PARAMETERS = {
+    'thermal_expansion': {'alpha': 1e-05, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)},
+    'thermal_conductivity': {'alpha': 1e-05, 'kernel': Matern(length_scale=1, nu=1.5) + WhiteKernel(noise_level=1)},
+    'young_modulus': {'alpha': 0.001, 'kernel': Matern(length_scale=1, nu=1.5) + WhiteKernel(noise_level=1)},
+    'poisson_ratio': {'alpha': 1e-05, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)}
+}
 
 
 def main(train_data_file, export_model_file):
@@ -44,9 +55,7 @@ def main(train_data_file, export_model_file):
 
     data['thermal_expansion'] *= 1e6
 
-    X = np.vstack(tuple(data[f] for f in considered_features)).T
-
-    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
+    X, Y = extract_XY_(data)
 
     assert Y.shape[0] == X.shape[0], "number of samples does not match"
 
@@ -64,16 +73,21 @@ def main(train_data_file, export_model_file):
         X_clean = X[clean_indices.flatten()]
 
         # create a pipeline object for training
+        best_params = BEST_PARAMETERS[property_name]
+        kernel = best_params['kernel']
+        alpha = best_params['alpha']
+
+        # create a pipeline object for training using the best parameters
         pipe = make_pipeline(
-            StandardScaler(),   # scaler for data normalization
-            GaussianProcessRegressor(kernel=Matern(length_scale=1, nu=1.5) + WhiteKernel(noise_level=1), normalize_y=True)
+            StandardScaler(),  # scaler for data normalization
+            GaussianProcessRegressor(kernel=kernel, alpha=alpha, normalize_y=True)
         )
 
         # split in test and train data
         X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, random_state=0)
         pipe.fit(X_train, y_train)
 
-        models[property_name] = {'pipe': pipe, 'features': considered_features}
+        models[property_name] = {'pipe': pipe, 'features': actual_features}
         models[property_name]['X_train'] = X_train
         models[property_name]['X_test'] = X_test
         models[property_name]['y_train'] = y_train
@@ -147,6 +161,11 @@ def main(train_data_file, export_model_file):
         joblib.dump(exported_model, export_model_file)
     return models
 
+def extract_XY_(data):
+    chord_length_ratio = data['chord_length_mean_4'] / data['chord_length_mean_10']
+    X = np.vstack((data['volume_fraction_4'], data['volume_fraction_1'], chord_length_ratio)).T
+    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
+    return X, Y
 
 def extract_XY(data):
 

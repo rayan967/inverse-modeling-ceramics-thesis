@@ -67,3 +67,11 @@ The paper presents an adaptive sampling algorithm for building multivariate, mul
 - [Using Gaussian process regression for efficient parameter reconstruction](https://arxiv.org/abs/1903.12128)
 
 Paper by Philipp-Immanuel Schneider and Martin Hammerschmidt on inverse modeling with bayesian optimization and gaussian process regressors.
+
+[Gaussian Processes for Machine Learning Book by Carl Edward Rasmussen and Christopher K. I. Williams]()
+
+[Answer on gradient calculation with RBF kernel](https://stats.stackexchange.com/questions/373446/computing-gradients-via-gaussian-process-regression)
+
+[Surrogate models based on machine learning methods for parameter estimation of left ventricular myocardium](https://royalsocietypublishing.org/doi/10.1098/rsos.20112)
+
+[An overview of gradient descent optimization algorithms](https://arxiv.org/pdf/1609.04747.pdf)

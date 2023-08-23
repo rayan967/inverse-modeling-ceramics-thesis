@@ -66,7 +66,10 @@ def main(train_data_file, export_model_file):
         Xt = Xt[clean_indices.flatten()]
 
         scaler = StandardScaler()
+        scalerY = StandardScaler()
+
         Xt = scaler.fit_transform(Xt)
+        yt = scalerY.fit_transform(yt)
 
         # Calculate parameter space boundaries for each feature
         parameterranges = np.array([[np.min(Xt[:, i]), np.max(Xt[:, i])] for i in range(dim)])
