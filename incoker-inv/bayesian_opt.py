@@ -25,7 +25,7 @@ considered_properties = [
 def main(prop, property_name):
     print("starting opt")
 
-    training_data = pathlib.Path("models/3d-features.npy")
+    training_data = pathlib.Path("training_data_rve_database.npy")
     if not training_data.exists():
         print(f"Error: training data path {training_data} does not exist.")
 

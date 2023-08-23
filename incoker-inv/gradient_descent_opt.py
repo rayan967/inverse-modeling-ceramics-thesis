@@ -39,6 +39,7 @@ def find_closest_point(Xt, yt, point, selected_indices):
         else:
             distances[index] = np.inf
 
+
 def gradient_function(x, models, property_name):
     model = models[property_name]['pipe']
     features = models[property_name]['features']
@@ -102,16 +103,11 @@ def predict_property(property_name, microstructure, models):
 
 def gpr_mean_grad(X_test, gpr):
     X_train = gpr.X_train_
-    y_train = gpr.y_train_
     kernel = gpr.kernel_
 
     rbf, white = kernel.k1, kernel.k2
     l = rbf.length_scale
-    sigma_n = np.sqrt(white.noise_level)  # The noise level
-
-    K = kernel(X_train, X_train)  # Covariance matrix of training points
-    I = np.eye(K.shape[0])  # Identity matrix of the same shape as K
-    alpha = np.linalg.solve(K + sigma_n**2 * I, y_train)
+    alpha = gpr.alpha_
 
     # Compute the gradient for each test point
     gradients = []
@@ -128,7 +124,7 @@ def gpr_mean_grad(X_test, gpr):
 
 print("starting opt")
 
-training_data = pathlib.Path('models/3d-features.npy')
+training_data = pathlib.Path('training_data_rve_database.npy')
 if not training_data.exists():
     print(f"Error: training data path {training_data} does not exist.")
 

@@ -6,16 +6,11 @@ from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 
 def gpr_mean_grad(X_test, gpr):
     X_train = gpr.X_train_
-    y_train = gpr.y_train_
     kernel = gpr.kernel_
 
     rbf, white = kernel.k1, kernel.k2
     l = rbf.length_scale
-    sigma_n = np.sqrt(white.noise_level)
-
-    K = kernel(X_train, X_train)  # Covariance matrix of training points
-    I = np.eye(K.shape[0])  # Identity matrix of the same shape as K
-    alpha = np.linalg.solve(K + sigma_n**2 * I, y_train)
+    alpha = gpr.alpha_
 
     # Compute the gradient for each test point
     gradients = []
