@@ -38,7 +38,7 @@ def main(prop, property_name):
 
     data['thermal_expansion'] *= 1e6
 
-    models = joblib.load("trained_models.joblib")["models"]
+    models = joblib.load("models/tuned-hyperparameters.joblib")["models"]
 
     X, Y = extract_XY(data)
 
@@ -48,12 +48,7 @@ def main(prop, property_name):
 
     # Define the search space dimensions based on the minimum and maximum values
     dimensions = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
-
-    # Ensure volume fractions sum to 1
-    constraint = LinearConstraint([1, 1, 1, 0, 0, 0, 0, 0, 0], lb=1, ub=1)
-
-    # Constraint to ensure porosity value is below 0.01
-    porosity_constraint = LinearConstraint([0, 0, 1, 0, 0, 0, 0, 0, 0], lb=0, ub=0.01)
+    print(dimensions)
 
     cons = [{'type': 'eq', 'fun': lambda x: x[0] + x[1] + x[2] - 1},
             {'type': 'ineq', 'fun': lambda x: -x[2] + 0.01},]

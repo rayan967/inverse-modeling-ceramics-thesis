@@ -7,12 +7,6 @@ from sklearn.metrics import make_scorer
 from sklearn.preprocessing import StandardScaler
 from skopt.learning.gaussian_process.kernels import RationalQuadratic
 
-
-def custom_accuracy(y_true, y_pred):
-    correct = np.abs(y_true - y_pred) <= 0.01
-    score = np.mean(correct) * 100
-    return score
-
 # Features and properties
 considered_features = [
     'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
@@ -20,7 +14,7 @@ considered_features = [
     'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
 ]
 considered_properties = ['young_modulus']
-custom_scorer = make_scorer(custom_accuracy, greater_is_better=True)
+
 
 # Load data
 training_data = pathlib.Path("training_data_rve_database.npy")

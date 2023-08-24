@@ -6,7 +6,7 @@ import json
 
 
 def main(microstructure):
-    models = joblib.load("models/3d-features.joblib")["models"]
+    models = joblib.load("models/tuned-hyperparameters.joblib")["models"]
     model = models['thermal_conductivity']['pipe']
     features = models['thermal_conductivity']['features']
 

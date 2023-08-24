@@ -15,14 +15,15 @@ from sklearn.metrics import make_scorer
 
 
 considered_features = [
-    'volume_fraction_4', 'volume_fraction_1',
-    'chord_length_mean_4', 'chord_length_mean_10',
+    'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
+    'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
+    'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
 ]
 
-actual_features = [
-    'volume_fraction_4', 'volume_fraction_1',
-    'chord_length_ratio'
-]
+#actual_features = [
+#    'volume_fraction_4', 'volume_fraction_1',
+#    'chord_length_ratio'
+#]
 
 # material properties to consider in training
 considered_properties = [
@@ -55,7 +56,7 @@ def main(train_data_file, export_model_file):
 
     data['thermal_expansion'] *= 1e6
 
-    X, Y = extract_XY_(data)
+    X, Y = extract_XY(data)
 
     assert Y.shape[0] == X.shape[0], "number of samples does not match"
 
@@ -87,7 +88,7 @@ def main(train_data_file, export_model_file):
         X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, random_state=0)
         pipe.fit(X_train, y_train)
 
-        models[property_name] = {'pipe': pipe, 'features': actual_features}
+        models[property_name] = {'pipe': pipe, 'features': considered_features}
         models[property_name]['X_train'] = X_train
         models[property_name]['X_test'] = X_test
         models[property_name]['y_train'] = y_train
@@ -161,11 +162,13 @@ def main(train_data_file, export_model_file):
         joblib.dump(exported_model, export_model_file)
     return models
 
+
 def extract_XY_(data):
     chord_length_ratio = data['chord_length_mean_4'] / data['chord_length_mean_10']
     X = np.vstack((data['volume_fraction_4'], data['volume_fraction_1'], chord_length_ratio)).T
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
     return X, Y
+
 
 def extract_XY(data):
 

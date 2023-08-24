@@ -3,30 +3,9 @@ import pathlib
 
 import joblib
 import numpy as np
-from standard_training import extract_XY_
+from standard_training import extract_XY
 from skopt import Optimizer
 from scipy.optimize import minimize, LinearConstraint
-
-
-def gradient_descent_optimization(initial_guess, objective_function, gradient_function, lr=0.01,
-                                  max_iterations=100):
-    x = initial_guess
-    prev_obj_val = float('inf')
-
-    for _ in range(max_iterations):
-        # Compute objective function and gradient
-        obj_val = objective_function(x)
-        grad = gradient_function(x)
-
-        # Gradient descent step
-        x -= lr * grad
-        # Check for early stopping
-        if abs(prev_obj_val - obj_val) < 1e-6:
-            print("Early stopping triggered.")
-            break
-        prev_obj_val = obj_val
-
-    return x, obj_val
 
 
 def find_closest_point(Xt, yt, point, selected_indices):
@@ -45,7 +24,7 @@ def gradient_function(x, models, property_name):
     features = models[property_name]['features']
 
     # Convert x to the relevant microstructure features
-    microstructure_features = [x[i] for i in range(features)]
+    microstructure_features = [x[i] for i in range(len(features))]
     X = np.array(microstructure_features).reshape(1, -1)
 
     # Access the scaler and GPR from the pipeline
@@ -61,14 +40,26 @@ def gradient_function(x, models, property_name):
 
 def convert_x_to_microstructure(x):
     volume_fraction_4 = x[0]
-    volume_fraction_1 = x[1]
-    chord_length_ratio = x[2]
+    volume_fraction_10 = x[1]
+    volume_fraction_1 = x[2]
+    chord_length_mean_4 = x[3]
+    chord_length_mean_10 = x[4]
+    chord_length_mean_1 = x[5]
+    chord_length_variance_4 = x[6]
+    chord_length_variance_10 = x[7]
+    chord_length_variance_1 = x[8]
 
     # Construct the microstructure representation
     microstructure = {
         'volume_fraction_4': volume_fraction_4,
+        'volume_fraction_10': volume_fraction_10,
         'volume_fraction_1': volume_fraction_1,
-        'chord_length_ratio': chord_length_ratio,
+        'chord_length_mean_4': chord_length_mean_4,
+        'chord_length_mean_10': chord_length_mean_10,
+        'chord_length_mean_1': chord_length_mean_1,
+        'chord_length_variance_4': chord_length_variance_4,
+        'chord_length_variance_10': chord_length_variance_10,
+        'chord_length_variance_1': chord_length_variance_1,
     }
 
     return microstructure
@@ -76,20 +67,24 @@ def convert_x_to_microstructure(x):
 
 def objective_function(x, desired_property, models, property_name):
     microstructure = convert_x_to_microstructure(x)
-
     predicted_property = predict_property(property_name, microstructure, models)
-
-    # Calculate the difference between the predicted property and the desired property
     discrepancy = predicted_property - desired_property
+    return discrepancy ** 2  # Return the squared discrepancy for minimization
 
-    return abs(discrepancy)  # Return the discrepancy (for minimization)
+
+def objective_gradient(x, desired_property, models, property_name):
+    gpr_grad = gradient_function(x, models, property_name)
+    predicted_property = predict_property(property_name, convert_x_to_microstructure(x), models)
+    discrepancy = predicted_property - desired_property
+    return 2 * discrepancy * gpr_grad
 
 
 def predict_property(property_name, microstructure, models):
     model = models[property_name]['pipe']
     features = [
-        'volume_fraction_4', 'volume_fraction_1',
-        'chord_length_ratio'
+        'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
+        'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
+        'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
     ]
 
     microstructure_features = [microstructure[feature] for feature in features]
@@ -124,7 +119,7 @@ def gpr_mean_grad(X_test, gpr):
 
 print("starting opt")
 
-training_data = pathlib.Path('training_data_rve_database.npy')
+training_data = pathlib.Path("training_data_rve_database.npy")
 if not training_data.exists():
     print(f"Error: training data path {training_data} does not exist.")
 
@@ -137,41 +132,48 @@ print(f"loaded {data.shape[0]} training data pairs")
 
 data['thermal_expansion'] *= 1e6
 
-models = joblib.load("models/3d-features.joblib")["models"]
+models = joblib.load("models/tuned-hyperparameters.joblib")["models"]
 
-X, Y = extract_XY_(data)
+X, Y = extract_XY(data)
 
+prop = 5.9
+property_name = 'thermal_expansion'
 # Compute the minimum and maximum values for each feature in the training data
 min_values = np.min(X, axis=0)
 max_values = np.max(X, axis=0)
 
 # Define the search space dimensions based on the minimum and maximum values
+bounds = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
+
+cons = [{'type': 'eq', 'fun': lambda x: x[0] + x[1] + x[2] - 1},
+        {'type': 'ineq', 'fun': lambda x: -x[2] + 0.01},]
+
 dimensions = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
 
+NUM_STARTS = 10  # Number of starting points for multi-start
 
-property_name = "thermal_expansion"
-prop = 5.9
-# Define learning rate and max iterations
-learning_rate = 0.01
-max_iterations = 500
+# Random sample starting points
+initial_points = X[np.random.choice(X.shape[0], NUM_STARTS, replace=False)]
 
-# initial_guess = np.mean(dimensions, axis=1)
-initial_guess, closest_point_value, selected_indices = find_closest_point(X, Y, np.mean(dimensions, axis=1), [])
+best_result = None
+best_value = float('inf')
 
+for initial_point in initial_points:
+    res = minimize(
+        fun=lambda x: objective_function(x, prop, models, property_name),
+        jac=lambda x: objective_gradient(x, prop, models, property_name),
+        x0=initial_point,
+        bounds=bounds,
+        constraints=cons,
+        method="L-BFGS-B"
+    )
+    if res.fun < best_value:
+        best_value = res.fun
+        best_result = res
 
-print(initial_guess)
-
-# Perform gradient descent optimization
-optimal_x, optimal_value = gradient_descent_optimization(initial_guess,
-                                                         lambda x: objective_function(x, prop, models,
-                                                                                      property_name),
-                                                         lambda x: gradient_function(x, models, property_name),
-                                                         lr=learning_rate,
-                                                         max_iterations=max_iterations)
+optimal_x = best_result.x
 optimal_microstructure = convert_x_to_microstructure(optimal_x)
-
-# Evaluate the desired property using the optimal microstructure
-optimal_property_value = predict_property("thermal_expansion", optimal_microstructure, models)
+optimal_property_value = predict_property(property_name, optimal_microstructure, models)
 
 print(optimal_microstructure)
-print("Error in optimisation: " + str(np.abs(prop - optimal_property_value)))
+print("Error in optimisation: "+str(np.abs(prop - optimal_property_value)))
