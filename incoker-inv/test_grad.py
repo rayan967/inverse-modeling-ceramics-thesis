@@ -1,26 +1,28 @@
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern
-from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
+from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel, Matern
 
 
 def gpr_mean_grad(X_test, gpr):
     X_train = gpr.X_train_
     kernel = gpr.kernel_
 
-    rbf, white = kernel.k1, kernel.k2
-    l = rbf.length_scale
+    kernel1, white = kernel.k1, kernel.k2
     alpha = gpr.alpha_
 
-    # Compute the gradient for each test point
+
     gradients = []
     for x_star in X_test:
-        grad_sum = 0
-        for i, x_i in enumerate(X_train):
-            diff = (x_star - x_i)
-            k_gradient = -diff * np.exp(-np.sum(diff ** 2) / (2 * l ** 2)) / l ** 2
-            grad_sum += alpha[i] * k_gradient
-        gradients.append(grad_sum)
+        # Compute the gradient for x_star across all training data
+        k_gradient_matrix = kernel1.gradient_x(x_star, X_train)
+
+        # Multiply the gradient matrix with alpha and sum across training data
+        grad_sum = np.dot(alpha, k_gradient_matrix)
+
+        # Adjust for normalization
+        grad_sum_adjusted = gpr._y_train_std * grad_sum + gpr._y_train_mean
+
+        gradients.append(grad_sum_adjusted)
 
     return np.array(gradients).ravel()
 
@@ -36,7 +38,7 @@ X_train = np.linspace(0, 1, 15)[:, np.newaxis]
 y_train = f(X_train).ravel()
 
 # Fit the GPR model to the sample data
-kernel = RBF(length_scale=1) + WhiteKernel(noise_level=1)
+kernel = Matern(length_scale=1) + WhiteKernel(noise_level=1)
 gpr = GaussianProcessRegressor(kernel=kernel)
 gpr.fit(X_train, y_train)
 

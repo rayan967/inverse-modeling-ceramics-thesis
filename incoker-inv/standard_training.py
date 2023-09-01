@@ -2,6 +2,7 @@ import argparse
 import pathlib
 import joblib
 import numpy as np
+from matplotlib import pyplot as plt
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
@@ -15,15 +16,10 @@ from sklearn.metrics import make_scorer
 
 
 considered_features = [
-    'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
+    'volume_fraction_4', 'volume_fraction_1',
     'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
     'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
 ]
-
-#actual_features = [
-#    'volume_fraction_4', 'volume_fraction_1',
-#    'chord_length_ratio'
-#]
 
 # material properties to consider in training
 considered_properties = [
@@ -41,7 +37,7 @@ BEST_PARAMETERS = {
 }
 
 
-def main(train_data_file, export_model_file):
+def main(train_data_file, export_model_file, number_of_features):
 
     training_data = pathlib.Path(train_data_file)
     if not training_data.exists():
@@ -56,8 +52,14 @@ def main(train_data_file, export_model_file):
 
     data['thermal_expansion'] *= 1e6
 
-    X, Y = extract_XY(data)
+    if number_of_features == 3:
+        X, Y = extract_XY_3(data)
+    elif number_of_features == 2:
+        X, Y = extract_XY_2(data)
+    else:
+        X, Y = extract_XY(data)
 
+    print("Features: ", str(considered_features))
     assert Y.shape[0] == X.shape[0], "number of samples does not match"
 
     models = {}
@@ -131,6 +133,16 @@ def main(train_data_file, export_model_file):
         print \
             ("   %0.5f accuracy with a standard deviation of %0.5f" % (cv_score_mean, cv_score_std))
 
+
+        plt.figure()
+        plt.scatter(X_test[:,0], y_test, label="Actual", color='blue', marker='o')
+        plt.scatter(X_test[:,0], y_pred, label="Predicted", color='red', marker='x')
+
+        plt.xlabel("Volume Fraction Zirconia")
+        plt.ylabel(property_name)
+        plt.legend()
+        plt.show()
+
     for prop in ['young_modulus', 'poisson_ratio', 'thermal_conductivity', 'thermal_expansion']:
         if prop in models:
             print \
@@ -163,14 +175,47 @@ def main(train_data_file, export_model_file):
     return models
 
 
-def extract_XY_(data):
+def extract_XY_2(data):
+    """Use for 2 features."""
+
+    filtered_indices = np.where(data['volume_fraction_1'] == 0.0)
+
+    chord_length_ratio = data['chord_length_mean_4'][filtered_indices] / data['chord_length_mean_10'][filtered_indices]
+
+    volume_fraction_4 = data['volume_fraction_4'][filtered_indices]
+
+    X = np.vstack((volume_fraction_4, chord_length_ratio)).T
+
+    Y = np.vstack(tuple(data[p][filtered_indices] for p in considered_properties)).T
+
+    global considered_features
+
+    considered_features = [
+    'volume_fraction_4',
+    'chord_length_ratio'
+]
+
+    return X, Y
+
+
+def extract_XY_3(data):
+    """Use for 3 features."""
+
     chord_length_ratio = data['chord_length_mean_4'] / data['chord_length_mean_10']
     X = np.vstack((data['volume_fraction_4'], data['volume_fraction_1'], chord_length_ratio)).T
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
+
+    global considered_features
+
+    considered_features = [
+    'volume_fraction_4', 'volume_fraction_1',
+    'chord_length_ratio'
+]
     return X, Y
 
 
 def extract_XY(data):
+    """Use for 8 features."""
 
     X = np.vstack(tuple(data[f] for f in considered_features)).T
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
@@ -216,8 +261,10 @@ if __name__ == "__main__":
                              'numpy file with training data already loaded')
     parser.add_argument('--export_model_file', type=pathlib.Path, required=False,
                         help='Path to a file where the trained models will be exported to.')
+    parser.add_argument('--number_of_features', type=int, required=True,
+                        help='Number of features, supports 8 or 3 or 2.')
     args = parser.parse_args()
 
-    main(args.train_data_file, args.export_model_file)
+    main(args.train_data_file, args.export_model_file, args.number_of_features)
 
 

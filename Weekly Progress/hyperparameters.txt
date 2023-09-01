@@ -18,3 +18,9 @@ Poisson ratio:
 
 Best parameters found:  {'alpha': 1e-05, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)}
 Custom accuracy with best parameters:  0.9999841181548217
+
+
+young_modulus: 1.000, 1.9e-05, 2.8e-01
+poisson_ratio: 1.000, 4.3e-06, 1.5e-04
+thermal_conductivity: 0.998, 3.3e-04, 4.0e-01
+thermal_expansion: 1.000, 6.2e-06, 5.0e-03
