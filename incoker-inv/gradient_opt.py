@@ -4,7 +4,8 @@ import pathlib
 import joblib
 import numpy as np
 from sklearn.metrics import mean_squared_error, r2_score
-
+from simlopt.basicfunctions.utils.creategrid import createPD
+from pyDOE import lhs
 from standard_training import extract_XY, extract_XY_3, extract_XY_2
 from skopt import Optimizer
 from scipy.optimize import minimize, LinearConstraint
@@ -12,13 +13,13 @@ import matplotlib.pyplot as plt
 
 
 
-def find_closest_point(Xt, yt, point, selected_indices):
+def find_closest_point(Xt, point, selected_indices):
     distances = np.linalg.norm(Xt - point, axis=1)
     while True:
         index = np.argmin(distances)
         if index not in selected_indices:
             selected_indices.append(index)
-            return Xt[index], yt[index], selected_indices
+            return Xt[index], selected_indices
         else:
             distances[index] = np.inf
 
@@ -114,8 +115,10 @@ def convert_x_to_microstructure(x, features):
 def objective_function(x, desired_property, models, property_name):
     features = models[property_name]['features']
     microstructure = convert_x_to_microstructure(x, features)
+    #print("Current microstructure:", str(microstructure))
     predicted_property = predict_property(property_name, microstructure, models)
     discrepancy = predicted_property - desired_property
+    #print("Objective value: ", str(discrepancy ** 2))
     return (discrepancy ** 2)  # Return the squared discrepancy for minimization
 
 
@@ -124,6 +127,9 @@ def objective_gradient(x, desired_property, models, property_name):
     gpr_grad = gradient_function(x, models, property_name)
     predicted_property = predict_property(property_name, convert_x_to_microstructure(x, features), models)
     discrepancy = predicted_property - desired_property
+    #print("Objective Gradient: ", str(2 * discrepancy * gpr_grad))
+    #print("\n")
+
     return (2 * discrepancy * gpr_grad)
 
 
@@ -148,7 +154,6 @@ def gpr_mean_grad(X_test, gpr):
 
     kernel_1, white = kernel.k1, kernel.k2
     alpha = gpr.alpha_
-
     gradients = []
     for x_star in X_test:
         # Compute the gradient for x_star across all training data
@@ -166,9 +171,21 @@ def gpr_mean_grad(X_test, gpr):
     return np.array(gradients).ravel()
 
 
-def optimise_for_value(prop, X):
+def optimise_for_value(prop, X, property_name):
     # Random sample starting points
-    initial_points = X[np.random.choice(X.shape[0], NUM_STARTS, replace=False)]
+    #initial_points = X[np.random.choice(X.shape[0], NUM_STARTS, replace=False)]
+    # LHS sampling for uniform starting points in multi-start optimization
+    num_samples = 30
+    lhs_samples = lhs(len(bounds), samples=num_samples)
+    for i in range(len(bounds)):
+        lhs_samples[:, i] = lhs_samples[:, i] * (bounds[i][1] - bounds[i][0]) + bounds[i][0]
+
+    # Find the closest points in X to the LHS samples
+    selected_indices = []
+    Xt_initial = np.zeros((num_samples, X.shape[1]))  # Initialize closest points array
+    for i in range(num_samples):
+        Xt_initial[i], selected_indices = find_closest_point(X, lhs_samples[i], selected_indices)
+    initial_points = X[selected_indices]
 
     best_result = None
     best_value = float('inf')
@@ -193,35 +210,83 @@ def optimise_for_value(prop, X):
     print("Error in optimisation: " + str(np.abs(prop - optimal_property_value)))
 
 
+def find_best_starting_point(X, models, property_name, bounds, features, NUM_STARTS=1000):
+    # Exhaustive search to find the average absolute error for each starting point
+    starting_point_scores = {}
+    prop_bounds = (min(Y[:, 1])+1, max(Y[:, 1])-1)
+
+    num_points = 100
+    prop_values = np.linspace(prop_bounds[0], prop_bounds[1], num_points)
+
+    # Get random starting points
+    random_indices = np.random.choice(X.shape[0], NUM_STARTS, replace=False)
+    starting_points = X[random_indices]
+
+    num_props = len(prop_values)
+
+    for idx, initial_point in zip(random_indices, starting_points):
+        total_absolute_error = 0
+        for prop in prop_values:
+            best_result = None
+            best_value = float('inf')
+
+            res = minimize(
+                fun=lambda x: objective_function(x, prop, models, property_name),
+                jac=lambda x: objective_gradient(x, prop, models, property_name),
+                x0=initial_point,
+                bounds=bounds,
+                method="L-BFGS-B"
+            )
+
+            if res.fun < best_value:
+                best_value = res.fun
+                best_result = res
+
+            optimal_x = best_result.x
+            optimal_microstructure = convert_x_to_microstructure(optimal_x, features)
+
+            # Predict the thermal expansion
+            predicted_value = predict_property(property_name, optimal_microstructure, models)
+
+            # Calculate the absolute error for this prop value
+            absolute_error = abs(predicted_value - prop)
+
+            total_absolute_error += absolute_error
+
+        # Calculate the average absolute error for this starting point
+        avg_absolute_error = total_absolute_error / num_props
+
+        starting_point_scores[idx] = avg_absolute_error
+
+    # Sort the starting points by average absolute error
+    sorted_indices = sorted(starting_point_scores, key=starting_point_scores.get)[:10]
+
+    # Find the best 10 starting points and their average absolute errors
+    best_starting_points = [X[idx] for idx in sorted_indices]
+    best_avg_absolute_errors = [starting_point_scores[idx] for idx in sorted_indices]
+
+    # Print the best 10 starting points and their corresponding average absolute errors
+    for i in range(10):
+        print(f"Best Starting Point {i+1}: {best_starting_points[i]}")
+        print(f"Best Average Absolute Error {i+1}: {best_avg_absolute_errors[i]}")
+    print(sorted_indices)
+    return best_starting_points, sorted_indices  # Return the best 10 starting points and their indices in X
+
+
 print("starting opt")
 
-training_data = pathlib.Path("training_data_rve_database.npy")
-if not training_data.exists():
-    print(f"Error: training data path {training_data} does not exist.")
+property_name = 'thermal_conductivity'
 
-if training_data.suffix == '.npy':
-    data = np.load(training_data)
-else:
-    print("Invalid data")
+# Change next line for different feature sets from models folder
+models = joblib.load("models/2d_model.joblib")["models"]
 
-print(f"loaded {data.shape[0]} training data pairs")
+X = models[property_name]['X_train']
+X_test = models[property_name]['X_test']
+Y = models[property_name]['y_train']
+y_test = models[property_name]['y_test']
 
-data['thermal_expansion'] *= 1e6
-
-
-# Change next two lines for different feature sets or models
-models = joblib.load("models/3d-features.joblib")["models"]
-X, Y = extract_XY_3(data)
-
-clean_indices = np.argwhere(~np.isnan(Y))
-Y = Y[clean_indices.flatten()]
-X = X[clean_indices.flatten()]
-
-
-property_name = 'thermal_expansion'
 # Compute the minimum and maximum values for each feature in the training data
 min_values = np.min(X, axis=0)
-max_values = np.max(X, axis=0)
 max_values = np.max(X, axis=0)
 features = models[property_name]['features']
 print("Features: ", str(features))
@@ -234,22 +299,40 @@ cons = [{'type': 'eq', 'fun': lambda x: x[0] + x[1] + x[2] - 1},
 
 dimensions = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
 
-NUM_STARTS = 10  # Number of starting points for multi-start
-initial_points = X[np.random.choice(X.shape[0], NUM_STARTS, replace=False)]
+NUM_STARTS = 30  # Number of starting points for multi-start
 
-property_name = 'thermal_expansion'
-prop_bounds = (min(Y[:, 1]), max(Y[:, 1]))  
+prop_bounds = (min(Y), max(Y))
 
+# LHS sampling for uniform starting points in multi-start optimization
+num_samples = 30
+lhs_samples = lhs(len(bounds), samples=num_samples)
+for i in range(len(bounds)):
+    lhs_samples[:, i] = lhs_samples[:, i] * (bounds[i][1] - bounds[i][0]) + bounds[i][0]
+
+# Find the closest points in X to the LHS samples
+selected_indices = []
+Xt_initial = np.zeros((num_samples, X.shape[1]))  # Initialize closest points array
+for i in range(num_samples):
+    Xt_initial[i], selected_indices = find_closest_point(X, lhs_samples[i], selected_indices)
+initial_points = X[selected_indices]
+
+# or random choice
+# initial_points = X[np.random.choice(X.shape[0], NUM_STARTS, replace=False)]
+
+
+# Grid of 100 points across property bounds for plot
 num_points = 100
 prop_values = np.linspace(prop_bounds[0], prop_bounds[1], num_points)
 
 optimal_microstructures = []
 optimal_volume_fractions_4 = []
-optimal_thermal_expansions = []
+optimal_properties = []
 
 actual_volume_fractions_4 = X[:, 0]
-actual_thermal_expansions = Y[:, 1]
+actual_properties = Y
 count = 0
+error_bars_min = []
+error_bars_max = []
 
 for prop in prop_values:
     count += 1
@@ -274,34 +357,38 @@ for prop in prop_values:
     optimal_microstructures.append(optimal_microstructure)
     # Store the optimal volume fraction and thermal expansion value
     optimal_volume_fractions_4.append(optimal_microstructure['volume_fraction_4'])
-    optimal_thermal_expansions.append(prop)
+    optimal_properties.append(prop)
 
 
-predicted_optimal_thermal_expansions = []
-predicted_actual_thermal_expansions = []
+predicted_optimal_properties = []
+predicted_actual_properties = []
 
-predicted_thermal_expansions = []
+predicted_properties = []
 
 for optimal_microstructure in optimal_microstructures:
-    predicted_value = predict_property('thermal_expansion', optimal_microstructure, models)
-    predicted_thermal_expansions.append(predicted_value)
+    predicted_value = predict_property(property_name, optimal_microstructure, models)
+    predicted_properties.append(predicted_value)
 
-# Convert the list to a NumPy array for easier manipulation
-predicted_thermal_expansions = np.array(predicted_thermal_expansions)
+predicted_properties = np.array(predicted_properties)
 
 # Calculate RMSE
-rmse = np.sqrt(mean_squared_error(prop_values, predicted_thermal_expansions))
+rmse = np.sqrt(mean_squared_error(prop_values, predicted_properties))
 print(f"Root Mean Square Error (RMSE) between predicted and desired values: {rmse}")
 
 # Calculate R2 score for optimized and actual feature sets
-r2 = r2_score(prop_values, predicted_thermal_expansions)
+r2 = r2_score(prop_values, predicted_properties)
 print(f"R2 score between predicted and desired values: {r2*100}")
 
 
 plt.figure()
-plt.scatter(actual_volume_fractions_4, actual_thermal_expansions, label="Actual",  color='blue', marker='o')
-plt.scatter(optimal_volume_fractions_4, optimal_thermal_expansions, label="Optimized", color='red', marker='x')
+plt.scatter(actual_volume_fractions_4, actual_properties, label="Actual",  color='blue', marker='o')
+plt.scatter(optimal_volume_fractions_4, optimal_properties, label="Optimized", color='red', marker='x')
 plt.xlabel("Volume Fraction Zirconia")
-plt.ylabel("Thermal Expansion")
+plt.ylabel(property_name)
 plt.legend()
 plt.show()
+
+# x0 = np.array([[0.92994, 0.0097084, 1.8811808208744365]])
+# best_starting_point, sorted_indices = find_best_starting_point(X, models, property_name, bounds, features)
+# optimise_for_value(34, X, property_name)
+

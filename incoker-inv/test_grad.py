@@ -38,7 +38,7 @@ X_train = np.linspace(0, 1, 15)[:, np.newaxis]
 y_train = f(X_train).ravel()
 
 # Fit the GPR model to the sample data
-kernel = Matern(length_scale=1) + WhiteKernel(noise_level=1)
+kernel = Matern(length_scale=1, nu=2.5) + WhiteKernel(noise_level=1)
 gpr = GaussianProcessRegressor(kernel=kernel)
 gpr.fit(X_train, y_train)
 

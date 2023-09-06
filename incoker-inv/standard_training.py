@@ -10,8 +10,7 @@ from sklearn.model_selection import cross_validate, cross_val_score
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, mean_absolute_error
 from sklearn.pipeline import make_pipeline
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern
-from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF
+from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern
 from sklearn.metrics import make_scorer
 
 
@@ -37,7 +36,7 @@ BEST_PARAMETERS = {
 }
 
 
-def main(train_data_file, export_model_file, number_of_features):
+def main(train_data_file, export_model_file, number_of_features, plots=False):
 
     training_data = pathlib.Path(train_data_file)
     if not training_data.exists():
@@ -133,15 +132,15 @@ def main(train_data_file, export_model_file, number_of_features):
         print \
             ("   %0.5f accuracy with a standard deviation of %0.5f" % (cv_score_mean, cv_score_std))
 
+        if plots:
+            plt.figure()
+            plt.scatter(X_test[:,0], y_test, label="Actual", color='blue', marker='o')
+            plt.scatter(X_test[:,0], y_pred, label="Predicted", color='red', marker='x')
 
-        plt.figure()
-        plt.scatter(X_test[:,0], y_test, label="Actual", color='blue', marker='o')
-        plt.scatter(X_test[:,0], y_pred, label="Predicted", color='red', marker='x')
-
-        plt.xlabel("Volume Fraction Zirconia")
-        plt.ylabel(property_name)
-        plt.legend()
-        plt.show()
+            plt.xlabel("Volume Fraction Zirconia")
+            plt.ylabel(property_name)
+            plt.legend()
+            plt.show()
 
     for prop in ['young_modulus', 'poisson_ratio', 'thermal_conductivity', 'thermal_expansion']:
         if prop in models:

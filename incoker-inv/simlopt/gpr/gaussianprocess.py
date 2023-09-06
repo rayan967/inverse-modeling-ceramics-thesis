@@ -5,7 +5,7 @@ import pathlib
 
 from os import path
 
-from simlopt.basicfunctions.covariance.rbf_white_cov import *
+from simlopt.basicfunctions.covariance.cov import *
 from simlopt.basicfunctions.derivative.dGPR import *
 from simlopt.basicfunctions.utils.creategrid import *
 
