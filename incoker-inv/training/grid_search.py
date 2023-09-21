@@ -17,7 +17,7 @@ considered_properties = ['young_modulus']
 
 
 # Load data
-training_data = pathlib.Path("training_data_rve_database.npy")
+training_data = pathlib.Path("../data/training_data_rve_database.npy")
 data = np.load(training_data)
 data['thermal_expansion'] *= 1e6
 

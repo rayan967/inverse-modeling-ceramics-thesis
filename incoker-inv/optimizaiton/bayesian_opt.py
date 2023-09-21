@@ -3,6 +3,9 @@ import pathlib
 
 import joblib
 import numpy as np
+from matplotlib import pyplot as plt
+from sklearn.metrics import mean_squared_error, r2_score
+
 from standard_training import extract_XY, extract_XY_3
 from skopt import Optimizer, gp_minimize
 from scipy.optimize import minimize, LinearConstraint
@@ -22,10 +25,10 @@ considered_properties = [
 ]
 
 
-def main(prop, property_name):
+def main(prop1, property_name):
     print("starting opt")
 
-    training_data = pathlib.Path("training_data_rve_database.npy")
+    training_data = pathlib.Path("../data/training_data_rve_database.npy")
     if not training_data.exists():
         print(f"Error: training data path {training_data} does not exist.")
 
@@ -38,10 +41,14 @@ def main(prop, property_name):
 
     data['thermal_expansion'] *= 1e6
 
-    models = joblib.load("models/8d-features.joblib")["models"]
+    models = joblib.load("../models/3d_model.joblib")["models"]
     features = models[property_name]['features']
 
-    X, Y = extract_XY(data)
+
+    X = models[property_name]['X_train']
+    X_test = models[property_name]['X_test']
+    Y = models[property_name]['y_train']
+    y_test = models[property_name]['y_test']
 
     # Compute the minimum and maximum values for each feature in the training data
     min_values = np.min(X, axis=0)
@@ -50,7 +57,7 @@ def main(prop, property_name):
     # Define the search space dimensions based on the minimum and maximum values
     dimensions = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
     print(dimensions)
-
+    """
     res = gp_minimize(lambda x: objective_function(x, prop, models, property_name),
                      dimensions,
                      n_calls=100,  # Number of iterations)
@@ -65,6 +72,68 @@ def main(prop, property_name):
 
     print(optimal_microstructure)
     print("Error in optimisation: "+str(np.abs(prop - optimal_property_value)))
+
+    """
+    # Running subspace optimizations with Bayesian optimisation
+    features = models[property_name]['features']
+    print("Features: ", str(features))
+
+    prop_bounds = (min(Y), max(Y))
+
+    # Grid of 100 points across property bounds for plot
+    num_points = 100
+    prop_values = np.linspace(prop_bounds[0], prop_bounds[1], num_points)
+
+    optimal_microstructures = []
+    optimal_volume_fractions_4 = []
+    optimal_properties = []
+
+    actual_volume_fractions_4 = X[:, 0]
+    actual_properties = Y
+    count = 0
+    error_bars_min = []
+    error_bars_max = []
+
+    for prop in prop_values:
+        count += 1
+        res = gp_minimize(lambda x: objective_function(x, prop, models, property_name),
+                          dimensions,
+                          n_calls=100,
+                          )
+
+        optimal_x = res.x
+        optimal_microstructure = convert_x_to_microstructure(optimal_x, features)
+
+        optimal_microstructures.append(optimal_microstructure)
+        # Store the optimal volume fraction and thermal expansion value
+        optimal_volume_fractions_4.append(optimal_microstructure['volume_fraction_4'])
+        optimal_properties.append(prop)
+
+    predicted_properties = []
+
+    for optimal_microstructure in optimal_microstructures:
+        predicted_value = predict_property(property_name, optimal_microstructure, models)
+        predicted_properties.append(predicted_value)
+
+    predicted_properties = np.array(predicted_properties)
+
+    # Calculate RMSE
+    rmse = np.sqrt(mean_squared_error(prop_values, predicted_properties))
+    print(f"Root Mean Square Error (RMSE) between predicted and desired values: {rmse}")
+
+    # Calculate R2 score for optimized and actual feature sets
+    r2 = r2_score(prop_values, predicted_properties)
+    print(f"R2 score between predicted and desired values: {r2*100}")
+
+
+    plt.figure()
+    plt.scatter(actual_volume_fractions_4, actual_properties, label="Actual",  color='blue', marker='o')
+    plt.scatter(optimal_volume_fractions_4, optimal_properties, label="Optimized", color='red', marker='x')
+    plt.xlabel("Volume Fraction Zirconia")
+    plt.ylabel(property_name)
+    plt.legend()
+    plt.show()
+
 
 
 def convert_x_to_microstructure(x, features):
@@ -123,23 +192,27 @@ def convert_x_to_microstructure(x, features):
             'volume_fraction_1': volume_fraction_1,
             'chord_length_ratio': chord_length_ratio,
         }
+    elif len(features) == 2:
+        volume_fraction_4 = x[0]
+        chord_length_ratio = x[1]
+
+        # Construct the microstructure representation
+        microstructure = {
+            'volume_fraction_4': volume_fraction_4,
+            'chord_length_ratio': chord_length_ratio,
+        }
 
     return microstructure
 
 
 def objective_function(x, desired_property, models, property_name):
     features = models[property_name]['features']
-
-    # Convert the input vector x to a microstructure representation
     microstructure = convert_x_to_microstructure(x, features)
-
-    # Predict the desired property using the trained GPR models
+    #print("Current microstructure:", str(microstructure))
     predicted_property = predict_property(property_name, microstructure, models)
-
-    # Calculate the difference between the predicted property and the desired property
     discrepancy = predicted_property - desired_property
-
-    return abs(discrepancy)  # Return the absolute value of the discrepancy (for minimization)
+    #print("Objective value: ", str(discrepancy ** 2))
+    return (discrepancy ** 2)  # Return the squared discrepancy for minimization
 
 
 def predict_property(property_name, microstructure, models):

@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import check_grad
 from sklearn.gaussian_process import GaussianProcessRegressor
 from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel, Matern
 
@@ -39,7 +40,7 @@ y_train = f(X_train).ravel()
 
 # Fit the GPR model to the sample data
 kernel = Matern(length_scale=1, nu=2.5) + WhiteKernel(noise_level=1)
-gpr = GaussianProcessRegressor(kernel=kernel)
+gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
 gpr.fit(X_train, y_train)
 
 score = gpr.score(X_train, y_train)
@@ -51,6 +52,9 @@ actual_grad = grad_f(X_test)
 
 # gpr_func = gpr.predict(X_test, gpr)
 # actual_func = f(X_test)
+
+error = check_grad(f, grad_f, 4)
+print("Gradient error:", error)
 
 import matplotlib.pyplot as plt
 

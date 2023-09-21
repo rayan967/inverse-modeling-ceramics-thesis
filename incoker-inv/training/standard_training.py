@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import metrics
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_validate, cross_val_score
@@ -141,6 +142,53 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
             plt.ylabel(property_name)
             plt.legend()
             plt.show()
+
+        v2_values = np.linspace(min(X_train[:, 0]), max(X_train[:, 0]), num=100)
+        rho_values = np.linspace(min(X_train[:, 1]), max(X_train[:, 1]), num=100)
+        v2_grid, rho_grid = np.meshgrid(v2_values, rho_values)
+
+        # Flatten the grid to pass it to the model for prediction
+        feature_grid = np.vstack([v2_grid.ravel(), rho_grid.ravel()]).T
+
+        # Assume 'model' is your trained 2-feature model
+        # Make predictions
+        predictions = models[property_name]['pipe'].predict(feature_grid)
+
+        # Reshape the predictions to match the shape of the grid
+        predictions_grid = predictions.reshape(v2_grid.shape)
+
+        # Create a 3D plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot_surface(v2_grid, rho_grid, predictions_grid)
+
+        # Add labels and title
+        ax.set_xlabel('Volume Fraction (zirconia)')
+        ax.set_ylabel('Particle Size Ratio')
+        ax.set_zlabel(property_name)
+        ax.set_title('3D Surface of Predicted Material Property')
+
+        plt.show()
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Scatter plot for actual points
+        ax.scatter(X_test[:,0], X_test[:,1], y_test, label="Actual", color='blue', marker='o')
+
+        # Scatter plot for optimized points
+        ax.scatter(X_test[:,0], X_test[:,1], y_pred, label="Predictions with ML model", color='red',
+                   marker='x')
+
+        # Set labels
+        ax.set_xlabel('Volume Fraction Zirconia')
+        ax.set_ylabel('Particle Size Ratio (rho)')
+        ax.set_zlabel(property_name)
+
+        # Show legend
+        ax.legend()
+
+        plt.show()
 
     for prop in ['young_modulus', 'poisson_ratio', 'thermal_conductivity', 'thermal_expansion']:
         if prop in models:

@@ -1,25 +1,4 @@
-import numpy as np
-
-import time
-from timeit import default_timer as timer
-
-import scipy
-
-from scipy.optimize import minimize
-from scipy.optimize import Bounds
-from scipy.optimize import NonlinearConstraint
-
-from simlopt.basicfunctions.covariance.cov import *
-from simlopt.basicfunctions.utils.creategrid import *
-from simlopt.basicfunctions.kaskade.kaskadeio import *
-
-from simlopt.optimization.errormodel_new import *
-from simlopt.optimization.workmodel import *
-from simlopt.optimization.utilities import *
-
 from simlopt.gpr.gaussianprocess import *
-
-from simlopt.IOlogging.iotofile import *
 
 from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.optimization.errormodel_new import MCGlobalEstimate, acquisitionfunction, estiamteweightfactors
