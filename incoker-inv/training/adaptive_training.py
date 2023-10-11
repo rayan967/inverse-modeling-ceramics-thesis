@@ -1,3 +1,10 @@
+import sys
+import os
+
+current_directory = os.path.dirname(os.path.abspath(__file__))
+parent_directory = os.path.dirname(current_directory)
+sys.path.append(parent_directory)
+
 import argparse
 from adapt import *
 from simlopt.gpr.gaussianprocess import *

@@ -5,6 +5,7 @@ from pyDOE import lhs
 from scipy.optimize import minimize, brute
 import matplotlib.pyplot as plt
 
+K_inv = None
 
 
 def find_closest_point(Xt, point, selected_indices):
@@ -18,7 +19,7 @@ def find_closest_point(Xt, point, selected_indices):
             distances[index] = np.inf
 
 
-def gradient_function(x, models, property_name):
+def gradient_mean_wrapper(x, models, property_name):
     model = models[property_name]['pipe']
     features = models[property_name]['features']
 
@@ -35,6 +36,25 @@ def gradient_function(x, models, property_name):
 
     # Compute the gradient using the scaled data and GPR
     return gpr_mean_grad(X_scaled, gpr)
+
+
+def gradient_variance_wrapper(x, models, property_name):
+    model = models[property_name]['pipe']
+    features = models[property_name]['features']
+
+    # Convert x to the relevant microstructure features
+    microstructure_features = [x[i] for i in range(len(features))]
+    X = np.array(microstructure_features).reshape(1, -1)
+
+    # Access the scaler and GPR from the pipeline
+    scaler = model.named_steps['standardscaler']
+    gpr = model.named_steps['gaussianprocessregressor']
+
+    # Scale the input data
+    X_scaled = scaler.transform(X)
+
+    # Compute the gradient using the scaled data and GPR
+    return gpr_variance_grad(X_scaled, gpr)
 
 
 def convert_x_to_microstructure(x, features):
@@ -117,18 +137,71 @@ def objective_function(x, desired_property, models, property_name, callback=None
     discrepancy = predicted_property - desired_property
     #print("Objective value: ", str(discrepancy ** 2))
 
-    return (discrepancy ** 2) + uncertainty[0]*1e-13
+    return (discrepancy ** 2) + uncertainty[0]*1e-15
 
 
 def objective_gradient(x, desired_property, models, property_name):
     features = models[property_name]['features']
-    gpr_grad = gradient_function(x, models, property_name)
+    gpr_grad = gradient_mean_wrapper(x, models, property_name)
+    gpr_var_grad = gradient_variance_wrapper(x, models, property_name)
     predicted_property = predict_property(property_name, convert_x_to_microstructure(x, features), models)
     discrepancy = predicted_property - desired_property
     #print("Objective Gradient: ", str(2 * discrepancy * gpr_grad))
     #print("\n")
 
-    return (2 * discrepancy * gpr_grad)
+    return (2 * discrepancy * gpr_grad) + gpr_var_grad*1e-15
+
+def gpr_mean_grad(X_test, gpr):
+    X_train = gpr.X_train_
+    kernel = gpr.kernel_
+
+    kernel_1, white = kernel.k1, kernel.k2
+    alpha = gpr.alpha_
+    gradients = []
+    for x_star in X_test:
+        # Compute the gradient for x_star across all training data
+        # Only need grad of kernel_1, white is constant
+        k_gradient_matrix = kernel_1.gradient_x(x_star, X_train)
+
+        # Multiply the gradient matrix with alpha and sum across training data
+        grad_sum = np.dot(alpha, k_gradient_matrix)
+
+        # Adjust for normalization
+        grad_sum_adjusted = gpr._y_train_std * grad_sum
+
+        gradients.append(grad_sum_adjusted)
+
+    return np.array(gradients).ravel()
+
+def gpr_variance_grad(X_test, gpr):
+    global K_inv
+    X_train = gpr.X_train_
+    kernel = gpr.kernel_
+
+    # Decompose the kernel into its constituent parts
+    kernel_1, white = kernel.k1, kernel.k2
+
+    if K_inv is None:
+        # L.L^T = K (with noise)
+        # K_inv = L^-T.L^-1
+        L_inv = np.linalg.inv(gpr.L_)
+        K_inv = L_inv.T.dot(L_inv)
+
+    gradients = []
+    for x_star in X_test:
+        dk_xx = kernel_1.gradient_x(x_star, x_star.reshape(1, -1))
+
+        # Compute the kernel vector k(x_star)
+        k_x_star = kernel_1(x_star.reshape(1, -1), X_train).ravel()
+        # Compute the gradient of kernel vector
+        dk_x_star = kernel_1.gradient_x(x_star, X_train)
+        # Compute the gradient of variance
+        grad_variance = dk_xx - 2 * np.dot(np.dot(k_x_star.T, K_inv), dk_x_star)
+        grad_variance_adjusted = grad_variance * gpr._y_train_std**2
+
+        gradients.append(grad_variance_adjusted)
+
+    return np.array(gradients).ravel()
 
 
 def predict_property(property_name, microstructure, models, uncertainty=False):
@@ -147,29 +220,6 @@ def predict_property(property_name, microstructure, models, uncertainty=False):
         return predicted_value[0], std_dev
     else:
         return predicted_value[0]
-
-
-def gpr_mean_grad(X_test, gpr):
-    X_train = gpr.X_train_
-    kernel = gpr.kernel_
-
-    kernel_1, white = kernel.k1, kernel.k2
-    alpha = gpr.alpha_
-    gradients = []
-    for x_star in X_test:
-        # Compute the gradient for x_star across all training data
-        # Only need grad of kernel_1, white is constant
-        k_gradient_matrix = kernel_1.gradient_x(x_star, X_train)
-
-        # Multiply the gradient matrix with alpha and sum across training data
-        grad_sum = np.dot(alpha, k_gradient_matrix)
-
-        # Adjust for normalization
-        grad_sum_adjusted = gpr._y_train_std * grad_sum + gpr._y_train_mean
-
-        gradients.append(grad_sum_adjusted)
-
-    return np.array(gradients).ravel()
 
 
 def optimise_for_value(prop, X, property_name):
@@ -208,6 +258,7 @@ def optimise_for_value(prop, X, property_name):
 
         res = minimize(
             fun=lambda x: objective_function(x, prop, models, property_name, callback),
+            jac=lambda x: objective_gradient(x, prop, models, property_name),
             x0=initial_point,
             bounds=bounds,
             method="L-BFGS-B",
@@ -278,7 +329,7 @@ print("starting opt")
 property_name = 'thermal_conductivity'
 
 # Change next line for different feature sets from models folder
-models = joblib.load("../models/2d_model.joblib")["models"]
+models = joblib.load("models/2d_model.joblib")["models"]
 
 X = models[property_name]['X_train']
 X_test = models[property_name]['X_test']
@@ -349,6 +400,7 @@ for prop in prop_values:
     for initial_point in initial_points:
         res = minimize(
             fun=lambda x: objective_function(x, prop, models, property_name),
+            jac=lambda x: objective_gradient(x, prop, models, property_name),
             x0=initial_point,
             bounds=bounds,
             method="L-BFGS-B"

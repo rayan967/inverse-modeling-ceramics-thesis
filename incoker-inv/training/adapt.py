@@ -66,6 +66,11 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             print("Point closest to Xc:", str(closest_point))
             print("Yc:", str(closest_point_value))
 
+
+            # y = simulate(XC[0], 'thermal_expansion')
+            # XC[0] = [-0.31546006  0.27063561  1.00704592], y = [5.5]
+
+
             epsXc = 1E-4 * np.ones((1, XC.shape[0]))  # eps**2
             gp.adddatapoint(closest_point)
             gp.adddatapointvalue(closest_point_value)
