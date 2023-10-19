@@ -67,7 +67,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             print("Yc:", str(closest_point_value))
 
 
-            # y = simulate(XC[0], 'thermal_expansion')
+            # y = generate_and_predict(XC[0], 'thermal_expansion')
             # XC[0] = [-0.31546006  0.27063561  1.00704592], y = [5.5]
 
 
