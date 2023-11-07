@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from adaptive_training import accuracy_test
 
 
-def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, selected_indices):
+def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test):
     # Initialization
     counter = 0
     N = gp.getdata[0]
@@ -19,7 +19,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
     accuracies = []
 
     print("---------------------------------- Start adaptive phase")
-    print("Number of initial points:          "+str(len(selected_indices)))
+    print("Number of initial points:          "+str(len(gp.yt)))
     print("Desired tolerance:                 "+str(TOL))
     print("\n")
 
@@ -62,12 +62,12 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             print(" Value at index          :            {}".format(value))
             print("\n")
 
-            closest_point, closest_point_value, selected_indices = find_closest_point(Xt, yt, XC[0], selected_indices)
+            closest_point, closest_point_value, Xt, yt = find_closest_point(Xt, yt, XC[0], gp)
             print("Point closest to Xc:", str(closest_point))
             print("Yc:", str(closest_point_value))
 
 
-            # y = generate_and_predict(XC[0], 'thermal_expansion')
+            # y = simulate(XC[0], 'thermal_expansion')
             # XC[0] = [-0.31546006  0.27063561  1.00704592], y = [5.5]
 
 
@@ -75,7 +75,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             gp.adddatapoint(closest_point)
             gp.adddatapointvalue(closest_point_value)
             gp.addaccuracy(epsXc)
-            print("Size of data: ", str(len(selected_indices)))
+            print("Size of data: ", str(len(gp.yt)))
         else:
             print("Something went wrong, no candidate point was found.")
             print("\n")
@@ -92,12 +92,12 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
         accuracies.append(accuracy_test(gp, X_test, y_test))
 
         # Check convergence
-        if mcglobalerrorafter <= TOL:
-            print("--- Convergence")
-            print(" Desired tolerance is reached, adaptive phase is done.")
-            plot_global_errors(global_errors)
-            plot_accuracy(accuracies)
-            return gp
+      #  if mcglobalerrorafter <= TOL:
+       #     print("--- Convergence")
+        #    print(" Desired tolerance is reached, adaptive phase is done.")
+        #    plot_global_errors(global_errors)
+        #    plot_accuracy(accuracies)
+        #    return gp
 
         # Adjust budget
         relchange = np.abs(mcglobalerrorbefore - mcglobalerrorafter) / mcglobalerrorbefore * 100
@@ -106,7 +106,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             print("Relative change is below set threshold. Adjusting TOLAcqui.")
 
         # Check number of points
-        if len(selected_indices) >= 1815:
+        if len(yt) <= 0:
             print("--- Maximum number of points reached")
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
@@ -125,15 +125,24 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
         print("\n")
 
 
-def find_closest_point(Xt, yt, point, selected_indices):
+def find_closest_point(Xt, yt, point, gp=None):
     distances = np.linalg.norm(Xt - point, axis=1)
-    while True:
-        index = np.argmin(distances)
-        if index not in selected_indices:
-            selected_indices.append(index)
-            return Xt[index].reshape(1,-1), yt[index].reshape(1,-1), selected_indices
-        else:
-            distances[index] = np.inf
+
+    index = np.argmin(distances)
+    selected_x = Xt[index].reshape(1, -1)
+    selected_y = yt[index].reshape(1, -1)
+
+    # Removing the selected data point from Xt and yt
+    Xt = np.delete(Xt, index, axis=0)
+    yt = np.delete(yt, index, axis=0)
+
+    if gp is not None:
+        y = gp.yt
+        common_elements = len(set(y.flatten()) & set(yt.flatten()))
+        print(f"Number of unique elements in y: {len(set(y.flatten()))}")
+        print(f"Number of common unique elements between y and yt: {common_elements}")
+
+    return selected_x, selected_y, Xt, yt
 
 
 def plot_global_errors(global_errors):

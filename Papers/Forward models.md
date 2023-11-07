@@ -29,7 +29,7 @@ A similar methodology for an application in seabed logging. They use GPRs to bui
 
 Another similar methodology to inverse modeling for design of electromagnetic (EM) devices by using a gaussian kernel regression and applying Newton's method as an optimization routine.
 
-- [A machine learning framework for real-time inverse modeling and multi-objective process optimization of composites for active manufacturing control](https://www.sciencedirect.com/science/article/abs/pii/S135983682100531X)
+- [A machine learning framework for real-time inverse modeling and multi-objective process optimization of composites for active manufacturing control](https://www.sciencedirect.com/science/article/pii/S135983682100531X)
 
 A similar methodology to solve the inverse heat transfer problem, using a surrogate model for optimizing an inverse solution; parts of the paper are not accessible through uni credentials.
 
@@ -57,7 +57,6 @@ Comprehensive books on the topic of inverse modeling.
 Sciences](https://books.google.de/books?hl=en&lr=&id=1w_WDwAAQBAJ&oi=fnd&pg=PP1&dq=Surrogates:+Gaussian+Process+Modeling,+Design+and+Optimization+for+the+Applied+Sciences&ots=vRrs7y7vGa&sig=klhPa8XSvYRPQT-TCEWMloBmoJo&redir_esc=y#v=onepage&q=Surrogates%3A%20Gaussian%20Process%20Modeling%2C%20Design%20and%20Optimization%20for%20the%20Applied%20Sciences&f=false)
 
 Comprehensive book on GPR, discussing the basic concepts, distributions, kernels, non-parametric models, etc.
-
 
 - [Adaptive sampling applied to multivariate, multiple
 output rational interpolation models with application to microwave circuits.](https://onlinelibrary.wiley.com/doi/abs/10.1002/mmce.10032)

@@ -1,10 +1,13 @@
+import pathlib
 import sys
 import os
+
+from sklearn import metrics
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.append(parent_directory)
-
+import numpy as np
 import argparse
 from adapt import *
 from simlopt.gpr.gaussianprocess import *
@@ -18,16 +21,15 @@ plt.close('all')
 plt.ioff()
 
 considered_features = [
-    'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
-#    'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
-#    'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
+    'volume_fraction_4', 'volume_fraction_1',
+    'chord_length_mean_4', 'chord_length_mean_10',
 ]
 
 # material properties to consider in training
 considered_properties = [
-    #'thermal_conductivity',
+    'thermal_conductivity',
     #'thermal_expansion',
-    'young_modulus',
+    #'young_modulus',
     #'poisson_ratio',
 ]
 
@@ -37,6 +39,45 @@ def extract_XY(data):
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
 
     return X, Y
+
+def extract_XY_2(data):
+    """Use for 2 features."""
+
+    filtered_indices = np.where(data['volume_fraction_1'] == 0.0)
+
+    chord_length_ratio = data['chord_length_mean_4'][filtered_indices] / data['chord_length_mean_10'][filtered_indices]
+
+    volume_fraction_4 = data['volume_fraction_4'][filtered_indices]
+
+    X = np.vstack((volume_fraction_4, chord_length_ratio)).T
+
+    Y = np.vstack(tuple(data[p][filtered_indices] for p in considered_properties)).T
+
+    global considered_features
+
+    considered_features = [
+    'volume_fraction_4',
+    'chord_length_ratio'
+]
+
+    return X, Y
+
+
+def extract_XY_3(data):
+    """Use for 3 features."""
+
+    chord_length_ratio = data['chord_length_mean_4'] / data['chord_length_mean_10']
+    X = np.vstack((data['volume_fraction_4'], data['volume_fraction_1'], chord_length_ratio)).T
+    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
+
+    global considered_features
+
+    considered_features = [
+    'volume_fraction_4', 'volume_fraction_1',
+    'chord_length_ratio'
+]
+    return X, Y
+
 
 
 def main(train_data_file, export_model_file):
@@ -72,12 +113,6 @@ def main(train_data_file, export_model_file):
         yt = yt[clean_indices.flatten()]
         Xt = Xt[clean_indices.flatten()]
 
-        scaler = StandardScaler()
-        scalerY = StandardScaler()
-
-        Xt = scaler.fit_transform(Xt)
-        yt = scalerY.fit_transform(yt)
-
         # Calculate parameter space boundaries for each feature
         parameterranges = np.array([[np.min(Xt[:, i]), np.max(Xt[:, i])] for i in range(dim)])
 
@@ -100,7 +135,7 @@ def main(train_data_file, export_model_file):
         Xt_initial = np.zeros_like(XGLEE)
         yt_initial = np.zeros((30, yt.shape[1]))
         for i in range(30):
-            Xt_initial[i], yt_initial[i], selected_indices = find_closest_point(Xt, yt, XGLEE[i], selected_indices)
+            Xt_initial[i], yt_initial[i], Xt, yt = find_closest_point(Xt, yt, XGLEE[i], None)
 
 
         # Initial hyperparameter parameters
@@ -134,7 +169,7 @@ def main(train_data_file, export_model_file):
         print("RMSE: ", rmse)
         print("Accuracy: ", accuracy_test(gp, X_test, y_test))
 
-        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, selected_indices)
+        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test)
         gp.optimizehyperparameter(region, "mean", False)
 
         print("-----Adaptive run complete:-----")
@@ -171,7 +206,6 @@ def createerror(Xt, random=False, graddata=False):
             epsXgrad = vargraddata*np.ones((1,N*dim))
     return epsXt, epsXgrad
 
-
 def accuracy_test(model, X_test, y_test, tolerance=1E-2):
     """
     Parameters
@@ -194,10 +228,7 @@ def accuracy_test(model, X_test, y_test, tolerance=1E-2):
     y_pred = model.predictmean(X_test)
 
     # Calculate whether each prediction is within the tolerance of the true value
-    correct = np.abs(y_test - y_pred) <= tolerance
-
-    # Calculate the accuracy score
-    score = np.mean(correct) * 100
+    score = metrics.r2_score(y_true=y_test, y_pred=y_pred)*100
 
     return score
 
