@@ -89,7 +89,9 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
         mcglobalerrorafter = MCGlobalEstimate(wpost_f, normvar_f, NMC, parameterranges)
         global_errors.append(mcglobalerrorafter)
 
-        accuracies.append(accuracy_test(gp, X_test, y_test))
+        score = accuracy_test(gp, X_test, y_test)
+        accuracies.append(score)
+        print(" Score:            {}".format(str(score)))
 
         # Check convergence
       #  if mcglobalerrorafter <= TOL:
@@ -111,6 +113,13 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
             return gp
+
+        if score > 99.9:
+            print("--- Convergence reached")
+            plot_global_errors(global_errors)
+            plot_accuracy(accuracies)
+            return gp
+
 
         Nmax = 50
         N = gp.getdata[0]
