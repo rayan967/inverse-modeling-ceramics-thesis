@@ -1,9 +1,9 @@
+import numpy as np
 from simlopt.gpr.gaussianprocess import *
 
 from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.optimization.errormodel_new import MCGlobalEstimate, acquisitionfunction, estiamteweightfactors
 import matplotlib.pyplot as plt
-from adaptive_training import accuracy_test
 
 
 def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test):
@@ -31,7 +31,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
         print(f"--- Iteration {counter}")
 
         # Generate candidate points
-        XGLEE = createPD(NMC, dim, "random", parameterranges)
+        XGLEE = createPD(NMC, dim, "latin", parameterranges)
         dfGLEE = gp.predictderivative(XGLEE, True)
         varGLEE = gp.predictvariance(XGLEE, True)
         normvar = np.linalg.norm(np.sqrt(np.abs(varGLEE)), 2, axis=0) ** 2
@@ -106,7 +106,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             print("Relative change is below set threshold. Adjusting TOLAcqui.")
 
         # Check number of points
-        if len(yt) <= 0:
+        if len(gp.yt) >= 7:
             print("--- Maximum number of points reached")
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
@@ -163,3 +163,30 @@ def plot_accuracy(accuracies):
     plt.title('Accuracy per Iteration')
     plt.grid(True)
     plt.savefig('accuracy_plot.png')
+
+
+def accuracy_test(model, X_test, y_test, tolerance=1E-2):
+    """
+    Parameters
+    ----------
+    model : GPR model
+    X_test : np.array
+        Test data (features).
+    y_test : np.array
+        Test data (true values).
+    tolerance : float
+        Tolerance for the accuracy score.
+
+    Returns
+    -------
+    score : float
+        Accuracy score between 0 and 100.
+    """
+
+    # Predict mean for test data
+    y_pred = model.predictmean(X_test)
+
+    # Calculate whether each prediction is within the tolerance of the true value
+    score = metrics.r2_score(y_true=y_test, y_pred=y_pred)*100
+
+    return score

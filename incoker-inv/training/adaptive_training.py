@@ -96,7 +96,7 @@ def main(train_data_file, export_model_file):
     data['thermal_expansion'] *= 1e6
 
     # Training data
-    Xt, Y = extract_XY(data)
+    Xt, Y = extract_XY_2(data)
 
     assert Y.shape[0] == Xt.shape[0], "number of samples does not match"
 
