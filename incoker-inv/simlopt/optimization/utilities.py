@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 from tabulate import tabulate
@@ -71,7 +72,87 @@ def plotiteration(gp,w,var,N,Ngrad,XGLEE,XC,mcglobalerrorbefore,parameterranges,
     axw.set(xlim=(p1lower-delta, p1upper+delta), ylim=(p2lower-delta, p2upper+delta))
     figw.colorbar(cntrw, ax=axw)
     figw.savefig(figurepath+"w_iter_"+str(counter)+'.png')
-    
+
+
+def plotiteration(gp, w, var, N, Ngrad, XGLEE, XC, mcglobalerrorbefore, parameterranges, figurepath, counter,Xa):
+    matplotlib.use('Agg')  # Use a non-GUI backend like 'Agg'
+
+    p1lower = parameterranges[0, 0]
+    p1upper = parameterranges[0, 1]
+    p2lower = parameterranges[1, 0]
+    p2upper = parameterranges[1, 1]
+
+    delta = 0.05
+
+
+    ' Plot w*var '
+    erroratx = w * var
+
+    X = gp.getX
+
+    figcontour, axcontour = plt.subplots()
+    figvar, axvar = plt.subplots()
+    figw, axw = plt.subplots()
+
+    axcontour.scatter(X[0:N, 0], X[0:N, 1], c="black", zorder=2)
+
+    if XC.size != 0:
+        axcontour.scatter(XC[:, 0], XC[:, 1], marker='x', c="green", zorder=3, s=30)
+        axvar.scatter(XC[:, 0], XC[:, 1], marker='x', c="green", zorder=3, s=30)
+        axw.scatter(XC[:, 0], XC[:, 1], marker='x', c="green", zorder=3, s=30)
+
+        # Plot the exact point (Xa)
+        if Xa is not None:
+            for ax in [axcontour, axvar, axw]:
+                ax.scatter(Xa[:, 0], Xa[:, 1], marker='x', c="red", zorder=3, s=40)
+
+        # Plot the grid points (XGLEE)
+        for ax in [axcontour, axvar, axw]:
+            ax.scatter(XGLEE[:, 0], XGLEE[:, 1], marker='x', c="white", zorder=2, s=20)
+
+    if isinstance(Ngrad, int) and Ngrad > 0:
+        axcontour.scatter(gp.getXgrad[:Ngrad, 0], gp.getXgrad[:Ngrad, 1], marker='x', c="green", zorder=2, s=20)
+
+    triang = tri.Triangulation(XGLEE[:, 0], XGLEE[:, 1])
+    refiner = tri.UniformTriRefiner(triang)
+    tri_refi, z_test_refi = refiner.refine_field(erroratx, subdiv=4)
+    z_test_refi = np.abs(z_test_refi)
+
+    cntr2 = axcontour.tricontourf(tri_refi, z_test_refi, 25, cmap="RdBu_r")
+    # axcontour.tricontour(tri_refi, z_test_refi, 15, linewidths=0.5, colors='k')
+    axcontour.set(xlim=(p1lower - delta, p1upper + delta), ylim=(p2lower - delta, p2upper + delta))
+
+    axcontour.set_title("Global error estimat: " + str(mcglobalerrorbefore))
+    figcontour.colorbar(cntr2, ax=axcontour)
+    axcontour.set_xlabel("$p_1$")
+    axcontour.set_ylabel("$p_2$")
+    figcontour.savefig(figurepath + "lee_iter_" + str(counter) + '.png')
+    # figcontour.savefig(figurepath+"lee_iter_"+str(counter)+'.svg', format = 'svg', dpi=300)
+
+    'Plot variance '
+    tri_refi, z_test_refi = refiner.refine_field(var, subdiv=4)
+
+    axvar.scatter(X[0:N, 0], X[0:N, 1], c="black", zorder=2)
+    cntrvar = axvar.tricontourf(tri_refi, z_test_refi, 15, cmap="RdBu_r")
+    # cntrvar = axvar.tricontourf(XGLEE[:,0], XGLEE[:,1], var, 15, cmap="RdBu_r")
+    # axvar.tricontour(XGLEE[:,0], XGLEE[:,1], var, 15, linewidths=0.5, colors='k')
+    axvar.set(xlim=(p1lower - delta, p1upper + delta), ylim=(p2lower - delta, p2upper + delta))
+    figvar.colorbar(cntrvar, ax=axvar)
+    figvar.savefig(figurepath + "varplot_iter_" + str(counter) + '.png')
+
+    'Plot w'
+    tri_refi, z_test_refi = refiner.refine_field(w, subdiv=4)
+
+    axw.scatter(X[0:N, 0], X[0:N, 1], c="black", zorder=2)
+    cntrw = axw.tricontourf(tri_refi, z_test_refi, 15, cmap="RdBu_r")
+    # cntrw = axw.tricontourf(XGLEE[:,0], XGLEE[:,1], w, 15, cmap="RdBu_r")
+    # axvar.tricontour(XGLEE[:,0], XGLEE[:,1], w, 15, linewidths=0.5, colors='k')
+    axw.set(xlim=(p1lower - delta, p1upper + delta), ylim=(p2lower - delta, p2upper + delta))
+    figw.colorbar(cntrw, ax=axw)
+    figw.savefig(figurepath + "w_iter_" + str(counter) + '.png')
+    plt.close(figcontour)
+    plt.close(figvar)
+    plt.close(figw)
 
     
 def plotderivativedifference(gp,fun,N,XGLEE,parameterranges,figurepath,counter):

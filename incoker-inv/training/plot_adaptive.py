@@ -1,5 +1,6 @@
 import numpy as np
-from online_training import *
+
+from adaptive_training import *
 
 
 def predict_property(microstructure):
@@ -77,17 +78,48 @@ def main():
     plt.legend()
     plt.show()
 
+import matplotlib.pyplot as plt
+import joblib
+
+def plot_training_data():
+    # Load the Gaussian Process model
+    gp = joblib.load("adapt/800_gp.joblib")
+
+    # Extract the training data points
+    X = gp.X
+
+    # Design space limits
+    x_min, x_max = 0.1, 0.9  # First dimension limits
+    y_min, y_max = 0.3, 3.0  # Second dimension limits
+
+    # Create the scatter plot
+    plt.figure(figsize=(8, 6))
+    plt.scatter(X[:, 0], X[:, 1], color='blue', marker='o', label='Training Points')
+
+    # Setting plot limits
+    plt.xlim(x_min, x_max)
+    plt.ylim(y_min, y_max)
+
+    # Adding labels and title
+    plt.xlabel('First Dimension (e.g., Volume Fraction)')
+    plt.ylabel('Second Dimension (e.g., Particle Size Ratio)')
+    plt.title('Training Data Points in Design Space')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
 
 
 if __name__ == "__main__":
-    if __name__ == "__main__":
-        parser = argparse.ArgumentParser(description='Predict property')
-        parser.add_argument('prop1', type=float,
-                            help='Expected property in JSON format')
-        parser.add_argument('prop2', type=float,
-                            help='Expected property in JSON format')
-        args = parser.parse_args()
-        arr = np.array([args.prop1,args.prop2])
-        microstr = convert_x_to_microstructure(arr)
-        predict_property(microstr)
-        main()
+    #parser = argparse.ArgumentParser(description='Predict property')
+    #parser.add_argument('prop1', type=float,
+                        #help='Expected property in JSON format')
+    #parser.add_argument('prop2', type=float,
+                        #help='Expected property in JSON format')
+    #args = parser.parse_args()
+    #arr = np.array([args.prop1,args.prop2])
+    plot_training_data()
+    #microstr = convert_x_to_microstructure(arr)
+    #predict_property(microstr)
+    main()

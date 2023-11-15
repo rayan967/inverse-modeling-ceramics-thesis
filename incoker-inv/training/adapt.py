@@ -1,12 +1,25 @@
-import numpy as np
 from simlopt.gpr.gaussianprocess import *
 
 from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.optimization.errormodel_new import MCGlobalEstimate, acquisitionfunction, estiamteweightfactors
 import matplotlib.pyplot as plt
+import os
+
+from simlopt.basicfunctions.covariance.cov import *
+from simlopt.basicfunctions.utils.creategrid import *
+from simlopt.basicfunctions.kaskade.kaskadeio import *
+
+from simlopt.optimization.errormodel_new import *
+from simlopt.optimization.workmodel import *
+from simlopt.optimization.utilities import *
+
+from simlopt.gpr.gaussianprocess import *
+
+from simlopt.IOlogging.iotofile import *
+from sklearn import metrics
 
 
-def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test):
+def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, runpath):
     # Initialization
     counter = 0
     N = gp.getdata[0]
@@ -18,7 +31,20 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
     global_errors = []
     accuracies = []
 
+    cases = {1:"Case 1: Gradient data is not available.",
+             2:"Case 1: Gradient data is available."}
+
+    'Check for which cases are set.'
+    if gp.getXgrad is None:
+        Ngrad = gp.getdata[1] #Is None, when Xgrad is None
+        case = 1
+    elif gp.getXgrad is not None:
+        Ngrad = gp.getdata[1]
+        case = 2
+
+    figurepath = os.path.join(runpath+"/", "iteration_plots/")
     print("---------------------------------- Start adaptive phase")
+    print(cases[case])
     print("Number of initial points:          "+str(len(gp.yt)))
     print("Desired tolerance:                 "+str(TOL))
     print("\n")
@@ -31,7 +57,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
         print(f"--- Iteration {counter}")
 
         # Generate candidate points
-        XGLEE = createPD(NMC, dim, "latin", parameterranges)
+        XGLEE = createPD(NMC, dim, "random", parameterranges)
         dfGLEE = gp.predictderivative(XGLEE, True)
         varGLEE = gp.predictvariance(XGLEE, True)
         normvar = np.linalg.norm(np.sqrt(np.abs(varGLEE)), 2, axis=0) ** 2
@@ -50,6 +76,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
         """ ------------------------------Acquisition phase ------------------------------ """
         'Add new candidate points'
         XC = np.array([])
+        normvar_TEST    = np.linalg.norm(np.sqrt(np.abs(varGLEE)),2,axis=0)
         # Acquisition phase
         XC, index, value = acquisitionfunction(gp, dfGLEE, normvar, w, XGLEE, epsphys,
                                                TOLAcqui)  # Use your acquisition function
@@ -89,7 +116,10 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
         mcglobalerrorafter = MCGlobalEstimate(wpost_f, normvar_f, NMC, parameterranges)
         global_errors.append(mcglobalerrorafter)
 
-        accuracies.append(accuracy_test(gp, X_test, y_test))
+        score = accuracy_test(gp, X_test, y_test)
+        accuracies.append(score)
+        print(" Score:            {}".format(str(score)))
+        plotiteration(gp,w,normvar_TEST,N,Ngrad,XGLEE,XC,mcglobalerrorbefore,parameterranges, figurepath,counter, closest_point)
 
         # Check convergence
       #  if mcglobalerrorafter <= TOL:
@@ -106,11 +136,18 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
             print("Relative change is below set threshold. Adjusting TOLAcqui.")
 
         # Check number of points
-        if len(gp.yt) >= 7:
+        if len(yt) <= 0:
             print("--- Maximum number of points reached")
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
             return gp
+
+        if score > 99.9:
+            print("--- Convergence reached")
+            plot_global_errors(global_errors)
+            plot_accuracy(accuracies)
+            return gp
+
 
         Nmax = 50
         N = gp.getdata[0]
@@ -163,7 +200,6 @@ def plot_accuracy(accuracies):
     plt.title('Accuracy per Iteration')
     plt.grid(True)
     plt.savefig('accuracy_plot.png')
-
 
 def accuracy_test(model, X_test, y_test, tolerance=1E-2):
     """

@@ -15,6 +15,8 @@ from simlopt.hyperparameter.utils.crossvalidation import *
 from simlopt.basicfunctions.utils.creategrid import createPD
 from pyDOE import lhs
 from sklearn.model_selection import train_test_split
+from simlopt.basicfunctions.utils.createfolderstructure import *
+
 
 
 plt.close('all')
@@ -100,6 +102,13 @@ def main(train_data_file, export_model_file):
 
     assert Y.shape[0] == Xt.shape[0], "number of samples does not match"
 
+    execpath = './/adapt'
+    execname = None
+
+    ' Adaptive phase '
+    foldername = createfoldername("ZTA-adaptive", "2D", "1E5")
+    runpath = createfolders(execpath, foldername)
+
     for i, property_name in enumerate(considered_properties):
 
         yt = Y[:, i]
@@ -130,12 +139,16 @@ def main(train_data_file, export_model_file):
 
         Xt, X_test, yt, y_test = train_test_split(Xt, yt, random_state=0)
 
-        selected_indices = []
-        XGLEE = createPD(30, dim, "latin", parameterranges)
-        Xt_initial = np.zeros_like(XGLEE)
-        yt_initial = np.zeros((30, yt.shape[1]))
-        for i in range(30):
-            Xt_initial[i], yt_initial[i], Xt, yt = find_closest_point(Xt, yt, XGLEE[i], None)
+
+        print(len(yt))
+        initial_design_points = create_initial_design_points(parameterranges)
+        Xt_initial = np.zeros((9, 2))
+        yt_initial = np.zeros((9, 1))
+
+        for i, point in enumerate(initial_design_points):
+            # Your FEM simulation call
+            input = (point[0], point[1])
+            Xt_initial[i], yt_initial[i], Xt, yt = find_closest_point(Xt, yt, point, None)
 
 
         # Initial hyperparameter parameters
@@ -169,8 +182,7 @@ def main(train_data_file, export_model_file):
         print("RMSE: ", rmse)
         print("Accuracy: ", accuracy_test(gp, X_test, y_test))
 
-        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test)
-        gp.optimizehyperparameter(region, "mean", False)
+        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, runpath)
 
         print("-----Adaptive run complete:-----")
 
@@ -233,23 +245,33 @@ def accuracy_test(model, X_test, y_test, tolerance=1E-2):
     return score
 
 
-def sample_boundary_points(Xt, yt, n_boundary_points):
-    # Generate a Latin Hypercube Sample
-    lhs_samples = lhs(Xt.shape[1], samples=n_boundary_points)
+def create_initial_design_points(parameterranges):
+    """
+    Creates 9 design points in a 2D parameter space including corners,
+    midpoints of boundaries, and the center.
 
-    # Scale LHS samples to the range of your data
-    Xt_lhs = np.zeros_like(lhs_samples)
-    for i in range(Xt.shape[1]):
-        Xt_lhs[:, i] = lhs_samples[:, i] * (Xt[:, i].max() - Xt[:, i].min()) + Xt[:, i].min()
+    Parameters:
+    parameterranges (numpy array): Array of parameter ranges [[min_x, max_x], [min_y, max_y]]
 
-    # Find the corresponding y values
-    Xt_initial = np.zeros_like(Xt_lhs)
-    yt_initial = np.zeros((n_boundary_points, yt.shape[1]))
-    selected_indices = []
-    for i in range(n_boundary_points):
-        Xt_initial[i], yt_initial[i], selected_indices = find_closest_point(Xt, yt, Xt_lhs[i], selected_indices)
+    Returns:
+    numpy array: Array of 9 design points.
+    """
+    min_x, max_x = parameterranges[0]
+    min_y, max_y = parameterranges[1]
+    mid_x = (min_x + max_x) / 2
+    mid_y = (min_y + max_y) / 2
 
-    return Xt_initial, yt_initial, selected_indices
+    # Define corner points, midpoints, and center point
+    points = np.array([[min_x, min_y],
+                       [min_x, max_y],
+                       [max_x, min_y],
+                       [max_x, max_y],
+                       [min_x, mid_y],
+                       [max_x, mid_y],
+                       [mid_x, min_y],
+                       [mid_x, max_y],
+                       [mid_x, mid_y]])
+    return points
 
 
 if __name__ == "__main__":

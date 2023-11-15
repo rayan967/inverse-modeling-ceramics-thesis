@@ -1,10 +1,7 @@
 import os
 import numpy as np
-
-
-
-from basicfunctions.utils.creategrid import *
-from optimization.errormodel_new import estiamteweightfactors
+from simlopt.basicfunctions.utils.creategrid import *
+from simlopt.optimization.errormodel_new import estiamteweightfactors
 import matplotlib.tri as tri
 import scipy.stats as stats
 from matplotlib import pyplot as plt, ticker as mticker
