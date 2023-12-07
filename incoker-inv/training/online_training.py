@@ -17,6 +17,14 @@ from simlopt.hyperparameter.utils.crossvalidation import *
 from simlopt.basicfunctions.utils.creategrid import createPD
 from pyDOE import lhs
 from sklearn.model_selection import train_test_split
+from simlopt.basicfunctions.utils.createfolderstructure import *
+import signal
+
+class TimeoutException(Exception):
+    pass
+def timeout_handler(signum, frame):
+    raise TimeoutException("Operation timed out")
+signal.signal(signal.SIGALRM, timeout_handler)
 
 
 plt.close('all')
@@ -88,6 +96,8 @@ def main():
     if not training_data.exists():
         print(f"Error: training data path {training_data} does not exist.")
 
+    output_stream = DualOutputStream("terminal_output.txt")
+    sys.stdout = output_stream
     #if training_data.suffix == '.npy':
     #    data = np.load(training_data)
     #else:
@@ -114,6 +124,18 @@ def main():
 
     assert Y.shape[0] == Xt.shape[0], "number of samples does not match"
 
+    execpath = './/adapt'
+    execname = None
+
+    ' Adaptive phase '
+    foldername = createfoldername("ZTA-adaptive", "2D", "1E5")
+    runpath = createfolders(execpath, foldername)
+
+    print(foldername)
+    print(runpath)
+
+
+
     for i, property_name in enumerate(considered_properties):
 
         yt = Y
@@ -131,7 +153,7 @@ def main():
         parameterranges = np.array([[np.min(Xt[:, i]), np.max(Xt[:, i])] for i in range(dim)])
         print(f"DB Parameter ranges: {parameterranges}")
 
-        parameterranges = np.array([[0.1, 0.9],[0.3, 3.0]])
+        parameterranges = np.array([[0.15, 0.85],[0.3, 2.0]])
         print(f"Parameter ranges: {parameterranges}")
 
 
@@ -149,35 +171,51 @@ def main():
         Xt, X_test, yt, y_test = train_test_split(Xt, yt, random_state=0)
 
         initial_design_points = create_initial_design_points(parameterranges)
-        Xt_initial = np.zeros((9, 2))
-        yt_initial = np.zeros((9, 1))
-
+        Xt_initial = []
+        yt_initial = []
         for i, point in enumerate(initial_design_points):
+            print(f"--- Initial Iteration {i}")
+            try:
+                signal.alarm(600)
+                output_stream.error_detected = False
 
-            print(f"Initial point: {str(point)}")
-            input = (point[0], point[1])
-            options = {
-                "material_property": "thermal_conductivity",
-                "particle_quantity": 200,
-                "dim": 16,
-                "max_vertices": 10000
-            }
-            result = prediction_pipeline.generate_and_predict(input, options)
-            output_value = result["homogenization"]["Thermal conductivity"]["value"]
-            vf = result["volume_fractions"][11]
-            cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][11]["mean_chord_length"]
-            cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][4]["mean_chord_length"]
-            clr = cl_11 / cl_4
+                print(f"Initial point: {str(point)}")
+                input = (point[0], point[1])
+                options = {
+                    "material_property": "thermal_conductivity",
+                    "particle_quantity": 200,
+                    "dim": 16,
+                    "max_vertices": 10000
+                }
+                result = prediction_pipeline.generate_and_predict(input, options)
+                output_value = result["homogenization"]["Thermal conductivity"]["value"]
+                vf = result["v_phase"]["11"]
+                cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][11]["mean_chord_length"]
+                cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][4]["mean_chord_length"]
+                clr = cl_11 / cl_4
 
-            # Store the design points and corresponding output
-            Xt_initial[i] = np.array([vf, clr])
-            yt_initial[i] = output_value
-            print(f"Initial point: {str(point)}")
-            print(f"Found point: {str(Xt_initial[i])}")
+                if output_stream.error_detected:
+                    output_stream.error_detected = False
+                    raise Exception("Error detected during operation: Mapdl")
 
+                # Store the design points and corresponding output
+                Xt_initial.append([vf, clr])
+                yt_initial.append(output_value)
+                print(f"Initial point: {str(point)}")
+                print(f"Found point: {str(Xt_initial[i])}")
+                print(f"Found value: {str(output_value)}")
+                signal.alarm(0)
 
+            except TimeoutException as te:
+                print(f"Timeout occurred for initial iteration {i}: {te}")
+                signal.alarm(0)
+                continue
+            except Exception as e:
+                print(e)
+                continue
 
-
+        Xt_initial = np.array(Xt_initial)
+        yt_initial = np.array(yt_initial).reshape(-1, 1)
         # Initial hyperparameter parameters
         region = [(0.01, 2) for _ in range(dim)]
         assert len(region) == dim, "Too much or fewer hyperparameters for the given problem dimension"
@@ -209,7 +247,7 @@ def main():
         print("RMSE: ", rmse)
         print("Accuracy: ", accuracy_test(gp, X_test, y_test))
 
-        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test)
+        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, runpath, output_stream)
 
         print("-----Adaptive run complete:-----")
 
@@ -301,6 +339,28 @@ def create_initial_design_points(parameterranges):
                        [mid_x, max_y],
                        [mid_x, mid_y]])
     return points
+
+import sys
+
+class DualOutputStream:
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+        msg = "intersection(s) found between triangle"
+        msg2 = "ansys.mapdl.core.errors.MapdlRuntimeError:"
+        if msg in message or msg2 in message:
+            self.error_detected = True
+
+    def flush(self):
+        # This flush method is needed for Python 3 compatibility.
+        # This handles the flush command by doing nothing.
+        # You might want to extend this method in the future.
+        pass
 
 
 if __name__ == "__main__":

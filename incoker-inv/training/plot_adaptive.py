@@ -4,7 +4,7 @@ from adaptive_training import *
 
 
 def predict_property(microstructure):
-    model = joblib.load("adapt/800_gp.joblib")
+    model = joblib.load("adapt/200_gp.joblib")
     features = ['volume_fraction_4','chord_length_ratio']
     microstructure_features = [microstructure[feature] for feature in features]
     X = np.array(microstructure_features).reshape(1, -1)
@@ -26,7 +26,7 @@ def convert_x_to_microstructure(x):
     return microstructure
 
 def main():
-    gp = joblib.load("adapt/800_gp.joblib")
+    gp = joblib.load("adapt/200_gp.joblib")
     features = ['volume_fraction_4', 'chord_length_ratio']
 
     v2_values = np.linspace(0.1, 0.9, num=100)
@@ -81,9 +81,9 @@ def main():
 import matplotlib.pyplot as plt
 import joblib
 
-def plot_training_data():
+def plot_design_space():
     # Load the Gaussian Process model
-    gp = joblib.load("adapt/800_gp.joblib")
+    gp = joblib.load("adapt/200_gp.joblib")
 
     # Extract the training data points
     X = gp.X
@@ -108,7 +108,37 @@ def plot_training_data():
     plt.grid(True)
     plt.show()
 
+def plot_training_data():
+    # Load the Gaussian Process model
+    gp = joblib.load("adapt/200_gp.joblib")
 
+    # Extract the training data points
+    X = gp.X
+    y_pred = gp.predictmean(X)
+
+    # Design space limits
+    x_min, x_max = 0.1, 0.9  # First dimension limits
+    y_min, y_max = 0.3, 3.0  # Second dimension limits
+
+    # Create the scatter plot
+    plt.figure(figsize=(8, 6))
+    plt.scatter(X[:, 0], gp.yt[:,0], color='blue', marker='o', label='Training Points')
+    plt.scatter(X[:, 0], y_pred, label="Predicted", color='red', marker='x')
+
+
+    print("Point\tX1\t\t\tX2\t\t\tf(X)")
+    for i, (point, f_val) in enumerate(zip(gp.X, gp.yt)):
+        f_val_scalar = f_val[0] if isinstance(f_val, (list, np.ndarray)) and len(f_val) == 1 else f_val
+        print(f"{i + 1}\t{point[0]:.6f}\t{point[1]:.6f}\t{f_val_scalar:.6f}")
+
+    # Adding labels and title
+    plt.xlabel('First Dimension (e.g., Volume Fraction)')
+    plt.ylabel('Second Dimension (e.g., Property)')
+    plt.title('Training Data Points in Design Space')
+
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -120,6 +150,7 @@ if __name__ == "__main__":
     #args = parser.parse_args()
     #arr = np.array([args.prop1,args.prop2])
     plot_training_data()
+    plot_design_space()
     #microstr = convert_x_to_microstructure(arr)
     #predict_property(microstr)
     main()
