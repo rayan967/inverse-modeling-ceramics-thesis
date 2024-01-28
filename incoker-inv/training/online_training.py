@@ -27,7 +27,7 @@ considered_features = [
 
 # material properties to consider in training
 considered_properties = [
-    'thermal_conductivity_composite',
+    'thermal_conductivity',
     #'thermal_expansion',
     #'young_modulus',
     #'poisson_ratio',
@@ -50,6 +50,24 @@ def load_test_data(base_path, prop='homogenization'):
 
     return np.array(X), np.array(y)
 
+def load_test_data(base_path, prop='homogenization'):
+    base_path = pathlib.Path(base_path)
+    info_files = list(base_path.glob('**/info.json'))
+
+    X = []
+    y = []
+    for file in info_files:
+        data = json.loads(file.read_text())
+        if not (prop in data and "v_phase" in data):
+            continue
+        vf = data["v_phase"]['11']
+        clr = data["chord_length_ratio"]
+        X.append([vf, clr])
+        y.append(data[prop]["Thermal conductivity"]["value"])
+
+    return np.array(X), np.array(y)
+
+
 
 def main():
 
@@ -68,7 +86,6 @@ def main():
 
     print(foldername)
     print(runpath)
-
 
 
     for i, property_name in enumerate(considered_properties):
@@ -134,7 +151,6 @@ def main():
 
                 if output_stream.error_detected:
                     output_stream.error_detected = False
-                    raise Exception("Error detected during operation: Mapdl")
 
                 # Store the design points and corresponding output
                 Xt_initial.append([vf, clr])
