@@ -11,6 +11,8 @@ current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.append(parent_directory)
 
+import pathlib
+
 from incoker_micro_sims import prediction_pipeline
 
 from simlopt.gpr.gaussianprocess import *
@@ -107,6 +109,8 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
                 output_stream.error_detected = False
 
                 input = (XC[0][0], XC[0][1])
+                output_path = pathlib.Path(runpath, "adaptive_points", f"v={input[0]:.2f},r={input[1]:.2f}")
+                output_path.mkdir(parents=True, exist_ok=True)
                 options = {
                     #"material_property": "elasticity",
                     #"material_property": "thermal_expansion",
