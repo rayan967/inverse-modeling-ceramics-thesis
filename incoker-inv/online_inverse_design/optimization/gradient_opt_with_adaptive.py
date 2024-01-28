@@ -1,3 +1,5 @@
+"""Deprecated: use gradient_opt with adaptive GPR refactored to skopt instead."""
+
 import statistics
 import sys
 import os

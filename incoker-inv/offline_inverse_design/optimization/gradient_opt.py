@@ -92,27 +92,27 @@ def convert_x_to_microstructure(x, features):
 def objective_function(x, desired_property, pipe, property_name, callback=None):
     if callback is not None:
         callback(x)
-    predicted_property  = pipe.predict(x.reshape(1, -1))
+    predicted_property, uncertainty  = pipe.predict(x.reshape(1, -1), return_std=True)
     discrepancy = predicted_property - desired_property
 
-    return (discrepancy ** 2) #+ uncertainty[0]*0.01
+    return (discrepancy ** 2) + uncertainty[0]*0.01
 
 
 def objective_gradient(x, desired_property, pipe, property_name):
 
-    predicted_property, gpr_grad, = pipe.predict(x.reshape(1, -1), return_mean_grad=True)
+    predicted_property, std, gpr_grad, gpr_var_grad  = pipe.predict(x.reshape(1, -1), return_mean_grad=True,return_std=True, return_std_grad=True)
     discrepancy = predicted_property - desired_property
 
-    #print("Objective Gradient: ", str(2 * discrepancy * gpr_grad))
-    #print("\n")
     # Retrieve standard deviation from the StandardScaler
     scaler = pipe.named_steps['standardscaler']
     std_dev = scaler.scale_
 
     # Adjust gradients
     adjusted_gpr_grad = gpr_grad / std_dev
+    adjusted_gpr_var_grad = gpr_var_grad / std_dev
 
-    return (2 * discrepancy * adjusted_gpr_grad) #+ adjusted_gpr_var_grad*0.01
+    return (2 * discrepancy * adjusted_gpr_grad) + adjusted_gpr_var_grad * 0.01
+
     #0.0008 for TC
     #0.01 for YM, TE, PR
 
@@ -232,7 +232,7 @@ def optimise_for_value(prop, X, property_name):
 
 print("starting opt")
 
-property_name = 'young_modulus'
+property_name = 'thermal_expansion'
 
 property_ax_dict = {
     'thermal_conductivity':'CTC [W/(m*K)]',
@@ -248,7 +248,7 @@ property_dict = {
     'poisson_ratio':'Poisson Ratio',
 }
 # Change next line for different feature sets from models folder
-models = joblib.load("models/100_YM_adapt.joblib")["models"]
+models = joblib.load("models/2d_rbf_grad.joblib")["models"]
 pipe = models[property_name]['pipe']
 
 X = models[property_name]['X_train']
