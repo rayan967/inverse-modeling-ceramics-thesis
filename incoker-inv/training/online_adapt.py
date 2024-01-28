@@ -22,16 +22,6 @@ from adaptive_training import accuracy_test
 from simlopt.optimization.utilities import *
 
 from sklearn import metrics
-import signal
-
-class TimeoutException(Exception):
-    pass
-
-def timeout_handler(signum, frame):
-    raise TimeoutException("Operation timed out")
-
-# Set the signal handler for the SIGALRM signal
-signal.signal(signal.SIGALRM, timeout_handler)
 
 
 def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, runpath, output_stream):
@@ -114,18 +104,16 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
 
 
             try:
-                signal.alarm(600)
                 output_stream.error_detected = False
-                # y = generate_and_predict(XC[0], 'thermal_expansion')
-                # XC[0] = [-0.31546006  0.27063561  1.00704592], y = [5.5]
+
                 input = (XC[0][0], XC[0][1])
                 options = {
-                    #"material_property": "elasticity"
+                    #"material_property": "elasticity",
                     #"material_property": "thermal_expansion",
-                     "material_property": "thermal_conductivity",
+                    "material_property": "thermal_conductivity",
                     "particle_quantity": 200,
-                    "dim": 16,
-                    "max_vertices": 10000
+                    "dim": 32,
+                    "max_vertices": 10000,
                 }
                 result = prediction_pipeline.generate_and_predict(input, options)
                 print(result.keys())
@@ -140,27 +128,33 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
                 Xc = np.array([vf,clr]).reshape(1,-1)
                 Yc = np.array([output_value]).reshape(1,-1)
 
+
                 if output_stream.error_detected:
                     output_stream.error_detected = False
                     raise Exception("Error detected during operation: Mapdl")
 
+
                 dist = weighted_distance(XC[0], Xc[0], weights)
-                distance_threshold = 0.05
-                if dist > 0.2:
+                distance_threshold = 0.04
+                print(f"Distance between generated and requested point: {dist}")
+                if dist > 0.1:
                     print(f"Distance to generated point {str(Xc[0])} is larger than threshold: {dist}")
                     print(f"Excluding point from future sampling: {str(XC[0])}")
                     exclusion_zone = (XC[0], distance_threshold)
                     exclusion_zones.append(exclusion_zone)
-                    print(f"Distance is larger than threshold: {dist}")
+                    print(f"Distance is larger than threshold: {distance_threshold}")
 
-                print(f"distance between generated and requested point: {dist}")
-                signal.alarm(0)
+                plotiteration(gp, w, normvar_TEST, N, Ngrad, XGLEE, XC, mcglobalerrorbefore, parameterranges, figurepath,
+                          counter, Xc)
 
-            except TimeoutException as te:
-                print(f"Timeout occurred for iteration {counter}: {te}")
-                signal.alarm(0)
-                continue
             except Exception as e:
+                if str(e) == "list index out of range":
+                    print(e)
+                    print(f"Excluding point from future sampling: {str(XC[0])}")
+                    exclusion_zone = (XC[0], 0.05)
+                    exclusion_zones.append(exclusion_zone)
+                    continue
+
                 print(f"Error at {str(counter)} iteration at size {str(len(gp.yt))}")
                 print(f"Error: {e}")
                 continue
@@ -191,7 +185,6 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
 
         acc = accuracy_test(gp, X_test, y_test)
         print(" Current accuracy:            {}".format(str(acc)))
-        plotiteration(gp,w,normvar_TEST,N,Ngrad,XGLEE,XC,mcglobalerrorbefore,parameterranges, figurepath,counter, Xc)
         accuracies.append(acc)
 
         # Check convergence
@@ -210,13 +203,13 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
 
         # Check number of points
 
-        if len(gp.yt) >= 600:
+        if len(gp.yt) >= 150:
             print("--- Maximum number of points reached")
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
             return gp
 
-        if len(gp.yt) % 100 == 0:
+        if len(gp.yt) % 5 == 0:
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
             joblib.dump(gp, f"adapt/{str(len(gp.yt))}_gp.joblib")

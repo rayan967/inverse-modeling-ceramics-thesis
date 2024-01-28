@@ -1,11 +1,10 @@
 import pathlib
 import sys
 import os
-
+import json
 import joblib
 import pandas as pd
 from sklearn import metrics
-
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.append(parent_directory)
@@ -18,15 +17,6 @@ from simlopt.basicfunctions.utils.creategrid import createPD
 from pyDOE import lhs
 from sklearn.model_selection import train_test_split
 from simlopt.basicfunctions.utils.createfolderstructure import *
-import signal
-
-class TimeoutException(Exception):
-    pass
-def timeout_handler(signum, frame):
-    raise TimeoutException("Operation timed out")
-signal.signal(signal.SIGALRM, timeout_handler)
-
-
 plt.close('all')
 plt.ioff()
 
@@ -43,84 +33,29 @@ considered_properties = [
     #'poisson_ratio',
 ]
 
+def load_test_data(base_path, prop='homogenization'):
+    base_path = pathlib.Path(base_path)
+    info_files = list(base_path.glob('**/info.json'))
 
-def extract_XY(data):
-    X = np.vstack(tuple(data[f] for f in considered_features)).T
-    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
+    X = []
+    y = []
+    for file in info_files:
+        data = json.loads(file.read_text())
+        if not (prop in data and "v_phase" in data):
+            continue
+        vf = data["v_phase"]['11']
+        clr = data["chord_length_ratio"]
+        X.append([vf, clr])
+        y.append(data[prop]["Thermal conductivity"]["value"])
 
-    return X, Y
-
-def extract_XY_2(data):
-    """Use for 2 features."""
-
-    filtered_indices = np.where(data['volume_fraction_1'] == 0.0)
-
-    chord_length_ratio = data['chord_length_mean_4'][filtered_indices] / data['chord_length_mean_10'][filtered_indices]
-
-    volume_fraction_4 = data['volume_fraction_4'][filtered_indices]
-
-    X = np.vstack((volume_fraction_4, chord_length_ratio)).T
-
-    Y = np.vstack(tuple(data[p][filtered_indices] for p in considered_properties)).T
-
-    global considered_features
-
-    considered_features = [
-    'volume_fraction_4',
-    'chord_length_ratio'
-]
-
-    return X, Y
-
-
-def extract_XY_3(data):
-    """Use for 3 features."""
-
-    chord_length_ratio = data['chord_length_mean_4'] / data['chord_length_mean_10']
-    X = np.vstack((data['volume_fraction_4'], data['volume_fraction_1'], chord_length_ratio)).T
-    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
-
-    global considered_features
-
-    considered_features = [
-    'volume_fraction_4', 'volume_fraction_1',
-    'chord_length_ratio'
-]
-    return X, Y
-
+    return np.array(X), np.array(y)
 
 
 def main():
 
-    training_data = pathlib.Path("data/training_data_rve_database.npy")
-    if not training_data.exists():
-        print(f"Error: training data path {training_data} does not exist.")
-
     output_stream = DualOutputStream("terminal_output.txt")
     sys.stdout = output_stream
-    #if training_data.suffix == '.npy':
-    #    data = np.load(training_data)
-    #else:
-    #    print("Invalid data")
-
-    #print(f"loaded {data.shape[0]} training data pairs")
-
-    #data['thermal_expansion'] *= 1e6
-
-    # Training data
-    #Xt, Y = extract_XY_2(data)
-
-    df = pd.read_csv("data/thermal_conductivity_tcc_64.csv")
-    models = {}
-    # Calculate chord_length_mean_ratio
-    df['chord_length_mean_ratio'] = df['chord_length_mean_zro2'] / df['chord_length_mean_al2o3']
-    df.dropna(inplace=True)
-
-    features = ['volume_fraction_zro2', 'chord_length_mean_ratio']
-
-    Xt = df[features].to_numpy()
-    Y = df['thermal_conductivity_composite'].to_numpy()
-    property_name = ['thermal_conductivity_composite']
+    Xt, Y = load_test_data('/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_thermal_conductivity')
 
     assert Y.shape[0] == Xt.shape[0], "number of samples does not match"
 
@@ -153,7 +88,7 @@ def main():
         parameterranges = np.array([[np.min(Xt[:, i]), np.max(Xt[:, i])] for i in range(dim)])
         print(f"DB Parameter ranges: {parameterranges}")
 
-        parameterranges = np.array([[0.15, 0.85],[0.3, 2.0]])
+        parameterranges = np.array([[0.15, 0.85],[0.3, 5.0]])
         print(f"Parameter ranges: {parameterranges}")
 
 
@@ -168,27 +103,30 @@ def main():
         epsphys             = np.var(yt)    # Assumed or known variance of physical measurement!
         adaptgrad           = False         # Toggle if gradient data should be adapted
 
-        Xt, X_test, yt, y_test = train_test_split(Xt, yt, random_state=0)
+        X_test, y_test = Xt, yt
 
         initial_design_points = create_initial_design_points(parameterranges)
         Xt_initial = []
         yt_initial = []
+
         for i, point in enumerate(initial_design_points):
             print(f"--- Initial Iteration {i}")
             try:
-                signal.alarm(600)
                 output_stream.error_detected = False
+
 
                 print(f"Initial point: {str(point)}")
                 input = (point[0], point[1])
                 options = {
+                    #"material_property": "elasticity",
                     "material_property": "thermal_conductivity",
                     "particle_quantity": 200,
-                    "dim": 16,
-                    "max_vertices": 10000
+                    "dim": 32,
+                    "max_vertices": 10000,
                 }
                 result = prediction_pipeline.generate_and_predict(input, options)
                 output_value = result["homogenization"]["Thermal conductivity"]["value"]
+
                 vf = result["v_phase"]["11"]
                 cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][11]["mean_chord_length"]
                 cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][4]["mean_chord_length"]
@@ -202,17 +140,19 @@ def main():
                 Xt_initial.append([vf, clr])
                 yt_initial.append(output_value)
                 print(f"Initial point: {str(point)}")
-                print(f"Found point: {str(Xt_initial[i])}")
+                print(f"Found point: {str([vf, clr])}")
                 print(f"Found value: {str(output_value)}")
-                signal.alarm(0)
 
-            except TimeoutException as te:
-                print(f"Timeout occurred for initial iteration {i}: {te}")
-                signal.alarm(0)
-                continue
             except Exception as e:
+                if str(e) == "list index out of range":
+                    print(e)
+                    print("Skipping")
+                    continue
                 print(e)
                 continue
+
+
+
 
         Xt_initial = np.array(Xt_initial)
         yt_initial = np.array(yt_initial).reshape(-1, 1)
@@ -223,6 +163,10 @@ def main():
         epsXt, epsXgrad = createerror(Xt_initial, random=False, graddata=False)
 
         epsphys = np.var(yt)
+        print("Initial X")
+        print(Xt_initial)
+        print("Initial Y")
+        print(yt_initial)
 
         gp = GPR(Xt_initial, yt_initial, None, None, epsXt, None)
         gp.optimizehyperparameter(region, "mean", False)
@@ -355,6 +299,7 @@ class DualOutputStream:
         msg2 = "ansys.mapdl.core.errors.MapdlRuntimeError:"
         if msg in message or msg2 in message:
             self.error_detected = True
+
 
     def flush(self):
         # This flush method is needed for Python 3 compatibility.

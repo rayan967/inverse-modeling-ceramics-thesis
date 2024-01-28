@@ -4,7 +4,7 @@ from adaptive_training import *
 
 
 def predict_property(microstructure):
-    model = joblib.load("adapt/200_gp.joblib")
+    model = joblib.load(gp_file)
     features = ['volume_fraction_4','chord_length_ratio']
     microstructure_features = [microstructure[feature] for feature in features]
     X = np.array(microstructure_features).reshape(1, -1)
@@ -26,11 +26,11 @@ def convert_x_to_microstructure(x):
     return microstructure
 
 def main():
-    gp = joblib.load("adapt/200_gp.joblib")
+    gp = joblib.load(gp_file)
     features = ['volume_fraction_4', 'chord_length_ratio']
 
     v2_values = np.linspace(0.1, 0.9, num=100)
-    rho_values = np.linspace(0.3, 3.0, num=100)
+    rho_values = np.linspace(0.3, 4.0, num=100)
     v2_grid, rho_grid = np.meshgrid(v2_values, rho_values)
 
     # Flatten the grid to pass it to the model for prediction
@@ -83,14 +83,14 @@ import joblib
 
 def plot_design_space():
     # Load the Gaussian Process model
-    gp = joblib.load("adapt/200_gp.joblib")
+    gp = joblib.load(gp_file)
 
     # Extract the training data points
     X = gp.X
 
     # Design space limits
     x_min, x_max = 0.1, 0.9  # First dimension limits
-    y_min, y_max = 0.3, 3.0  # Second dimension limits
+    y_min, y_max = 0.3, 4.0  # Second dimension limits
 
     # Create the scatter plot
     plt.figure(figsize=(8, 6))
@@ -110,7 +110,7 @@ def plot_design_space():
 
 def plot_training_data():
     # Load the Gaussian Process model
-    gp = joblib.load("adapt/200_gp.joblib")
+    gp = joblib.load(gp_file)
 
     # Extract the training data points
     X = gp.X
@@ -118,7 +118,7 @@ def plot_training_data():
 
     # Design space limits
     x_min, x_max = 0.1, 0.9  # First dimension limits
-    y_min, y_max = 0.3, 3.0  # Second dimension limits
+    y_min, y_max = 0.3, 5.0  # Second dimension limits
 
     # Create the scatter plot
     plt.figure(figsize=(8, 6))
@@ -142,6 +142,7 @@ def plot_training_data():
 
 
 if __name__ == "__main__":
+    gp_file = "adapt/7_gp.joblib"
     #parser = argparse.ArgumentParser(description='Predict property')
     #parser.add_argument('prop1', type=float,
                         #help='Expected property in JSON format')
