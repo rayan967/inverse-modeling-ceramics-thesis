@@ -137,7 +137,7 @@ class OptimizationResult:
 
 def torch_minimize(fun, jac, x0, bounds, max_iter=1000, tol=1e-6):
     x = torch.tensor(x0, dtype=torch.float32, requires_grad=True)
-    optimizer = torch.optim.Adam([x])
+    optimizer = torch.optim.ASGD([x])
 
     for _ in range(max_iter):
         optimizer.zero_grad()

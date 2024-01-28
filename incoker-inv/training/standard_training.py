@@ -1,8 +1,17 @@
+import os
+import sys
+
+from skopt.learning import GaussianProcessRegressor
+
+current_directory = os.path.dirname(os.path.abspath(__file__))
+parent_directory = os.path.dirname(current_directory)
+sys.path.append(parent_directory)
 import argparse
 import pathlib
 import joblib
 import numpy as np
 from matplotlib import pyplot as plt
+from plotly.subplots import make_subplots
 from sklearn import metrics
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
@@ -10,10 +19,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_validate, cross_val_score
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, mean_absolute_error
 from sklearn.pipeline import make_pipeline
-from sklearn.gaussian_process import GaussianProcessRegressor
-from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern
-from sklearn.metrics import make_scorer
 
+from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern, RationalQuadratic, DotProduct, \
+    Exponentiation, ExpSineSquared
+
+from sklearn.metrics import make_scorer
+import plotly.graph_objects as go
 
 considered_features = [
     'volume_fraction_4', 'volume_fraction_1',
@@ -30,10 +41,10 @@ considered_properties = [
 ]
 
 BEST_PARAMETERS = {
-    'thermal_expansion': {'alpha': 1e-05, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-    'thermal_conductivity': {'alpha': 1e-05, 'kernel': Matern(length_scale=1, nu=1.5) + WhiteKernel(noise_level=1)},
-    'young_modulus': {'alpha': 0.001, 'kernel': Matern(length_scale=1, nu=1.5) + WhiteKernel(noise_level=1)},
-    'poisson_ratio': {'alpha': 1e-05, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)}
+    'thermal_expansion': {'alpha': 1e-10, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)},
+    'thermal_conductivity': {'alpha': 1e-10, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)},
+    'young_modulus': {'alpha': 1e-10, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)},
+    'poisson_ratio': {'alpha': 1e-10, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)}
 }
 
 
@@ -82,12 +93,12 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
 
         # create a pipeline object for training using the best parameters
         pipe = make_pipeline(
-            StandardScaler(),  # scaler for data normalization
-            GaussianProcessRegressor(kernel=kernel, alpha=alpha, normalize_y=True)
+            StandardScaler(),
+            GaussianProcessRegressor(kernel=RBF()+WhiteKernel(),normalize_y=True)
         )
 
         # split in test and train data
-        X_train, X_test, y_train, y_test = train_test_split(X_clean, y_clean, random_state=0)
+        X_train, X_test, y_train, y_test = X_clean, X_clean, y_clean, y_clean
         pipe.fit(X_train, y_train)
 
         models[property_name] = {'pipe': pipe, 'features': considered_features}
@@ -193,7 +204,7 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
     for prop in ['young_modulus', 'poisson_ratio', 'thermal_conductivity', 'thermal_expansion']:
         if prop in models:
             print \
-                (f"{prop}: {models[prop]['cv_score_mean']:.3f}, {models[prop]['cv_score_std']:.1e}, {models[prop]['rmse']:.1e}")
+                (f"{prop}: {models[prop]['cv_score_mean']:.3e}, {models[prop]['cv_score_std']:.1e}, {models[prop]['rmse']:.1e}")
 
     # export model for use in other projects
     if export_model_file is not None:

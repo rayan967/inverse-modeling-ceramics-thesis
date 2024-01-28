@@ -1,6 +1,6 @@
 import os
 import sys
-import json
+
 import pandas as pd
 from skopt.learning import GaussianProcessRegressor
 
@@ -12,6 +12,7 @@ import pathlib
 import joblib
 import numpy as np
 from matplotlib import pyplot as plt
+from plotly.subplots import make_subplots
 from sklearn import metrics
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
@@ -24,20 +25,8 @@ from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern, Ra
     Exponentiation, ExpSineSquared
 
 from sklearn.metrics import make_scorer
+import plotly.graph_objects as go
 
-considered_features = [
-    'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
-    'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
-    'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
-]
-
-# material properties to consider in training
-considered_properties = [
-    'thermal_conductivity',
-    'thermal_expansion',
-    'young_modulus',
-    'poisson_ratio',
-]
 
 BEST_PARAMETERS = {
     'thermal_expansion': {'alpha': 1e-10, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)},
@@ -46,55 +35,35 @@ BEST_PARAMETERS = {
     'poisson_ratio': {'alpha': 1e-10, 'kernel': RBF(length_scale=1) + WhiteKernel(noise_level=1)}
 }
 
-def load_test_data(base_path, prop='homogenization'):
-    base_path = pathlib.Path(base_path)
-    info_files = list(base_path.glob('**/info.json'))
 
-    X = []
-    y = []
-    for file in info_files:
-        data = json.loads(file.read_text())
-        if not (prop in data and "v_phase" in data):
-            continue
-        vf = data["v_phase"]['11']
-        clr = data["chord_length_ratio"]
-        X.append([vf, clr])
-        y.append(data[prop]["Thermal conductivity"]["value"])
-
-    return np.array(X), np.array(y)
+def main(train_data_file, export_model_file, number_of_features=2, plots=False):
 
 
-def main(export_model_file, number_of_features, plots=False):
-
-    X_test, y_test = load_test_data('/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_thermal_conductivity')
 
 
-    # Change next two lines for different feature sets or models
-    agp = joblib.load("models/CTC_adapt.joblib")
-    X, Y = agp.X, agp.yt
-
-    #assert Y.shape[0] == X.shape[0], "number of samples does not match"
 
     models = {}
 
     considered_features = [
-        'volume_fraction_4', 'volume_fraction_10', 'volume_fraction_1',
-        'chord_length_mean_4', 'chord_length_mean_10', 'chord_length_mean_1',
-        'chord_length_variance_4', 'chord_length_variance_10', 'chord_length_variance_1'
+        'volume_fraction_4', 'chord_length_ratio'
     ]
 
     considered_properties = [
-        'thermal_conductivity',
+        'young_modulus',
+
     ]
     print("Features: ", str(considered_features))
 
 
 
+    agp = joblib.load("adapt/100_gp.joblib")
+    X, Y = agp.X, agp.yt
+
 
     for i, property_name in enumerate(considered_properties):
 
         # pick a single property
-        y = Y[:, i]
+        y = Y
         y_float = np.array([float(val) if val != b'nan' else np.nan for val in y])
 
         # ignore NaNs in the data
@@ -109,12 +78,12 @@ def main(export_model_file, number_of_features, plots=False):
 
         # create a pipeline object for training using the best parameters
         pipe = make_pipeline(
-            GaussianProcessRegressor(kernel=RBF()+WhiteKernel(), alpha=alpha)
+            StandardScaler(),
+            GaussianProcessRegressor(kernel=RBF()+WhiteKernel(), normalize_y=True)
         )
 
-        X_train, y_train = agp.X, agp.yt
-
         # split in test and train data
+        X_train, X_test, y_train, y_test = X_clean, X_clean, y_clean, y_clean
         pipe.fit(X_train, y_train)
 
         models[property_name] = {'pipe': pipe, 'features': considered_features}
@@ -330,12 +299,15 @@ def accuracy_test(model, X_test, y_test, tolerance=1):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train ML models using structure-property data of '
                                                  'RVEs.')
-
+    parser.add_argument('train_data_file', type=pathlib.Path,
+                        help='Path to the database of RVE structures and simulation results or '
+                             'numpy file with training data already loaded')
     parser.add_argument('--export_model_file', type=pathlib.Path, required=False,
                         help='Path to a file where the trained models will be exported to.')
-
+    parser.add_argument('--number_of_features', type=int, required=True,
+                        help='Number of features, supports 8 or 3 or 2.')
     args = parser.parse_args()
 
-    main( args.export_model_file, 2)
+    main(args.train_data_file, args.export_model_file, args.number_of_features)
 
 
