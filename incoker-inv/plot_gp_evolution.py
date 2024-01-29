@@ -67,7 +67,7 @@ accuracy = []
 model_size = []
 
 
-X_test, y_test = load_test_data('incoker-micro-sims/incoker_micro_sims/test_data_32')
+X_test, y_test = load_test_data('/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_thermal_conductivity')
 
 
 for model_path, color in tqdm.tqdm(list(zip(gp_models, colors))):

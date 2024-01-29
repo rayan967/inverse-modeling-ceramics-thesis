@@ -26,14 +26,16 @@ from simlopt.optimization.utilities import *
 from sklearn import metrics
 
 
-def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, runpath, output_stream):
+def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream, iter_count=None):
     # Initialization
     err = 0
     flag = 0
-    counter = 0
+    if iter_count is None:
+        counter = 0
+    else:
+        counter = iter_count
     N = gp.getdata[0]
     dim = gp.getdata[2]
-    m = yt.shape[1]
     NMC = 600
     totaltime = 0
     totalFEM = 0
@@ -117,7 +119,8 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt,
                     "material_property": "thermal_conductivity",
                     "particle_quantity": 200,
                     "dim": 32,
-                    "max_vertices": 10000,
+                    "max_vertices": 25000,
+                    "output_path": output_path
                 }
                 result = prediction_pipeline.generate_and_predict(input, options)
                 print(result.keys())

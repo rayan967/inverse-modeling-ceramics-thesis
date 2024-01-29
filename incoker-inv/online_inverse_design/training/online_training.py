@@ -126,52 +126,71 @@ def main():
         Xt_initial = []
         yt_initial = []
 
-        for i, point in enumerate(initial_design_points):
-            print(f"--- Initial Iteration {i}")
-            try:
-                output_stream.error_detected = False
 
+        # If initial points are available or restarting a failed run, set compute = True
+        compute = False
 
-                print(f"Initial point: {str(point)}")
-                input = (point[0], point[1])
-                options = {
-                    #"material_property": "elasticity",
-                    "material_property": "thermal_conductivity",
-                    "particle_quantity": 200,
-                    "dim": 32,
-                    "max_vertices": 10000,
-                }
-                result = prediction_pipeline.generate_and_predict(input, options)
-                output_value = result["homogenization"]["Thermal conductivity"]["value"]
+        if compute:
 
-                vf = result["v_phase"]["11"]
-                cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][11]["mean_chord_length"]
-                cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][4]["mean_chord_length"]
-                clr = cl_11 / cl_4
-
-                if output_stream.error_detected:
+            for i, point in enumerate(initial_design_points):
+                print(f"--- Initial Iteration {i}")
+                try:
                     output_stream.error_detected = False
 
-                # Store the design points and corresponding output
-                Xt_initial.append([vf, clr])
-                yt_initial.append(output_value)
-                print(f"Initial point: {str(point)}")
-                print(f"Found point: {str([vf, clr])}")
-                print(f"Found value: {str(output_value)}")
+                    output_path = pathlib.Path(runpath, "initial_points", f"v={input[0]},r={input[1]}")
+                    output_path.mkdir(parents=True, exist_ok=True)
 
-            except Exception as e:
-                if str(e) == "list index out of range":
+                    print(f"Initial point: {str(point)}")
+                    input = (point[0], point[1])
+                    options = {
+                        #"material_property": "elasticity",
+                        "material_property": "thermal_conductivity",
+                        "particle_quantity": 200,
+                        "dim": 32,
+                        "max_vertices": 25000,
+                        "output_path": output_path
+
+                    }
+
+                    result = prediction_pipeline.generate_and_predict(input, options)
+                    output_value = result["homogenization"]["Thermal conductivity"]["value"]
+
+                    vf = result["v_phase"]["11"]
+                    cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][11]["mean_chord_length"]
+                    cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][4]["mean_chord_length"]
+                    clr = cl_11 / cl_4
+
+                    if output_stream.error_detected:
+                        output_stream.error_detected = False
+
+                    # Store the design points and corresponding output
+                    Xt_initial.append([vf, clr])
+                    yt_initial.append(output_value)
+                    print(f"Initial point: {str(point)}")
+                    print(f"Found point: {str([vf, clr])}")
+                    print(f"Found value: {str(output_value)}")
+
+                except Exception as e:
+                    if str(e) == "list index out of range":
+                        print(e)
+                        print("Skipping")
+                        continue
                     print(e)
-                    print("Skipping")
                     continue
-                print(e)
-                continue
+
+            Xt_initial = np.array(Xt_initial)
+            yt_initial = np.array(yt_initial).reshape(-1, 1)
+
+        # Restart failed run
+        else:
+            Xt_initial, yt_initial = load_test_data('adaptZTA-adaptive_2D_1E5/initial_points')
+            yt_initial = np.array(yt_initial).reshape(-1, 1)
+
+            # Adjust iteration number for failed run
+            iter_count = Xt_initial.shape[0] - 8
+            print(f"Row count in Xt_initial: {iter_count}")
 
 
-
-
-        Xt_initial = np.array(Xt_initial)
-        yt_initial = np.array(yt_initial).reshape(-1, 1)
         # Initial hyperparameter parameters
         region = [(0.01, 2) for _ in range(dim)]
         assert len(region) == dim, "Too much or fewer hyperparameters for the given problem dimension"
@@ -207,7 +226,14 @@ def main():
         print("RMSE: ", rmse)
         print("Accuracy: ", accuracy_test(gp, X_test, y_test))
 
-        GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, Xt, yt, X_test, y_test, runpath, output_stream)
+        if compute:
+            GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream)
+
+        # Pass iteration number for failed run
+        else:
+            GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream, iter_count)
+
+
 
         print("-----Adaptive run complete:-----")
 
