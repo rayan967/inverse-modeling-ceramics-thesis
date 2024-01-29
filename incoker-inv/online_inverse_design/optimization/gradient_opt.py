@@ -172,7 +172,7 @@ def optimise_for_value(prop, X, property_name):
     optimal_microstructure = convert_x_to_microstructure(optimal_x, features)
     optimal_property_value, uncertainty  = models[property_name]['pipe'].predict(optimal_x.reshape(1, -1), return_std=True)
 
-    print(optimal_microstructure)
+    print(all_solutions)
     print("Error in optimisation: " + str(np.abs(prop - optimal_property_value)))
 
     print("Iter\tX1\t\t\tX2\t\t\tf(X)")

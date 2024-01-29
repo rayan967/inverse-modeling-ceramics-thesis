@@ -1,3 +1,15 @@
+"""
+online_training.py
+
+This script is designed for the inverse design of ZTA ceramic microstructures using Gaussian Process Regression (GPR) models. It includes functionalities for loading and preprocessing data, performing hyperparameter optimization, adaptive sampling, and model evaluation.
+
+Modules:
+- pathlib, sys, os, json, joblib: For file operations and system interactions.
+- pandas (pd), numpy (np): For data manipulation and numerical operations.
+- sklearn.metrics: For model evaluation metrics.
+- Custom modules (online_adapt, simlopt): For adaptive GPR.
+"""
+
 import pathlib
 import sys
 import os
@@ -20,20 +32,18 @@ from simlopt.basicfunctions.utils.createfolderstructure import *
 plt.close('all')
 plt.ioff()
 
-considered_features = [
-    'volume_fraction_4', 'volume_fraction_1',
-    'chord_length_mean_4', 'chord_length_mean_10',
-]
-
-# material properties to consider in training
-considered_properties = [
-    'thermal_conductivity',
-    #'thermal_expansion',
-    #'young_modulus',
-    #'poisson_ratio',
-]
 
 def load_test_data(base_path, prop='homogenization'):
+    """
+    Load test data from JSON files within a specified directory.
+
+    Parameters:
+    - base_path (str): Directory path to load data from.
+    - prop (str, optional): Property to extract from the data. Defaults to 'homogenization'.
+
+    Returns:
+    - tuple: A tuple containing two numpy arrays, X (features) and y (target values).
+    """
     base_path = pathlib.Path(base_path)
     info_files = list(base_path.glob('**/info.json'))
 
@@ -50,7 +60,17 @@ def load_test_data(base_path, prop='homogenization'):
 
     return np.array(X), np.array(y)
 
-def load_test_data(base_path, prop='homogenization'):
+def load_test_data_CTE(base_path, prop='mean'):
+    """
+    Load test data for CTE from JSON files within a specified directory.
+
+    Parameters:
+    - base_path (str): Directory path to load data from.
+    - prop (str, optional): Property to extract from the data. Defaults to 'homogenization'.
+
+    Returns:
+    - tuple: A tuple containing two numpy arrays, X (features) and y (target values).
+    """
     base_path = pathlib.Path(base_path)
     info_files = list(base_path.glob('**/info.json'))
 
@@ -63,105 +83,142 @@ def load_test_data(base_path, prop='homogenization'):
         vf = data["v_phase"]['11']
         clr = data["chord_length_ratio"]
         X.append([vf, clr])
-        y.append(data[prop]["Thermal conductivity"]["value"])
+        y.append(data[prop])
 
     return np.array(X), np.array(y)
-
 
 
 def main():
+    """
+    This function manages the workflow of the script, including loading data,
+    setting up the GPR model, performing adaptive sampling, and evaluating model performance.
+    """
 
+    # material properties to consider in training
+    considered_properties = [
+        'thermal_conductivity',
+        # 'thermal_expansion',
+        # 'young_modulus',
+        # 'poisson_ratio',
+    ]
+
+    # For result indexing
+    property_dict = {
+        'thermal_conductivity':'Thermal conductivity',
+        'thermal_expansion':'Thermal expansion',
+        'young_modulus': 'Young modulus',
+        'poisson_ratio': 'Poisson ratio',
+                     }
+
+    # For simulation options
+    property_dict_category = {
+        'thermal_conductivity':'thermal_conductivity',
+        'thermal_expansion':'thermal_expansion',
+        'young_modulus': 'elasticity',
+        'poisson_ratio': 'elasticity',
+                             }
+
+    # Print terminal output to text
     output_stream = DualOutputStream("terminal_output.txt")
     sys.stdout = output_stream
-    Xt, Y = load_test_data('/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_thermal_conductivity')
-
-    assert Y.shape[0] == Xt.shape[0], "number of samples does not match"
 
     execpath = './/adapt'
     execname = None
 
-    ' Adaptive phase '
+    ' Adaptive phase folders'
     foldername = createfoldername("ZTA-adaptive", "2D", "1E5")
     runpath = createfolders(execpath, foldername)
-
-    print(foldername)
-    print(runpath)
 
 
     for i, property_name in enumerate(considered_properties):
 
-        yt = Y
-        yt = yt.reshape(-1,1)
+        # Load validation data
+        if property_name == 'thermal_expansion':
+            X_test, y_test = load_test_data_CTE(
+                f'/data/ray29582/adaptive_gp_InCoKer/validation_data/test_data_32_{property_dict_category[property_name]}')
+        else:
+            X_test, y_test = load_test_data(
+                f'/data/ray29582/adaptive_gp_InCoKer/validation_data/test_data_32_{property_dict_category[property_name]}')
+
+        assert y_test.shape[0] == X_test.shape[0], "number of samples does not match"
+
+        y_test = y_test.reshape(-1,1)
         # Initial problem constants
-        N   = Xt.shape[0]
-        dim = Xt.shape[1]
-        m   = yt.shape[1]
+        dim = X_test.shape[1]
 
-        clean_indices = np.argwhere(~np.isnan(yt))
-        yt = yt[clean_indices.flatten()]
-        Xt = Xt[clean_indices.flatten()]
+        # Clean validation data of nan values
+        clean_indices = np.argwhere(~np.isnan(y_test))
+        y_test = y_test[clean_indices.flatten()]
+        X_test = X_test[clean_indices.flatten()]
 
-        # Calculate parameter space boundaries for each feature
-        parameterranges = np.array([[np.min(Xt[:, i]), np.max(Xt[:, i])] for i in range(dim)])
-        print(f"DB Parameter ranges: {parameterranges}")
-
-        parameterranges = np.array([[0.15, 0.85],[0.3, 5.0]])
+        # Custom parameter space boundaries for each feature
+        parameterranges = np.array([[0.15, 0.85],[0.3, 4.0]])
         print(f"Parameter ranges: {parameterranges}")
 
 
         # Parameters for adaptive phase
-        totalbudget         = 1E20          # Total budget to spend
-        incrementalbudget   = 1E5           # Incremental budget
-        TOL                 = 1E-2          # Overall desired reconstruction tolerance
-        TOLFEM              = 0.0           # Reevaluation tolerance
+        totalbudget         = 1E20          # Total budget to spend, to be implemented (TBI)
+        incrementalbudget   = 1E5           # Incremental budget, TBI
+        TOLFEM              = 0.0           # Reevaluation tolerance, TBI
         TOLAcqui            = 1.0           # Acquisition tolerance
         TOLrelchange        = 0             # Tolerance for relative change of global error estimation
 
-        epsphys             = np.var(yt)    # Assumed or known variance of physical measurement!
-        adaptgrad           = False         # Toggle if gradient data should be adapted
+        # Overall desired reconstruction tolerance
+        TOL                 = 0             # Needs to be set based on property, but set to 0 for full evaluation
 
-        X_test, y_test = Xt, yt
+        epsphys             = np.var(y_test)    # Assumed or known variance of physical measurement!
 
         initial_design_points = create_initial_design_points(parameterranges)
         Xt_initial = []
         yt_initial = []
 
-
         # If initial points are available or restarting a failed run, set compute = True
         compute = False
 
         if compute:
-
+            # Generate initial design points (border points) as training data
             for i, point in enumerate(initial_design_points):
                 print(f"--- Initial Iteration {i}")
                 try:
+                    # Set error flag for Mapdl error to False
                     output_stream.error_detected = False
 
+                    # Output path for generated structures
                     output_path = pathlib.Path(runpath, "initial_points", f"v={input[0]},r={input[1]}")
                     output_path.mkdir(parents=True, exist_ok=True)
 
                     print(f"Initial point: {str(point)}")
                     input = (point[0], point[1])
+
+                    # Generate design point
                     options = {
-                        #"material_property": "elasticity",
-                        "material_property": "thermal_conductivity",
+                        "material_property": property_dict_category[property_name],
                         "particle_quantity": 200,
                         "dim": 32,
                         "max_vertices": 25000,
                         "output_path": output_path
 
                     }
-
                     result = prediction_pipeline.generate_and_predict(input, options)
-                    output_value = result["homogenization"]["Thermal conductivity"]["value"]
+
+                    # For CTE
+                    if property_name == 'thermal_expansion':
+                        output_value = result["mean"]
+
+                    # For the rest
+                    else:
+                        output_value = result["homogenization"][property_dict[property_name]]["value"]
 
                     vf = result["v_phase"]["11"]
                     cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][11]["mean_chord_length"]
                     cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][4]["mean_chord_length"]
                     clr = cl_11 / cl_4
 
+                    # Check for Mapdl error
                     if output_stream.error_detected:
+                        # Reset error flag
                         output_stream.error_detected = False
+                        raise Exception("Error detected during operation: Mapdl")
 
                     # Store the design points and corresponding output
                     Xt_initial.append([vf, clr])
@@ -171,10 +228,7 @@ def main():
                     print(f"Found value: {str(output_value)}")
 
                 except Exception as e:
-                    if str(e) == "list index out of range":
-                        print(e)
-                        print("Skipping")
-                        continue
+                    print("Skipping")
                     print(e)
                     continue
 
@@ -195,14 +249,15 @@ def main():
         region = [(0.01, 2) for _ in range(dim)]
         assert len(region) == dim, "Too much or fewer hyperparameters for the given problem dimension"
 
+        # Create expected error for each initial point, constant error is passed but true error has to be implemented
         epsXt, epsXgrad = createerror(Xt_initial, random=False, graddata=False)
 
-        epsphys = np.var(yt)
         print("Initial X")
         print(Xt_initial)
         print("Initial Y")
         print(yt_initial)
 
+        # Train initial GPR
         gp = GPR(Xt_initial, yt_initial, None, None, epsXt, None)
         gp.optimizehyperparameter(region, "mean", False)
 
@@ -213,6 +268,8 @@ def main():
         print("Overall stopping tolerance:          {}".format(TOL))
         print("Hyperparameter bounds:               {}".format(region))
         print("\n")
+
+        # Validate initial GPR
         y_pred = gp.predictmean(X_test)
 
         # calculate MSE
@@ -227,11 +284,11 @@ def main():
         print("Accuracy: ", accuracy_test(gp, X_test, y_test))
 
         if compute:
-            GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream)
+            GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream, property_name)
 
         # Pass iteration number for failed run
         else:
-            GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream, iter_count)
+            GP_adapted = adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream, property_name, iter_count)
 
 
 
@@ -247,11 +304,22 @@ def main():
         print("MSE: ", mse)
         print("RMSE: ", rmse)
         print("Accuracy: ", accuracy_test(GP_adapted, X_test, y_test))
-        joblib.dump(gp, "adapt/final_gp.joblib")
-
+        # Store model
+        joblib.dump(gp, f"adapt/final_gp_{property_name}.joblib")
 
 
 def createerror(Xt, random=False, graddata=False):
+    """
+    Create error estimates for the input data.
+
+    Parameters:
+    - Xt (numpy.ndarray): Input data.
+    - random (bool, optional): Flag to use random error. Defaults to False.
+    - graddata (bool, optional): Flag to include gradient data in error calculation. Defaults to False.
+
+    Returns:
+    - tuple: A tuple of error estimates.
+    """
     N   = Xt.shape[0]
     dim = Xt.shape[1]
     epsXgrad = None
@@ -271,24 +339,20 @@ def createerror(Xt, random=False, graddata=False):
             epsXgrad = vargraddata*np.ones((1,N*dim))
     return epsXt, epsXgrad
 
+
 def accuracy_test(model, X_test, y_test, tolerance=1E-2):
     """
-    Parameters
-    ----------
-    model : GPR model
-    X_test : np.array
-        Test data (features).
-    y_test : np.array
-        Test data (true values).
-    tolerance : float
-        Tolerance for the accuracy score.
+    Calculate the accuracy of the model on test data.
 
-    Returns
-    -------
-    score : float
-        Accuracy score between 0 and 100.
+    Parameters:
+    - model: Trained GPR model.
+    - X_test (numpy.ndarray): Test data features.
+    - y_test (numpy.ndarray): Test data target values.
+    - tolerance (float, optional): Tolerance for accuracy. Defaults to 1E-2.
+
+    Returns:
+    - float: Accuracy score.
     """
-
     # Predict mean for test data
     y_pred = model.predictmean(X_test)
 
@@ -326,9 +390,16 @@ def create_initial_design_points(parameterranges):
                        [mid_x, mid_y]])
     return points
 
-import sys
 
 class DualOutputStream:
+    """
+    A class to handle dual output streams, allowing simultaneous writing to both the terminal and a log file.
+
+    Methods:
+    - __init__(filename): Constructor to initialize the dual output stream.
+    - write(message): Writes a message to both the terminal and the log file.
+    - flush(): Flush method for Python 3 compatibility.
+    """
     def __init__(self, filename):
         self.terminal = sys.stdout
         self.log = open(filename, "a")

@@ -1,9 +1,6 @@
 import os
 import sys
-
-import pandas as pd
 from skopt.learning import GaussianProcessRegressor
-
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.append(parent_directory)
@@ -12,20 +9,13 @@ import pathlib
 import joblib
 import numpy as np
 from matplotlib import pyplot as plt
-from plotly.subplots import make_subplots
 from sklearn import metrics
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_validate, cross_val_score
-from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, mean_absolute_error
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import make_pipeline
-
-from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern, RationalQuadratic, DotProduct, \
-    Exponentiation, ExpSineSquared
-
+from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF
 from sklearn.metrics import make_scorer
-import plotly.graph_objects as go
 
 
 BEST_PARAMETERS = {
@@ -36,11 +26,7 @@ BEST_PARAMETERS = {
 }
 
 
-def main(train_data_file, export_model_file, number_of_features=2, plots=False):
-
-
-
-
+def main(adapt_model, export_model_file, number_of_features=2, plots=False):
 
     models = {}
 
@@ -55,8 +41,7 @@ def main(train_data_file, export_model_file, number_of_features=2, plots=False):
     print("Features: ", str(considered_features))
 
 
-
-    agp = joblib.load("adapt/100_gp.joblib")
+    agp = joblib.load(adapt_model)
     X, Y = agp.X, agp.yt
 
 
@@ -217,55 +202,6 @@ def main(train_data_file, export_model_file, number_of_features=2, plots=False):
         joblib.dump(exported_model, export_model_file)
     return models
 
-
-def extract_XY_2(data):
-    """Use for 2 features."""
-
-    filtered_indices = np.where(data['volume_fraction_1'] == 0.0)
-
-    chord_length_ratio = data['chord_length_mean_4'][filtered_indices] / data['chord_length_mean_10'][filtered_indices]
-
-    volume_fraction_4 = data['volume_fraction_4'][filtered_indices]
-
-    X = np.vstack((volume_fraction_4, chord_length_ratio)).T
-
-    Y = np.vstack(tuple(data[p][filtered_indices] for p in considered_properties)).T
-
-    global considered_features
-
-    considered_features = [
-    'volume_fraction_4',
-    'chord_length_ratio'
-]
-
-    return X, Y
-
-
-def extract_XY_3(data):
-    """Use for 3 features."""
-
-    chord_length_ratio = data['chord_length_mean_4'] / data['chord_length_mean_10']
-    X = np.vstack((data['volume_fraction_4'], data['volume_fraction_1'], chord_length_ratio)).T
-    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
-
-    global considered_features
-
-    considered_features = [
-    'volume_fraction_4', 'volume_fraction_1',
-    'chord_length_ratio'
-]
-    return X, Y
-
-
-def extract_XY(data):
-    """Use for 8 features."""
-
-    X = np.vstack(tuple(data[f] for f in considered_features)).T
-    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
-
-    return X, Y
-
-
 def accuracy_test(model, X_test, y_test, tolerance=1):
     """
     Parameters
@@ -299,15 +235,12 @@ def accuracy_test(model, X_test, y_test, tolerance=1):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Train ML models using structure-property data of '
                                                  'RVEs.')
-    parser.add_argument('train_data_file', type=pathlib.Path,
-                        help='Path to the database of RVE structures and simulation results or '
-                             'numpy file with training data already loaded')
+    parser.add_argument('adapt_model', type=pathlib.Path,
+                        help='Path to the adaptive GP model to convert')
     parser.add_argument('--export_model_file', type=pathlib.Path, required=False,
                         help='Path to a file where the trained models will be exported to.')
-    parser.add_argument('--number_of_features', type=int, required=True,
-                        help='Number of features, supports 8 or 3 or 2.')
     args = parser.parse_args()
 
-    main(args.train_data_file, args.export_model_file, args.number_of_features)
+    main(args.adapt_model, args.export_model_file)
 
 
