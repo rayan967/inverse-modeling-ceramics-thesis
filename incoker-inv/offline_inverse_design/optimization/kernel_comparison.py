@@ -136,7 +136,7 @@ property_dict = {
 # Initialize a dictionary to hold the results
 results = {}
 
-modelnames = ["models/2d_dp.joblib","models/2d_rq.joblib","models/2d_rbf_grad.joblib","models/2d_matern.joblib","models/2d_rdw.joblib"]
+modelnames = ["models/2d_dp.joblib","models/2d_rq.joblib","models/2d_rbf.joblib","models/2d_matern.joblib","models/2d_rdw.joblib"]
 
 # Change next line for different feature sets from models folder
 # Properties and kernels to iterate over

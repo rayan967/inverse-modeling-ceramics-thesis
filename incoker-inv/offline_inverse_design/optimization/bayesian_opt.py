@@ -256,7 +256,7 @@ property_dict = {
     'poisson_ratio':'Poisson Ratio',
 }
 # Change next line for different feature sets from models folder
-models = joblib.load("models/2d_rbf_grad.joblib")["models"]
+models = joblib.load("models/2d_rbf.joblib")["models"]
 pipe = models[property_name]['pipe']
 
 X = models[property_name]['X_train']
