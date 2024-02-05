@@ -108,11 +108,11 @@ def perform_grid_search(X, Y, property_index, feature_set):
 
     results = pd.DataFrame(grid_search.cv_results_)
     results['param_kernel'] = results['param_kernel'].apply(kernel_to_string)
-    results['feature_set'] = feature_set  # Add feature_set column here
+    results['feature_set'] = feature_set
     return results
 
 # Create subplots for each property
-fig, axs = plt.subplots(2, 2, figsize=(20, 16))  # Adjust the size as needed
+fig, axs = plt.subplots(2, 2, figsize=(20, 16))
 axs = axs.flatten()
 
 for i, property_name in enumerate(considered_properties):
@@ -128,12 +128,9 @@ for i, property_name in enumerate(considered_properties):
 
     # After collecting results for a property, pivot and plot on the corresponding subplot
     final_pivot = final_results.pivot_table(index='param_kernel', columns='feature_set', values='mean_test_score')
-    sns.heatmap(final_pivot, annot=True, annot_kws={"size": 14}, cmap='RdBu', fmt=".3e", vmin=-0.1, vmax=1, ax=axs[i])  # Adjust annotation size here
+    sns.heatmap(final_pivot, annot=True, annot_kws={"size": 14}, cmap='RdBu', fmt=".3e", vmin=-0.1, vmax=1, ax=axs[i])
     axs[i].set_title(f'R2 Scores for {property_name}')
 
-    # Increase tick label size
-    """    axs[i].tick_params(axis='x', labelsize=14)  # Adjust x-tick label size
-    axs[i].tick_params(axis='y', labelsize=14)  # Adjust y-tick label size"""
 
     axs[i].set_ylabel('')
     axs[i].set_xlabel('')

@@ -1,3 +1,18 @@
+"""
+This script, reverse_training.py, is designed for direct inverse training and evaluation
+using structure-property data of Representative Volume Elements (RVEs). It supports multiple model
+types, including Neural Networks (NN), Gaussian Process Regressors (GPR), and Random Forests (RF),
+for predicting material properties such as thermal conductivity, thermal expansion, Young's modulus,
+and Poisson's ratio based on input features derived from RVEs.
+
+Usage:
+To run this script, you need a dataset file (in .npy format) containing the RVE structure-property
+data. Optionally, you can specify an export file path to save the trained models. Use the following
+command to execute the script:
+
+`python reverse_training.py <path_to_training_data.npy> [--export_model_file <path_to_export_models.joblib>]`
+"""
+
 import argparse
 import pathlib
 import joblib
@@ -37,8 +52,17 @@ property_ax_dict = {
 }
 
 
-def main(train_data_file, export_model_file, number_of_features, plots=False):
+def main(train_data_file, export_model_file, plots=False):
+    """
+    Main function to train models, evaluate performance, and plot results.
 
+    Parameters:
+    - train_data_file (str): Path to the database of RVE structures and simulation results, or a numpy file with training data.
+    - export_model_file (str): Optional. Path to a file where the trained models will be exported.
+    - plots (bool): Optional. Flag to enable or disable plotting of results.
+
+    This function loads training data from the specified file, preprocesses it, trains models for different material properties, evaluates their performance using metrics like R2 score and RMSE, and plots the results if enabled. Supported models include Neural Networks (NN), Gaussian Process Regressors (GPR), and Random Forests (RF).
+    """
     training_data = pathlib.Path(train_data_file)
     if not training_data.exists():
         print(f"Error: training data path {training_data} does not exist.")
@@ -52,16 +76,7 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
 
     data['thermal_expansion'] *= 1e6
 
-
-    if number_of_features == 3:
-        Y, X = extract_XY_3(data)
-    elif number_of_features == 2:
-        Y, X = extract_XY_2(data)
-    else:
-        Y, X = extract_XY(data)
-
-
-
+    Y, X = extract_XY_2(data)
 
     model_types = ["NN", "GPR", "RF"]
     best_models = {}
@@ -317,32 +332,6 @@ def rmse(y_pred, y_test):
 
     return score
 
-
-def extract_XY_3(data):
-    """Use for 3 features."""
-
-    chord_length_ratio = data['chord_length_mean_4'] / data['chord_length_mean_10']
-    X = np.vstack((data['volume_fraction_4'], data['volume_fraction_1'], chord_length_ratio)).T
-    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
-
-    global considered_features
-
-    considered_features = [
-    'volume_fraction_4', 'volume_fraction_1',
-    'chord_length_ratio'
-]
-    return X, Y
-
-
-def extract_XY(data):
-    """Use for 8 features."""
-
-    X = np.vstack(tuple(data[f] for f in considered_features)).T
-    Y = np.vstack(tuple(data[p] for p in considered_properties)).T
-
-    return X, Y
-
-
 def extract_XY_2(data):
     """Use for 2 features."""
 
@@ -366,7 +355,19 @@ def extract_XY_2(data):
     return X, Y
 
 def train_model_with(model_name, X_train, y_train):
-    """Helper function to train with different models."""
+    """
+    Trains a model based on the specified model name.
+
+    Parameters:
+    - model_name (str): Name of the model to train ('NN', 'GPR', or 'RF').
+    - X_train (array): Training data features.
+    - y_train (array): Training data labels.
+
+    Returns:
+    - model: The trained model.
+
+    This function supports training Neural Networks, Gaussian Process Regressors, and Random Forest models. It configures and trains a model based on the provided training data.
+    """
     if model_name == "NN":
         from sklearn.neural_network import MLPRegressor
         model = make_pipeline(StandardScaler(), MLPRegressor(hidden_layer_sizes=(100,100))
@@ -393,8 +394,6 @@ if __name__ == "__main__":
                              'numpy file with training data already loaded')
     parser.add_argument('--export_model_file', type=pathlib.Path, required=False,
                         help='Path to a file where the trained models will be exported to.')
-    parser.add_argument('--number_of_features', type=int, required=True,
-                        help='Number of features, supports 8 or 3 or 2.')
     args = parser.parse_args()
 
-    main(args.train_data_file, args.export_model_file, args.number_of_features)
+    main(args.train_data_file, args.export_model_file)
