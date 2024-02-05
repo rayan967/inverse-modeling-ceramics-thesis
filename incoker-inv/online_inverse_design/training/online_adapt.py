@@ -13,14 +13,14 @@ import numpy as np
 import os
 import sys
 current_directory = os.path.dirname(os.path.abspath(__file__))
-parent_directory = os.path.dirname(current_directory)
+parent_directory = os.path.dirname(os.path.dirname(current_directory))
 sys.path.append(parent_directory)
 import pathlib
 from incoker_micro_sims import prediction_pipeline
 from simlopt.gpr.gaussianprocess import *
 from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.optimization.errormodel_new import MCGlobalEstimate, acquisitionfunction, estiamteweightfactors
-from adaptive_training import accuracy_test
+from online_training import accuracy_test
 from simlopt.optimization.utilities import *
 import matplotlib.pyplot as plt
 

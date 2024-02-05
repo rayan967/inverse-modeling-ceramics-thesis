@@ -56,7 +56,7 @@ def accuracy_test(model, X_test, y_test, tolerance=1E-2):
 gp_models = list(
     sorted(
         pathlib.Path('adapt').glob('*.joblib'),
-        key=lambda x: int(x.name.split('_')[0])
+        key=lambda x: int(x.name.split('_')[2])
     )
 )[:50][::2]
 
@@ -80,7 +80,7 @@ for model_path, color in tqdm.tqdm(list(zip(gp_models, colors))):
     plt.ylabel('Thermal conductivity')
 
     accuracy.append(accuracy_test(model, X_test, y_test))
-    model_size.append(int(model_path.name.split('_')[0]))
+    model_size.append(int(model_path.name.split('_')[2]))
 
 plt.grid()
 plt.legend()

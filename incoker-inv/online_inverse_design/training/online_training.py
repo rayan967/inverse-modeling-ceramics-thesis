@@ -18,22 +18,23 @@ import joblib
 import pandas as pd
 from sklearn import metrics
 current_directory = os.path.dirname(os.path.abspath(__file__))
-parent_directory = os.path.dirname(current_directory)
+parent_directory = os.path.dirname(os.path.dirname(current_directory))
 sys.path.append(parent_directory)
 import numpy as np
 import argparse
-from online_adapt import *
 from simlopt.gpr.gaussianprocess import *
 from simlopt.hyperparameter.utils.crossvalidation import *
 from simlopt.basicfunctions.utils.creategrid import createPD
 from pyDOE import lhs
 from sklearn.model_selection import train_test_split
 from simlopt.basicfunctions.utils.createfolderstructure import *
+from online_adapt import *
+
 plt.close('all')
 plt.ioff()
 
 
-def load_test_data(base_path, prop='homogenization'):
+def load_test_data(base_path, prop_name, prop='homogenization'):
     """
     Load test data from JSON files within a specified directory.
 
@@ -56,7 +57,7 @@ def load_test_data(base_path, prop='homogenization'):
         vf = data["v_phase"]['11']
         clr = data["chord_length_ratio"]
         X.append([vf, clr])
-        y.append(data[prop]["Thermal conductivity"]["value"])
+        y.append(data[prop][prop_name]["value"])
 
     return np.array(X), np.array(y)
 
@@ -97,7 +98,7 @@ def main():
     # material properties to consider in training
     considered_properties = [
         'thermal_conductivity',
-        # 'thermal_expansion',
+        #'thermal_expansion',
         # 'young_modulus',
         # 'poisson_ratio',
     ]
@@ -136,12 +137,14 @@ def main():
         if property_name == 'thermal_expansion':
             X_test, y_test = load_test_data_CTE(
                 f'/data/ray29582/adaptive_gp_InCoKer/validation_data/test_data_32_{property_dict_category[property_name]}')
+        elif property_name == 'thermal_conductivity':
+            X_test, y_test = load_test_data(
+                f'/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_{property_dict_category[property_name]}', property_dict[property_name])
         else:
             X_test, y_test = load_test_data(
-                f'/data/ray29582/adaptive_gp_InCoKer/validation_data/test_data_32_{property_dict_category[property_name]}')
+                f'/data/ray29582/adaptive_gp_InCoKer/validation_data/test_data_32_{property_dict_category[property_name]}', property_dict[property_name])
 
         assert y_test.shape[0] == X_test.shape[0], "number of samples does not match"
-
         y_test = y_test.reshape(-1,1)
         # Initial problem constants
         dim = X_test.shape[1]
@@ -172,8 +175,8 @@ def main():
         Xt_initial = []
         yt_initial = []
 
-        # If initial points are available or restarting a failed run, set compute = True
-        compute = False
+        # If initial points are available or restarting a failed run, set compute = False
+        compute = True
 
         if compute:
             # Generate initial design points (border points) as training data
@@ -184,7 +187,7 @@ def main():
                     output_stream.error_detected = False
 
                     # Output path for generated structures
-                    output_path = pathlib.Path(runpath, "initial_points", f"v={input[0]},r={input[1]}")
+                    output_path = pathlib.Path(runpath, "initial_points", f"v={point[0]},r={point[1]}")
                     output_path.mkdir(parents=True, exist_ok=True)
 
                     print(f"Initial point: {str(point)}")
