@@ -19,15 +19,11 @@ import joblib
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import metrics
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_validate, cross_val_score
-from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, mean_absolute_error
 from sklearn.pipeline import make_pipeline
 from sklearn.gaussian_process import GaussianProcessRegressor
-from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern
-from sklearn.metrics import make_scorer
+from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF
 
 
 considered_features = [
@@ -52,7 +48,7 @@ property_ax_dict = {
 }
 
 
-def main(train_data_file, export_model_file, plots=False):
+def main(train_data_file, export_model_file):
     """
     Main function to train models, evaluate performance, and plot results.
 
@@ -170,11 +166,35 @@ def main(train_data_file, export_model_file, plots=False):
                                          property_ax_dict[property_name],
                                          gbr_models,
                                          train_points=(y_train[:, 0], y_train[:, 1], X_train))
+
         best_models[property_name] = {
             'model': best_model,
             'model_type': best_model_name,
             'score': best_score
         }
+
+        if export_model_file is not None:
+            from datetime import date
+            import pkg_resources
+            import sys
+            installed_packages = pkg_resources.working_set
+            installed_packages_list = sorted(["%s==%s" % (i.key, i.version)
+                                              for i in installed_packages])
+
+            # store python code in current directory for reproducibility
+            local_python_files = list(pathlib.Path().glob('*.py'))
+            local_python_code = [f.read_text() for f in local_python_files]
+            exported_model = {
+                'models': best_models,
+                'version_info':
+                    {
+                        'date': date.today().isoformat(),
+                        'python': sys.version,
+                        'packages': installed_packages_list
+                    },
+                'python_files': local_python_code
+            }
+            joblib.dump(exported_model, export_model_file)
 
 
 

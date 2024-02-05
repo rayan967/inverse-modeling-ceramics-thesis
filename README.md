@@ -38,14 +38,14 @@ the model files will be stored at the directory ``incoker-inv/adapt``. The saved
 using the ``adapt_to_standard.py`` script as:
 
 ```
-python online_inverse_design/training/online_training.py adapt/model_name.joblib --export_model_file models/model_name.joblib
+python online_inverse_design/training/adapt_to_standard.py adapt/model_name.joblib --export_model_file models/model_name.joblib
 ```
 
 Using this model, inverse design can be performed using the scripts under the directory ``incoker-inv/online_inverse_design/optimization``. To 
 perform validation designs, run the script:
 
 ```
-python online_inverse_design/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
+python online_inverse_design/optimization/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
 ```
 
 
@@ -56,23 +56,23 @@ Using pregenerated offline data, many of the initial tests were performed. The r
 To run the grid search for finding optimal hyperparameters for each property run the script:
 
 ```
-python offline_inverse_design/grid_search.py
+python offline_inverse_design/training/grid_search.py
 ```
 A grid to evaluate the performance of forward training across different feature sets can be performed using the script:
 
 ```
-python offline_inverse_design/feature_set_viz.py
+python offline_inverse_design/training/feature_set_viz.py
 ```
 
 Based on the results, training with the optimized parameters (manually changed in the script) can be done using the script:
 
 ```
-python offline_inverse_design/standard_training.py <path_to_training_data.npy> --export_model_file <path_to_export_models.joblib> --number_of_features <number_of_features (2, 3, or 8)>
+python offline_inverse_design/training/standard_training.py <path_to_training_data.npy> --export_model_file <path_to_export_models.joblib> --number_of_features <number_of_features (2, 3, or 8)>
 ```
 
 Once the models are trained and stored, evaluations of the inverse design using the model can be performed using the script:
 ```
- python offline_inverse_training/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
+python offline_inverse_training/optimization/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
 ```
 
 A full comparison of the different kernels (trained independently) for inverse design can be performed using the script:

@@ -1,6 +1,10 @@
+import os
+import sys
 import numpy as np
-
-from adaptive_training import *
+current_directory = os.path.dirname(os.path.abspath(__file__))
+parent_directory = os.path.dirname(current_directory)
+sys.path.append(parent_directory)
+from training.online_training import *
 
 
 def predict_property(microstructure):
