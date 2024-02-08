@@ -11,20 +11,14 @@ import pathlib
 import joblib
 import numpy as np
 from matplotlib import pyplot as plt
-from plotly.subplots import make_subplots
 from sklearn import metrics
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_validate, cross_val_score
-from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, mean_absolute_error
+from sklearn.model_selection import cross_validate
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import make_pipeline
 
-from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern, RationalQuadratic, DotProduct, \
-    Exponentiation, ExpSineSquared
-
+from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern, RationalQuadratic, DotProduct
 from sklearn.metrics import make_scorer
-import plotly.graph_objects as go
 
 considered_features = [
     'volume_fraction_4', 'volume_fraction_1',

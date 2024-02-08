@@ -21,6 +21,7 @@ numpy = "^1.23.4"
 tqdm = "^4.64.1"
 pandas = "^2.0.1"
 openpyxl = "^3.1.2"
+seaborn = "^0.13.2"
 mpaut = {path = "incoker-inv/incoker-micro-sims/mpaut", develop = true}
 mercdpm = {path = "incoker-inv/incoker-micro-sims/mercurydpm-structure-generation", develop = true}
 incoker-micro-sims = {path = "incoker-inv/incoker-micro-sims/", develop = true}

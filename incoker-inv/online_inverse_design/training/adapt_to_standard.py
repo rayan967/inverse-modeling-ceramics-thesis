@@ -26,7 +26,7 @@ BEST_PARAMETERS = {
 }
 
 
-def main(adapt_model, export_model_file, number_of_features=2, plots=False):
+def main(adapt_model, export_model_file, property_name, plots=False):
 
     models = {}
 
@@ -34,95 +34,82 @@ def main(adapt_model, export_model_file, number_of_features=2, plots=False):
         'volume_fraction_4', 'chord_length_ratio'
     ]
 
-    considered_properties = [
-        'young_modulus',
 
-    ]
     print("Features: ", str(considered_features))
 
 
     agp = joblib.load(adapt_model)
-    X, Y = agp.X, agp.yt
+    X, y = agp.X, agp.yt
 
+    y_float = np.array([float(val) if val != b'nan' else np.nan for val in y])
 
-    for i, property_name in enumerate(considered_properties):
+    # ignore NaNs in the data
+    clean_indices = np.argwhere(~np.isnan(y_float))
+    y_clean = y_float[clean_indices.flatten()]
+    X_clean = X[clean_indices.flatten()]
 
-        # pick a single property
-        y = Y
-        y_float = np.array([float(val) if val != b'nan' else np.nan for val in y])
+    # create a pipeline object for training using the best parameters
+    pipe = make_pipeline(
+        StandardScaler(),
+        GaussianProcessRegressor(kernel=RBF()+WhiteKernel(), normalize_y=True)
+    )
 
-        # ignore NaNs in the data
-        clean_indices = np.argwhere(~np.isnan(y_float))
-        y_clean = y_float[clean_indices.flatten()]
-        X_clean = X[clean_indices.flatten()]
+    # split in test and train data
+    X_train, X_test, y_train, y_test = X_clean, X_clean, y_clean, y_clean
+    pipe.fit(X_train, y_train)
 
-        # create a pipeline object for training
-        best_params = BEST_PARAMETERS[property_name]
-        kernel = best_params['kernel']
-        alpha = best_params['alpha']
+    models[property_name] = {'pipe': pipe, 'features': considered_features}
+    models[property_name]['X_train'] = X_train
+    models[property_name]['X_test'] = X_test
+    models[property_name]['y_train'] = y_train
+    models[property_name]['y_test'] = y_test
 
-        # create a pipeline object for training using the best parameters
-        pipe = make_pipeline(
-            StandardScaler(),
-            GaussianProcessRegressor(kernel=RBF()+WhiteKernel(), normalize_y=True)
-        )
+    # Evaluate the model using the score method
+    score = pipe.score(X_test, y_test)
+    print("Model R-squared score on test set:", score)
 
-        # split in test and train data
-        X_train, X_test, y_train, y_test = X_clean, X_clean, y_clean, y_clean
-        pipe.fit(X_train, y_train)
+    # Evaluate the model using the score method
+    score = pipe.score(X_train, y_train)
+    print("Model R-squared score on training set:", score)
 
-        models[property_name] = {'pipe': pipe, 'features': considered_features}
-        models[property_name]['X_train'] = X_train
-        models[property_name]['X_test'] = X_test
-        models[property_name]['y_train'] = y_train
-        models[property_name]['y_test'] = y_test
+    y_pred = pipe.predict(X_test)
+    min_pred_value = np.min(y_pred)
+    max_pred_value = np.max(y_pred)
+    print(min_pred_value, max_pred_value)
 
-        # Evaluate the model using the score method
-        score = pipe.score(X_test, y_test)
-        print("Model R-squared score on test set:", score)
+    print(f"Property {property_name}")
+    print("   score on train set = ", pipe.score(X_train, y_train))
+    print("   score on test  set = ", pipe.score(X_test, y_test))
 
-        # Evaluate the model using the score method
-        score = pipe.score(X_train, y_train)
-        print("Model R-squared score on training set:", score)
+    print("Accuracy: ", metrics.r2_score(y_test, y_pred))
 
-        y_pred = pipe.predict(X_test)
-        min_pred_value = np.min(y_pred)
-        max_pred_value = np.max(y_pred)
-        print(min_pred_value, max_pred_value)
+    # The mean squared error
+    rmse = mean_squared_error(y_test, y_pred, squared=False)
+    models[property_name]['rmse'] = rmse
+    print("   Root mean squared error: %.2f" % rmse)
+    # The coefficient of determination: 1 is perfect prediction
+    print("   Coefficient of determination: %.5f" % r2_score(y_test, y_pred))
 
-        print(f"Property {property_name}")
-        print("   score on train set = ", pipe.score(X_train, y_train))
-        print("   score on test  set = ", pipe.score(X_test, y_test))
+    custom_scorer = make_scorer(metrics.r2_score, greater_is_better=True)
 
-        print("Accuracy: ", metrics.r2_score(y_test, y_pred))
+    # cross validation
+    cv = cross_validate(pipe, X_clean, y_clean, cv=5, scoring=custom_scorer)
+    cv_score_mean = cv['test_score'].mean()
+    cv_score_std = cv['test_score'].std()
+    models[property_name]['cv_score_mean'] = cv_score_mean
+    models[property_name]['cv_score_std'] = cv_score_std
+    print \
+        ("   %0.5f accuracy with a standard deviation of %0.5f" % (cv_score_mean, cv_score_std))
 
-        # The mean squared error
-        rmse = mean_squared_error(y_test, y_pred, squared=False)
-        models[property_name]['rmse'] = rmse
-        print("   Root mean squared error: %.2f" % rmse)
-        # The coefficient of determination: 1 is perfect prediction
-        print("   Coefficient of determination: %.5f" % r2_score(y_test, y_pred))
+    if plots:
+        plt.figure()
+        plt.scatter(X_test[:,0], y_test, label="Actual", color='blue', marker='o')
+        plt.scatter(X_test[:,0], y_pred, label="Predicted", color='red', marker='x')
 
-        custom_scorer = make_scorer(metrics.r2_score, greater_is_better=True)
-
-        # cross validation
-        cv = cross_validate(pipe, X_clean, y_clean, cv=5, scoring=custom_scorer)
-        cv_score_mean = cv['test_score'].mean()
-        cv_score_std = cv['test_score'].std()
-        models[property_name]['cv_score_mean'] = cv_score_mean
-        models[property_name]['cv_score_std'] = cv_score_std
-        print \
-            ("   %0.5f accuracy with a standard deviation of %0.5f" % (cv_score_mean, cv_score_std))
-
-        if plots:
-            plt.figure()
-            plt.scatter(X_test[:,0], y_test, label="Actual", color='blue', marker='o')
-            plt.scatter(X_test[:,0], y_pred, label="Predicted", color='red', marker='x')
-
-            plt.xlabel("Volume Fraction Zirconia")
-            plt.ylabel(property_name)
-            plt.legend()
-            plt.show()
+        plt.xlabel("Volume Fraction Zirconia")
+        plt.ylabel(property_name)
+        plt.legend()
+        plt.show()
 
         v2_values = np.linspace(min(X_train[:, 0]), max(X_train[:, 0]), num=100)
         rho_values = np.linspace(min(X_train[:, 1]), max(X_train[:, 1]), num=100)
@@ -239,8 +226,13 @@ if __name__ == "__main__":
                         help='Path to the adaptive GP model to convert')
     parser.add_argument('--export_model_file', type=pathlib.Path, required=False,
                         help='Path to a file where the trained models will be exported to.')
+    parser.add_argument('--property_name', type=str,
+                        choices=['thermal_conductivity', 'thermal_expansion', 'young_modulus', 'poisson_ratio'],
+                        required=True, help='Name of the property')
+    parser.add_argument('--plots', action='store_true', help='Specify if plots should be shown.')
+
     args = parser.parse_args()
 
-    main(args.adapt_model, args.export_model_file)
+    main(args.adapt_model, args.export_model_file, args.property_name, plots=args.plots)
 
 

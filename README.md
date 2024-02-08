@@ -51,7 +51,7 @@ the model files will be stored at the directory ``incoker-inv/adapt``. The saved
 using the ``adapt_to_standard.py`` script as:
 
 ```console
-python online_inverse_design/training/adapt_to_standard.py adapt/model_name.joblib --export_model_file models/model_name.joblib
+python online_inverse_design/training/adapt_to_standard.py adapt/model_name.joblib --property_name <property_name> --export_model_file models/model_name.joblib
 ```
 
 Using this model, inverse design can be performed using the scripts under the directory ``incoker-inv/online_inverse_design/optimization``. To 
@@ -85,12 +85,12 @@ python offline_inverse_design/training/standard_training.py <path_to_training_da
 
 Once the models are trained and stored, evaluations of the inverse design using the model can be performed using the script:
 ```console
-python offline_inverse_training/optimization/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
+python offline_inverse_design/optimization/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
 ```
 
 A full comparison of the different kernels (trained independently) for inverse design can be performed using the script:
 ```console
-python offline_inverse_training/optimization/kernel_comparison.py
+python offline_inverse_design/optimization/kernel_comparison.py
 ```
 
 ### Direct Inverse Training
