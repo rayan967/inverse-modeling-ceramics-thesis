@@ -123,8 +123,11 @@ def main():
     output_stream = DualOutputStream("terminal_output.txt")
     sys.stdout = output_stream
 
-    execpath = './/adapt'
+    execpath = './adapt'
     execname = None
+
+    if not os.path.exists(execpath):
+        os.makedirs(execpath)
 
     ' Adaptive phase folders'
     foldername = createfoldername("ZTA-adaptive", "2D", "1E5")

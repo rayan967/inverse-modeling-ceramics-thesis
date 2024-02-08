@@ -17,7 +17,7 @@ poetry env use python3.11
 poetry install
 ```
 This will install the project package and its dependencies.
-You can then activate the virtual environment using:
+You can then activate the virtual environment (for linux) using:
 ```console
 source $(poetry env info --path)/bin/activate
 ```
