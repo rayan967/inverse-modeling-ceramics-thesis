@@ -1,3 +1,3 @@
 [submodule "incoker-inv/incoker-micro-sims"]
 	path = incoker-inv/incoker-micro-sims
-	url = https://gitlab.cc-asp.fraunhofer.de/simulation-htl/incoker-micro-sims.git
+	url = git@gitlab.cc-asp.fraunhofer.de:simulation-htl/incoker-micro-sims.git

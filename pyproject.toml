@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["rayan967 <36110753+rayan967@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{include = "incoker_inv"}]
+packages = [{include = "incoker-inv"}]
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.12"
@@ -16,7 +16,7 @@ jax = "^0.4.13"
 jaxlib = "^0.4.13"
 scikit-optimize = "^0.9.0"
 matplotlib = "^3.8.0"
-torch = "^2.1.0"
+# torch = "^2.1.0"
 dunamai = "^1.15.0"
 numpy = "^1.23.4"
 tqdm = "^4.64.1"
@@ -26,7 +26,55 @@ mpaut = {path = "incoker-inv/incoker-micro-sims/mpaut", develop = true}
 mercdpm = {path = "incoker-inv/incoker-micro-sims/mercurydpm-structure-generation", develop = true}
 incoker-micro-sims = {path = "incoker-inv/incoker-micro-sims/", develop = true}
 
+[tool.poetry.group.analysis]
+optional = true
+
+[tool.poetry.group.analysis.dependencies]
+flake8 = "^6.1.0"
+flake8-pyproject = "^1.2.3"
+flake8-docstrings = "^1.7.0"
+flake8-html = "^0.4.3"
+pylint = "<3"
+pylint-json2html = "^0.4.0"
+anybadge = "^1.14.0"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+target-version = ['py38', 'py39', 'py310', 'py311']
+line-length = 120
+include_trailing_comma = false
+
+[tool.pylint]
+ignore-paths = [
+    '.venv',
+    '.pytest_cache',
+    'build',
+    'builds',
+    '.eggs'
+]
+recursive = true
+output-format = ["json:pylint_result.json", "text:pylint_result.txt", "colorized"]
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.flake8]
+ignore = [
+    'W503'
+]
+max-line-length = 120
+count = true
+exclude = [
+    'incoker-inv/simlopt',
+    'incoker-inv/incoker-micro-sims',
+    '.venv',
+    '.pytest_cache',
+    'build',
+    'builds',
+    '.eggs'
+]
+format = "html"
+htmldir = "flake-report"
