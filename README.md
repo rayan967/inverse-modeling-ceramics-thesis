@@ -1,8 +1,8 @@
 # Inverse-Modeling-Ceramics-Thesis
 
-This thesis aims to extend the findings of the paper [Top-down material design of multi-phase ceramics](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) by designing bottom up models for the design of ceramics. The repository consists of ongoing documentation of literature review and weekly progress, along with the code implementation.
+This thesis aims to extend the findings of the paper [Top-down material design of multi-phase ceramics](https://doi.org/10.1016/j.oceram.2021.100211) by designing bottom up models for the design of ceramics. The repository consists of ongoing documentation of literature review and weekly progress, along with the code implementation.
 
-The completed thesis can be viewed [here](https://drive.google.com/file/d/1hwqsXUgSolrxIaKnrLP7zDHVB9zoaZii/view?usp=sharing).
+The completed thesis can be viewed [here](thesis/Rayan_Thesis_InverseGPR.pdf).
 
 
 ### Installation
