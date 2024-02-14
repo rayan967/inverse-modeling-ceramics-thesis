@@ -26,7 +26,8 @@ You can then move directory to the internal project files:
 ```console
 cd incoker-inv
 ```
-Additionally, MercuryDPM is used as part of the structure generator, which is required for running online simulations. To initialize the module, run the following commands:
+Additionally, MercuryDPM is used as part of the structure generator, which is required for running online simulations. To 
+initialize the module, run the following commands:
 
 ```console
 cd incoker-micro-sims
@@ -46,8 +47,9 @@ online adaptive training, run the script:
 python online_inverse_design/training/online_training.py
 ```
 
-This will start an interative GPR training for the desired material property. Once training is complete (typically 12 hours), 
-the model files will be stored at the directory ``incoker-inv/adapt``. The saved GPR can then be refactored into the skopt GPR 
+This will start an interative GPR training for the desired material property. The parameters for training can be set
+through the configuration file located at ``incoker-inv/online_inverse_design/training/config.yaml``. Once training is complete (typically 12 hours), 
+the model files and iterative plots will be stored at the directory ``incoker-inv/adapt``. The saved GPR can then be refactored into the skopt GPR 
 using the ``adapt_to_standard.py`` script as:
 
 ```console
