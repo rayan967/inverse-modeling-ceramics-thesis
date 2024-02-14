@@ -27,6 +27,7 @@ from scipy.optimize import minimize, brute
 import matplotlib.pyplot as plt
 import time
 
+
 def find_closest_point(Xt, point, selected_indices):
     """
     Finds the closest point in Xt to a given point that has not been selected yet.
@@ -48,6 +49,7 @@ def find_closest_point(Xt, point, selected_indices):
         else:
             distances[index] = np.inf
 
+
 def objective_function(x, desired_property, pipe, scale=0.01, callback=None):
     """
     Defines the objective function for the optimization problem.
@@ -65,10 +67,10 @@ def objective_function(x, desired_property, pipe, scale=0.01, callback=None):
     """
     if callback is not None:
         callback(x)
-    predicted_property, uncertainty  = pipe.predict(x.reshape(1, -1), return_std=True)
+    predicted_property, uncertainty = pipe.predict(x.reshape(1, -1), return_std=True)
     discrepancy = predicted_property - desired_property
 
-    return (discrepancy ** 2) + (uncertainty[0] * scale)
+    return (discrepancy**2) + (uncertainty[0] * scale)
 
 
 def objective_gradient(x, desired_property, pipe, scale=0.01):
@@ -84,11 +86,13 @@ def objective_gradient(x, desired_property, pipe, scale=0.01):
     Returns:
     - numpy.ndarray: The gradient of the objective function with respect to the solution vector.
     """
-    predicted_property, std, gpr_grad, gpr_var_grad  = pipe.predict(x.reshape(1, -1), return_mean_grad=True,return_std=True, return_std_grad=True)
+    predicted_property, std, gpr_grad, gpr_var_grad = pipe.predict(
+        x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+    )
     discrepancy = predicted_property - desired_property
 
     # Retrieve standard deviation from the StandardScaler
-    scaler = pipe.named_steps['standardscaler']
+    scaler = pipe.named_steps["standardscaler"]
     std_dev = scaler.scale_
 
     # Adjust gradients
@@ -97,11 +101,13 @@ def objective_gradient(x, desired_property, pipe, scale=0.01):
 
     return (2 * discrepancy * adjusted_gpr_grad) + (adjusted_gpr_var_grad * scale)
 
-    #s = 0.0008 for TC
-    #s = 0.01 for YM, TE, PR
+    # s = 0.0008 for TC
+    # s = 0.01 for YM, TE, PR
 
 
-def optimise_for_value(prop, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold):
+def optimise_for_value(
+    prop, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold
+):
     """
     Optimizes microstructure for a given property value using gradient-based optimization.
 
@@ -119,13 +125,13 @@ def optimise_for_value(prop, X, property_name, pipe, bounds, features, property_
     Optimizes the microstructure to achieve a target property value and visualizes the optimization process.
     """
     best_result = None
-    best_value = float('inf')
+    best_value = float("inf")
     best_iterates = []
     best_f_values = []
 
     all_solutions = []
 
-    if property_name == 'thermal_conductivity':
+    if property_name == "thermal_conductivity":
         scale = 0.0008
     else:
         scale = 0.01
@@ -138,7 +144,6 @@ def optimise_for_value(prop, X, property_name, pipe, bounds, features, property_
             current_iterates.append(np.copy(x))
             f_val = objective_function(x, prop, pipe, scale)
             current_f_values.append(f_val)
-
 
         res = minimize(
             fun=lambda x: objective_function(x, prop, pipe, scale, callback),
@@ -159,9 +164,8 @@ def optimise_for_value(prop, X, property_name, pipe, bounds, features, property_
             best_iterates = current_iterates.copy()
             best_f_values = current_f_values.copy()
 
-
     optimal_x = best_result.x
-    optimal_property_value, uncertainty  = pipe.predict(optimal_x.reshape(1, -1), return_std=True)
+    optimal_property_value, uncertainty = pipe.predict(optimal_x.reshape(1, -1), return_std=True)
 
     print("\nError in optimisation for best solution: " + str(np.abs(prop - optimal_property_value)))
 
@@ -170,7 +174,6 @@ def optimise_for_value(prop, X, property_name, pipe, bounds, features, property_
 
     for i, (iterate, f_val) in enumerate(zip(best_iterates, best_f_values)):
         print(f"{i+1}\t{iterate[0]:.6f}\t{iterate[1]:.6f}\t{f_val[0]:.6f}")
-
 
     if len(features) <= 2:
         print("\n\nAll solutions")
@@ -195,13 +198,13 @@ def optimise_for_value(prop, X, property_name, pipe, bounds, features, property_
         predictions_grid = predictions.reshape(v2_grid.shape)
 
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
         ax.plot_surface(v2_grid, rho_grid, predictions_grid, alpha=0.5)  # Reduced alpha to see points clearly
 
         # Labels and title
-        ax.set_xlabel('Volume Fraction (zirconia)')
-        ax.set_ylabel('Particle Size Ratio')
-        ax.set_zlabel("J(x) for "+property_ax_dict[property_name] + " = " + str(prop))
+        ax.set_xlabel("Volume Fraction (zirconia)")
+        ax.set_ylabel("Particle Size Ratio")
+        ax.set_zlabel("J(x) for " + property_ax_dict[property_name] + " = " + str(prop))
 
         """        # Plot the iterates
         iterates = np.array(best_iterates)
@@ -221,13 +224,25 @@ def optimise_for_value(prop, X, property_name, pipe, bounds, features, property_
         for solution in all_solutions:
             x_val, y_val = solution[0], solution[1]
             predicted_value, std_dev = pipe.predict([[x_val, y_val]], return_std=True)
-            z_val = objective_function(solution.reshape(1,-1), prop, pipe, scale)
-            ax.scatter(x_val, y_val, z_val, color='red', s=20)  # Red color for the solutions
+            z_val = objective_function(solution.reshape(1, -1), prop, pipe, scale)
+            ax.scatter(x_val, y_val, z_val, color="red", s=20)  # Red color for the solutions
         # Show the plot
         plt.show()
 
 
-def inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, property_dict, property_ax_dict, initial_points, minima_threshold):
+def inverse_validate(
+    X,
+    Y,
+    property_name,
+    pipe,
+    bounds,
+    prop_bounds,
+    features,
+    property_dict,
+    property_ax_dict,
+    initial_points,
+    minima_threshold,
+):
     """
     Validates and optimizes the inverse problem for a given material property across a range of target values.
 
@@ -260,7 +275,7 @@ def inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, p
     start_time = time.time()
     obj_fun = []
 
-    if property_name == 'thermal_conductivity':
+    if property_name == "thermal_conductivity":
         scale = 0.0008
     else:
         scale = 0.01
@@ -282,7 +297,6 @@ def inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, p
                 obj_fun.append(res.fun)
                 count += 1
 
-
     end_time = time.time()
     computation_time = end_time - start_time
 
@@ -293,7 +307,7 @@ def inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, p
     all_rho = []
 
     for solution in all_solutions:
-        predicted_value, uncertainty  = pipe.predict(solution.reshape(1, -1), return_std=True)
+        predicted_value, uncertainty = pipe.predict(solution.reshape(1, -1), return_std=True)
 
         predicted_properties.append(predicted_value)
 
@@ -302,7 +316,7 @@ def inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, p
     predicted_properties = np.array(predicted_properties)
 
     plt.figure()
-    plt.scatter(all_properties, predicted_properties, label="",  color='blue', marker='o')
+    plt.scatter(all_properties, predicted_properties, label="", color="blue", marker="o")
     plt.xlabel(f"Optimised value for {property_dict[property_name]}")
     plt.ylabel(f"Desired value for {property_dict[property_name]}")
     plt.legend()
@@ -316,28 +330,35 @@ def inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, p
     r2 = r2_score(all_properties, predicted_properties)
     print(f"R2 score between predicted and desired values: {r2*100}")
 
-
     # 2D plot
     plt.figure()
     # Scatter plot for actual points
-    plt.scatter(actual_volume_fractions_4, actual_properties, label="Ground truth",  color='blue', marker='o', alpha=0.5)
+    plt.scatter(actual_volume_fractions_4, actual_properties, label="Ground truth", color="blue", marker="o", alpha=0.5)
     # Scatter plot for optimized points
-    plt.scatter(all_volume_fractions_4, all_properties, label="Observed optimized structures", color='red', marker='x', alpha=0.5 )
+    plt.scatter(
+        all_volume_fractions_4,
+        all_properties,
+        label="Observed optimized structures",
+        color="red",
+        marker="x",
+        alpha=0.5,
+    )
     plt.xlabel("Volume Fraction Zirconia")
     plt.ylabel(property_ax_dict[property_name])
     plt.legend()
     plt.show()
 
-
     # 3D plot
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111, projection="3d")
     # Scatter plot for actual points
-    ax.scatter(actual_volume_fractions_4, actual_rho, actual_properties, label="Ground truth", color='blue', marker='o')
+    ax.scatter(actual_volume_fractions_4, actual_rho, actual_properties, label="Ground truth", color="blue", marker="o")
     # Scatter plot for optimized points
-    ax.scatter(all_volume_fractions_4, all_rho, all_properties, label="Observed optimized structures", color='red', marker='x')
-    ax.set_xlabel('Volume Fraction Zirconia')
-    ax.set_ylabel('Particle Size Ratio')
+    ax.scatter(
+        all_volume_fractions_4, all_rho, all_properties, label="Observed optimized structures", color="red", marker="x"
+    )
+    ax.set_xlabel("Volume Fraction Zirconia")
+    ax.set_ylabel("Particle Size Ratio")
     ax.set_zlabel(property_ax_dict[property_name])
 
     # Define the prediction surface with a grid in 3D plot
@@ -346,23 +367,34 @@ def inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, p
     v2_grid, rho_grid = np.meshgrid(v2_values, rho_values)
     feature_grid = np.vstack([v2_grid.ravel(), rho_grid.ravel()]).T
     # Predict the property values for the grid
-    predictions, uncertainty = (pipe.predict(feature_grid, return_std=True))
+    predictions, uncertainty = pipe.predict(feature_grid, return_std=True)
     predictions_grid = predictions.reshape(v2_grid.shape)
-    ax.plot_surface(v2_grid, rho_grid, predictions_grid, rstride=1, cstride=1,
-                           color='b', alpha=0.1, )
+    ax.plot_surface(
+        v2_grid,
+        rho_grid,
+        predictions_grid,
+        rstride=1,
+        cstride=1,
+        color="b",
+        alpha=0.1,
+    )
     ax.legend()
     plt.show()
 
+
 def main():
-    parser = argparse.ArgumentParser(description='Inverse Validation and Optimization for Material Properties')
-    parser.add_argument('--model_file', type=str, required=True, help='Path to the model file')
-    parser.add_argument('--property_name', type=str,
-                        choices=['thermal_conductivity', 'thermal_expansion', 'young_modulus', 'poisson_ratio'],
-                        required=True, help='Name of the property to optimize')
-    parser.add_argument('--property_value', type=float, required=True, help='Target value for the property')
+    parser = argparse.ArgumentParser(description="Inverse Validation and Optimization for Material Properties")
+    parser.add_argument("--model_file", type=str, required=True, help="Path to the model file")
+    parser.add_argument(
+        "--property_name",
+        type=str,
+        choices=["thermal_conductivity", "thermal_expansion", "young_modulus", "poisson_ratio"],
+        required=True,
+        help="Name of the property to optimize",
+    )
+    parser.add_argument("--property_value", type=float, required=True, help="Target value for the property")
 
     args = parser.parse_args()
-
 
     print("Starting optimization")
 
@@ -371,42 +403,42 @@ def main():
     model_file = args.model_file
 
     property_ax_dict = {
-        'thermal_conductivity': 'CTC [W/(m*K)]',
-        'thermal_expansion': 'CTE [ppm/K]',
-        'young_modulus': 'Young\'s Modulus[GPa]',
-        'poisson_ratio': 'Poisson Ratio',
+        "thermal_conductivity": "CTC [W/(m*K)]",
+        "thermal_expansion": "CTE [ppm/K]",
+        "young_modulus": "Young's Modulus[GPa]",
+        "poisson_ratio": "Poisson Ratio",
     }
 
     property_dict = {
-        'thermal_conductivity': 'CTC',
-        'thermal_expansion': 'CTE',
-        'young_modulus': 'Young\'s Modulus',
-        'poisson_ratio': 'Poisson Ratio',
+        "thermal_conductivity": "CTC",
+        "thermal_expansion": "CTE",
+        "young_modulus": "Young's Modulus",
+        "poisson_ratio": "Poisson Ratio",
     }
 
     models = joblib.load(model_file)["models"]
-    pipe = models[property_name]['pipe']
+    pipe = models[property_name]["pipe"]
 
-    X = models[property_name]['X_train']
-    Y = models[property_name]['y_train']
+    X = models[property_name]["X_train"]
+    Y = models[property_name]["y_train"]
 
     ## Preprocess parameters for optimization
 
     # Compute the minimum and maximum values for each feature in the training data
     min_values = np.min(X, axis=0)
     max_values = np.max(X, axis=0)
-    features = models[property_name]['features']
+    features = models[property_name]["features"]
     print("Features: ", str(features))
 
     # Define the search space dimensions based on the minimum and maximum values
     bounds = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
-    print("X Bounds: ",bounds)
+    print("X Bounds: ", bounds)
 
     # Number of starting points for multi-start
     num_samples = 30
 
     prop_bounds = (min(Y), max(Y))
-    print("Y Bounds",prop_bounds)
+    print("Y Bounds", prop_bounds)
     # LHS sampling for uniform starting points in multi-start optimization
     lhs_samples = lhs(len(bounds), samples=num_samples)
     for i in range(len(bounds)):
@@ -423,10 +455,24 @@ def main():
     minima_threshold = 1
 
     # Optimize desired value
-    optimise_for_value(property_value, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold)
+    optimise_for_value(
+        property_value, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold
+    )
 
     # Validate inverse design over a range of values
-    inverse_validate(X, Y, property_name, pipe, bounds, prop_bounds, features, property_dict, property_ax_dict, initial_points, minima_threshold)
+    inverse_validate(
+        X,
+        Y,
+        property_name,
+        pipe,
+        bounds,
+        prop_bounds,
+        features,
+        property_dict,
+        property_ax_dict,
+        initial_points,
+        minima_threshold,
+    )
 
 
 if __name__ == "__main__":

@@ -47,7 +47,6 @@ def find_closest_point(Xt, point, selected_indices):
 def gradient_function(x, models, property_name):
     model = models
 
-
     # Convert x to the relevant microstructure features
     microstructure_features = [x[i] for i in range(len(features))]
     X = np.array(microstructure_features).reshape(1, -1)
@@ -70,15 +69,15 @@ def convert_x_to_microstructure(x, features):
 
         # Construct the microstructure representation
         microstructure = {
-            'volume_fraction_4': volume_fraction_4,
-            'volume_fraction_10': volume_fraction_10,
-            'volume_fraction_1': volume_fraction_1,
-            'chord_length_mean_4': chord_length_mean_4,
-            'chord_length_mean_10': chord_length_mean_10,
-            'chord_length_mean_1': chord_length_mean_1,
-            'chord_length_variance_4': chord_length_variance_4,
-            'chord_length_variance_10': chord_length_variance_10,
-            'chord_length_variance_1': chord_length_variance_1,
+            "volume_fraction_4": volume_fraction_4,
+            "volume_fraction_10": volume_fraction_10,
+            "volume_fraction_1": volume_fraction_1,
+            "chord_length_mean_4": chord_length_mean_4,
+            "chord_length_mean_10": chord_length_mean_10,
+            "chord_length_mean_1": chord_length_mean_1,
+            "chord_length_variance_4": chord_length_variance_4,
+            "chord_length_variance_10": chord_length_variance_10,
+            "chord_length_variance_1": chord_length_variance_1,
         }
     elif len(features) == 8:
         volume_fraction_4 = x[0]
@@ -92,14 +91,14 @@ def convert_x_to_microstructure(x, features):
 
         # Construct the microstructure representation
         microstructure = {
-            'volume_fraction_4': volume_fraction_4,
-            'volume_fraction_1': volume_fraction_1,
-            'chord_length_mean_4': chord_length_mean_4,
-            'chord_length_mean_10': chord_length_mean_10,
-            'chord_length_mean_1': chord_length_mean_1,
-            'chord_length_variance_4': chord_length_variance_4,
-            'chord_length_variance_10': chord_length_variance_10,
-            'chord_length_variance_1': chord_length_variance_1,
+            "volume_fraction_4": volume_fraction_4,
+            "volume_fraction_1": volume_fraction_1,
+            "chord_length_mean_4": chord_length_mean_4,
+            "chord_length_mean_10": chord_length_mean_10,
+            "chord_length_mean_1": chord_length_mean_1,
+            "chord_length_variance_4": chord_length_variance_4,
+            "chord_length_variance_10": chord_length_variance_10,
+            "chord_length_variance_1": chord_length_variance_1,
         }
     elif len(features) == 3:
         volume_fraction_4 = x[0]
@@ -108,9 +107,9 @@ def convert_x_to_microstructure(x, features):
 
         # Construct the microstructure representation
         microstructure = {
-            'volume_fraction_4': volume_fraction_4,
-            'volume_fraction_1': volume_fraction_1,
-            'chord_length_ratio': chord_length_ratio,
+            "volume_fraction_4": volume_fraction_4,
+            "volume_fraction_1": volume_fraction_1,
+            "chord_length_ratio": chord_length_ratio,
         }
     elif len(features) == 2:
         volume_fraction_4 = x[0]
@@ -118,8 +117,8 @@ def convert_x_to_microstructure(x, features):
 
         # Construct the microstructure representation
         microstructure = {
-            'volume_fraction_4': volume_fraction_4,
-            'chord_length_ratio': chord_length_ratio,
+            "volume_fraction_4": volume_fraction_4,
+            "chord_length_ratio": chord_length_ratio,
         }
 
     return microstructure
@@ -129,14 +128,14 @@ def objective_function(x, desired_property, models, property_name):
     microstructure = convert_x_to_microstructure(x, features)
     predicted_property = predict_property(property_name, microstructure, models)
     discrepancy = predicted_property - desired_property
-    return (discrepancy ** 2)  # Return the squared discrepancy for minimization
+    return discrepancy**2  # Return the squared discrepancy for minimization
 
 
 def objective_gradient(x, desired_property, models, property_name):
     gpr_grad = gradient_function(x, models, property_name)
     predicted_property = predict_property(property_name, convert_x_to_microstructure(x, features), models)
     discrepancy = predicted_property - desired_property
-    return (2 * discrepancy * gpr_grad)
+    return 2 * discrepancy * gpr_grad
 
 
 def predict_property(property_name, microstructure, models):
@@ -158,10 +157,10 @@ def gpr_mean_grad(X_test, gpr):
 def optimise_for_value(prop, X, property_name):
     # Random sample starting points
     initial_points = X[np.random.choice(X.shape[0], NUM_STARTS, replace=False)]
-    #initial_points = X[sorted_indices[:NUM_STARTS]]
+    # initial_points = X[sorted_indices[:NUM_STARTS]]
 
     best_result = None
-    best_value = float('inf')
+    best_value = float("inf")
 
     for initial_point in initial_points:
         res = minimize(
@@ -169,7 +168,7 @@ def optimise_for_value(prop, X, property_name):
             jac=lambda x: objective_gradient(x, prop, models, property_name),
             x0=initial_point,
             bounds=bounds,
-            method="L-BFGS-B"
+            method="L-BFGS-B",
         )
         if res.fun < best_value:
             best_value = res.fun
@@ -184,49 +183,46 @@ def optimise_for_value(prop, X, property_name):
 
 
 print("starting opt")
-property_name = 'thermal_conductivity'
+property_name = "thermal_conductivity"
 
 property_ax_dict = {
-    'thermal_conductivity':'CTC [W/(m*K)]',
-    'thermal_expansion':'CTE [ppm/K]',
-    'young_modulus':'Young\'s Modulus[GPa]',
-    'poisson_ratio':'Poisson Ratio',
+    "thermal_conductivity": "CTC [W/(m*K)]",
+    "thermal_expansion": "CTE [ppm/K]",
+    "young_modulus": "Young's Modulus[GPa]",
+    "poisson_ratio": "Poisson Ratio",
 }
 
 property_dict = {
-    'thermal_conductivity':'CTC',
-    'thermal_expansion':'CTE',
-    'young_modulus':'Young\'s Modulus',
-    'poisson_ratio':'Poisson Ratio',
+    "thermal_conductivity": "CTC",
+    "thermal_expansion": "CTE",
+    "young_modulus": "Young's Modulus",
+    "poisson_ratio": "Poisson Ratio",
 }
 training_data = pathlib.Path("data/training_data_rve_database.npy")
 if not training_data.exists():
     print(f"Error: training data path {training_data} does not exist.")
 
-if training_data.suffix == '.npy':
+if training_data.suffix == ".npy":
     data = np.load(training_data)
 else:
     print("Invalid data")
 
 print(f"loaded {data.shape[0]} training data pairs")
 
-data['thermal_expansion'] *= 1e6
+data["thermal_expansion"] *= 1e6
 
 
 # Change next two lines for different feature sets or models
 gp = joblib.load("models/CTC_adapt.joblib")
 models = gp
 X, Y = gp.X, gp.yt
-print(len(X),len(Y))
+print(len(X), len(Y))
 
-property_name = 'thermal_conductivity'
+property_name = "thermal_conductivity"
 # Compute the minimum and maximum values for each feature in the training data
 min_values = np.min(X, axis=0)
 max_values = np.max(X, axis=0)
-features = [
-    'volume_fraction_4',
-    'chord_length_ratio'
-]
+features = ["volume_fraction_4", "chord_length_ratio"]
 
 print("Features: ", str(features))
 
@@ -235,12 +231,12 @@ bounds = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)
 
 NUM_STARTS = 30  # Number of starting points for multi-start
 
-property_name = 'thermal_conductivity'
-prop_bounds = (min(Y[:, ]), max(Y[:, ]))
+property_name = "thermal_conductivity"
+prop_bounds = (min(Y[:,]), max(Y[:,]))
 print(prop_bounds)
 
-#best_starting_point, sorted_indices = find_best_starting_point(X, models, property_name, bounds, features)
-#optimise_for_value(5.9, X, property_name)
+# best_starting_point, sorted_indices = find_best_starting_point(X, models, property_name, bounds, features)
+# optimise_for_value(5.9, X, property_name)
 # LHS sampling for uniform starting points in multi-start optimization
 num_samples = 30
 lhs_samples = lhs(len(bounds), samples=num_samples)
@@ -268,7 +264,7 @@ optimal_thermal_expansions = []
 actual_rho = X[:, 1]
 actual_properties = Y
 actual_volume_fractions_4 = X[:, 0]
-actual_thermal_expansions = Y[:, ]
+actual_thermal_expansions = Y[:,]
 count = 0
 error_bars_min = []
 error_bars_max = []
@@ -281,15 +277,15 @@ start_time = time.time()
 
 for prop in prop_values:
     best_result = None
-    best_value = float('inf')
+    best_value = float("inf")
 
     for initial_point in initial_points:
         res = minimize(
             fun=lambda x: objective_function(x, prop, gp, property_name),
-            #jac=lambda x: objective_gradient(x, prop, gp, property_name),
+            # jac=lambda x: objective_gradient(x, prop, gp, property_name),
             x0=initial_point,
             bounds=bounds,
-            method="L-BFGS-B"
+            method="L-BFGS-B",
         )
         if res.fun < 0.1:
             all_solutions.append(res.x)
@@ -306,15 +302,15 @@ for prop in prop_values:
 
     optimal_microstructures.append(optimal_microstructure)
     # Store the optimal volume fraction and thermal expansion value
-    optimal_volume_fractions_4.append(optimal_microstructure['volume_fraction_4'])
-    optimal_rho.append(optimal_microstructure['chord_length_ratio'])
+    optimal_volume_fractions_4.append(optimal_microstructure["volume_fraction_4"])
+    optimal_rho.append(optimal_microstructure["chord_length_ratio"])
     optimal_properties.append(prop)
 
 end_time = time.time()
 computation_time = end_time - start_time
 
 print(f"Optimization took {computation_time}")
-num_sol = count/20
+num_sol = count / 20
 print(f"Avg no of sols {num_sol} ")
 
 predicted_properties = []
@@ -327,12 +323,12 @@ for solution in all_solutions:
     predicted_value = predict_property(property_name, sol_microstructure, gp)
     predicted_properties.append(predicted_value)
 
-    all_volume_fractions_4.append(sol_microstructure['volume_fraction_4'])
-    all_rho.append(sol_microstructure['chord_length_ratio'])
+    all_volume_fractions_4.append(sol_microstructure["volume_fraction_4"])
+    all_rho.append(sol_microstructure["chord_length_ratio"])
 predicted_properties = np.array(predicted_properties)
 
 plt.figure()
-plt.scatter(all_properties, predicted_properties, label="",  color='blue', marker='o')
+plt.scatter(all_properties, predicted_properties, label="", color="blue", marker="o")
 plt.xlabel(f"Optimised value for {property_dict[property_name]}")
 plt.ylabel(f"Desired value for {property_dict[property_name]}")
 plt.legend()
@@ -351,8 +347,10 @@ print(statistics.mean(obj_fun))
 
 plt.figure()
 
-plt.scatter(actual_volume_fractions_4, actual_properties, label="Ground truth",  color='blue', marker='o', alpha=0.5)
-plt.scatter(all_volume_fractions_4, all_properties, label="Observed optimized structures", color='red', marker='x', alpha=0.5 )
+plt.scatter(actual_volume_fractions_4, actual_properties, label="Ground truth", color="blue", marker="o", alpha=0.5)
+plt.scatter(
+    all_volume_fractions_4, all_properties, label="Observed optimized structures", color="red", marker="x", alpha=0.5
+)
 
 plt.xlabel("Volume Fraction Zirconia")
 plt.ylabel(property_ax_dict[property_name])
@@ -360,22 +358,21 @@ plt.legend()
 plt.show()
 ##################
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
+ax = fig.add_subplot(111, projection="3d")
 
 
 # Scatter plot for actual points
-ax.scatter(actual_volume_fractions_4, actual_rho, actual_properties, label="Ground truth", color='blue', marker='o')
+ax.scatter(actual_volume_fractions_4, actual_rho, actual_properties, label="Ground truth", color="blue", marker="o")
 
 # Scatter plot for optimized points
-ax.scatter(all_volume_fractions_4, all_rho, all_properties, label="Observed optimized structures", color='red', marker='x')
-
-
-
+ax.scatter(
+    all_volume_fractions_4, all_rho, all_properties, label="Observed optimized structures", color="red", marker="x"
+)
 
 
 # Set labels
-ax.set_xlabel('Volume Fraction Zirconia')
-ax.set_ylabel('Particle Size Ratio')
+ax.set_xlabel("Volume Fraction Zirconia")
+ax.set_ylabel("Particle Size Ratio")
 ax.set_zlabel(property_ax_dict[property_name])
 
 v2_values = np.linspace(min(X[:, 0]), max(X[:, 0]), num=50)
@@ -384,17 +381,21 @@ v2_grid, rho_grid = np.meshgrid(v2_values, rho_values)
 
 feature_grid = np.vstack([v2_grid.ravel(), rho_grid.ravel()]).T
 
-predictions = (gp.predictmean(feature_grid))
+predictions = gp.predictmean(feature_grid)
 
 predictions_grid = predictions.reshape(v2_grid.shape)
-ax.plot_surface(v2_grid, rho_grid, predictions_grid, rstride=1, cstride=1,
-                       color='b', alpha=0.1, ) # Set color and transparency)
+ax.plot_surface(
+    v2_grid,
+    rho_grid,
+    predictions_grid,
+    rstride=1,
+    cstride=1,
+    color="b",
+    alpha=0.1,
+)  # Set color and transparency)
 
 # Show legend
 ax.legend()
 
 plt.show()
 ###############
-
-
-

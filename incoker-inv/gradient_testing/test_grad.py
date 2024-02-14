@@ -5,12 +5,11 @@ from sklearn.metrics import mean_squared_error
 from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel, Matern
 
 
-
 def gpr_mean_grad(X_test, gpr):
     X_train = gpr.X_train_
     kernel = gpr.kernel_
 
-    #kernel_1, white = kernel.k1, kernel.k2
+    # kernel_1, white = kernel.k1, kernel.k2
     alpha = gpr.alpha_
     gradients = []
     for x_star in X_test:
@@ -28,11 +27,14 @@ def gpr_mean_grad(X_test, gpr):
 
     return np.array(gradients).ravel()
 
+
 def f(x):
     return np.sin(2 * np.pi * x)
 
+
 def grad_f(x):
     return 2 * np.pi * np.cos(2 * np.pi * x)
+
 
 # Generate sample data from the function
 X_train = np.linspace(0, 1, 100)[:, np.newaxis]
@@ -61,7 +63,7 @@ print("RMSE:", rmse)
 error = check_grad(lambda x: gpr.predict(x.reshape(1, -1)), lambda x: gpr_mean_grad(x, gpr), np.array([0.4]))
 error_2 = gpr_mean_grad(np.array([0.4]), gpr) - grad_f(np.array([0.4]))
 print("Gradient error:", error)
-#print("Gradient error2:", error_2)
+# print("Gradient error2:", error_2)
 """
 import matplotlib.pyplot as plt
 

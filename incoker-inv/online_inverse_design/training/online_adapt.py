@@ -6,12 +6,14 @@ using a Gaussian Process surrogate model. It is designed to iteratively
 select new candidate points for evaluation and update the surrogate model
 to optimize a given property.
 """
+
 import os
 
 import joblib
 import numpy as np
 from pathlib import Path
 import sys
+
 current_file = Path(__file__).resolve()
 run_directory = current_file.parent.parent.parent
 sys.path.append(str(run_directory))
@@ -25,7 +27,22 @@ from simlopt.optimization.utilities import *
 import matplotlib.pyplot as plt
 
 
-def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, execpath, runpath, output_stream, property_name, simulation_options, iter_count=None):
+def adapt_inc(
+    gp,
+    parameterranges,
+    TOL,
+    TOLAcqui,
+    TOLrelchange,
+    epsphys,
+    X_test,
+    y_test,
+    execpath,
+    runpath,
+    output_stream,
+    property_name,
+    simulation_options,
+    iter_count=None,
+):
     """
     Perform the adaptive sampling and optimization process.
 
@@ -65,8 +82,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
     # List for storing values for plots
     global_errors = []
     accuracies = []
-    cases = {1:"Case 1: Gradient data is not available.",
-             2:"Case 1: Gradient data is available."}
+    cases = {1: "Case 1: Gradient data is not available.", 2: "Case 1: Gradient data is available."}
 
     # Calculate weights to normalize parameter ranges for finding fair euclidean distance
     weights = calculate_weights(parameterranges)
@@ -74,20 +90,19 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
     # Initialize zones to exclude that cannot be generated
     exclusion_zones = []
     generated_points_history = np.empty((0, len(parameterranges)))
-    'Check for which cases are set.'
+    "Check for which cases are set."
     if gp.getXgrad is None:
-        Ngrad = gp.getdata[1] #Is None, when Xgrad is None
+        Ngrad = gp.getdata[1]  # Is None, when Xgrad is None
         case = 1
     elif gp.getXgrad is not None:
         Ngrad = gp.getdata[1]
         case = 2
-    figurepath = os.path.join(runpath+"/", "iteration_plots/")
+    figurepath = os.path.join(runpath + "/", "iteration_plots/")
     print("---------------------------------- Start adaptive phase")
     print(cases[case])
-    print("Number of initial points:          "+str(len(gp.yt)))
-    print("Desired tolerance:                 "+str(TOL))
+    print("Number of initial points:          " + str(len(gp.yt)))
+    print("Desired tolerance:                 " + str(TOL))
     print("\n")
-
 
     # Main adaptive loop
     while True:
@@ -103,23 +118,22 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
         # Estimate weight factors
         w = estiamteweightfactors(dfGLEE, epsphys)
 
-
         # MC global error estimation
-        mcglobalerrorbefore = MCGlobalEstimate(w, normvar, NMC,
-                                               parameterranges)
+        mcglobalerrorbefore = MCGlobalEstimate(w, normvar, NMC, parameterranges)
         print("Global error estimate before optimization:   {:1.5f}".format(mcglobalerrorbefore))
 
         """ ------------------------------Acquisition phase ------------------------------ """
-        'Add new candidate points'
+        "Add new candidate points"
 
         XC = np.array([])
         Xc = np.array([])
         Yc = np.array([])
 
-        normvar_TEST    = np.linalg.norm(np.sqrt(np.abs(varGLEE)),2,axis=0)
+        normvar_TEST = np.linalg.norm(np.sqrt(np.abs(varGLEE)), 2, axis=0)
         # Acquisition phase
-        XC, index, value = acquisitionfunction(gp, dfGLEE, normvar, w, XGLEE, epsphys,
-                                               TOLAcqui, generated_points_history)  # Use your acquisition function
+        XC, index, value = acquisitionfunction(
+            gp, dfGLEE, normvar, w, XGLEE, epsphys, TOLAcqui, generated_points_history
+        )  # Use your acquisition function
 
         if XC.size != 0:
             print(" Number of possible candidate points: {}".format(XC.shape[0]))
@@ -131,8 +145,9 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
             # Try to generate candidate XC add it to the GP model
             try:
                 point = (XC[0][0], XC[0][1])
-                X, Y = generate_candidate_point(point, simulation_options, property_name, output_stream,
-                                                runpath, "adaptive_points")
+                X, Y = generate_candidate_point(
+                    point, simulation_options, property_name, output_stream, runpath, "adaptive_points"
+                )
                 Xc = np.array(X).reshape(1, -1)
                 Yc = np.array(Y).reshape(1, -1)
 
@@ -150,8 +165,20 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
                     print(f"Distance is larger than threshold: {distance_threshold}")
 
                 # Plot iterations to adaptZTA-adaptive_2D_1E5
-                plotiteration(gp, w, normvar_TEST, N, Ngrad, XGLEE, XC, mcglobalerrorbefore, parameterranges, figurepath,
-                          counter, Xc)
+                plotiteration(
+                    gp,
+                    w,
+                    normvar_TEST,
+                    N,
+                    Ngrad,
+                    XGLEE,
+                    XC,
+                    mcglobalerrorbefore,
+                    parameterranges,
+                    figurepath,
+                    counter,
+                    Xc,
+                )
 
             except Exception as e:
                 if str(e) == "list index out of range":
@@ -175,7 +202,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
             continue
 
         # Use constant variance for current point
-        epsXc = 1E-4 * np.ones((1, XC.shape[0]))  # eps**2
+        epsXc = 1e-4 * np.ones((1, XC.shape[0]))  # eps**2
 
         # Add point to GP
         gp.adddatapoint(Xc)
@@ -231,7 +258,7 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
             gp.optimizehyperparameter(region, "mean", False)
         else:
             print("--- A priori hyperparameter adjustment")
-            print("Number of points is higher then "+str(Nmax))
+            print("Number of points is higher then " + str(Nmax))
             print("No optimization is performed")
         print("\n")
         counter += 1
@@ -249,12 +276,12 @@ def plot_global_errors(global_errors):
 
     """
     plt.figure(figsize=(10, 6))
-    plt.plot(range(1, len(global_errors) + 1), global_errors, marker='o')
-    plt.xlabel('Iteration')
-    plt.ylabel('MC Global Error Estimate')
-    plt.title('MC Global Error Estimate per Iteration')
+    plt.plot(range(1, len(global_errors) + 1), global_errors, marker="o")
+    plt.xlabel("Iteration")
+    plt.ylabel("MC Global Error Estimate")
+    plt.title("MC Global Error Estimate per Iteration")
     plt.grid(True)
-    plt.savefig('mc_global_error_plot.png')
+    plt.savefig("mc_global_error_plot.png")
 
 
 def plot_accuracy(accuracies):
@@ -269,12 +296,12 @@ def plot_accuracy(accuracies):
 
     """
     plt.figure(figsize=(10, 6))
-    plt.plot(range(1, len(accuracies) + 1), accuracies, marker='o')
-    plt.xlabel('Iteration')
-    plt.ylabel('Accuracy')
-    plt.title('Accuracy per Iteration')
+    plt.plot(range(1, len(accuracies) + 1), accuracies, marker="o")
+    plt.xlabel("Iteration")
+    plt.ylabel("Accuracy")
+    plt.title("Accuracy per Iteration")
     plt.grid(True)
-    plt.savefig('accuracy_plot.png')
+    plt.savefig("accuracy_plot.png")
 
 
 def calculate_weights(parameterranges):
@@ -288,6 +315,7 @@ def calculate_weights(parameterranges):
     weights = 1 / ranges
     return weights
 
+
 def weighted_distance(point_a, point_b, weights):
     """
     Calculate the weighted Euclidean distance between two points.
@@ -299,4 +327,4 @@ def weighted_distance(point_a, point_b, weights):
     """
     diff = np.array(point_a) - np.array(point_b)
     weighted_diff = diff * weights
-    return np.sqrt(np.sum(weighted_diff ** 2))
+    return np.sqrt(np.sum(weighted_diff**2))
