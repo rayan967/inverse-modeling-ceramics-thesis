@@ -6,39 +6,26 @@ using a Gaussian Process surrogate model. It is designed to iteratively
 select new candidate points for evaluation and update the surrogate model
 to optimize a given property.
 """
-
+import os
 
 import joblib
 import numpy as np
-import os
+from pathlib import Path
 import sys
-current_directory = os.path.dirname(os.path.abspath(__file__))
-parent_directory = os.path.dirname(os.path.dirname(current_directory))
-sys.path.append(parent_directory)
+current_file = Path(__file__).resolve()
+run_directory = current_file.parent.parent.parent
+sys.path.append(str(run_directory))
 import pathlib
 from incoker_micro_sims import prediction_pipeline
 from simlopt.gpr.gaussianprocess import *
 from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.optimization.errormodel_new import MCGlobalEstimate, acquisitionfunction, estiamteweightfactors
-from online_training import accuracy_test
+from online_training import accuracy_test, generate_candidate_point
 from simlopt.optimization.utilities import *
 import matplotlib.pyplot as plt
 
-property_dict = {
-    'thermal_conductivity': 'Thermal conductivity',
-    'thermal_expansion': 'Thermal expansion',
-    'young_modulus': 'Young modulus',
-    'poisson_ratio': 'Poisson ratio',
-}
 
-property_dict_category = {
-    'thermal_conductivity': 'thermal_conductivity',
-    'thermal_expansion': 'thermal_expansion',
-    'young_modulus': 'elasticity',
-    'poisson_ratio': 'elasticity',
-}
-
-def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, runpath, output_stream, property_name, iter_count=None):
+def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test, y_test, execpath, runpath, output_stream, property_name, simulation_options, iter_count=None):
     """
     Perform the adaptive sampling and optimization process.
 
@@ -48,12 +35,14 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
         TOL (float): Desired tolerance for the global error estimate.
         TOLAcqui (float): Tolerance for the acquisition function.
         TOLrelchange (float): Tolerance for relative change in global error estimate.
-        epsphys (float): Physical variance in property.
+        epsphys (numpy.ndarray): Physical variance in property.
         X_test (numpy.ndarray): Test data features.
         y_test (numpy.ndarray): Test data targets.
-        runpath (str): Path to the output directory.
+        execpath (pathlib.Path): Path to the output directory for models.
+        runpath (str): Path to the output directory for post-processing.
         output_stream: Output stream for logging.
         property_name (str): Name of the property being optimized.
+        simulation_options (dict): Simulations options to be passed to pipeline.
         iter_count (int): Current iteration (for restarted runs).
 
     Returns:
@@ -140,47 +129,12 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
             print("\n")
 
             # Try to generate candidate XC add it to the GP model
-
             try:
-                # Set error flag for Mapdl error to False
-                output_stream.error_detected = False
-
-                input = (XC[0][0], XC[0][1])
-                output_path = pathlib.Path(runpath, "adaptive_points", f"v={input[0]:.2f},r={input[1]:.2f}")
-                output_path.mkdir(parents=True, exist_ok=True)
-
-                # Generate candidate point
-                options = {
-                    "material_property": property_dict_category[property_name],
-                    "particle_quantity": 200,
-                    "dim": 32,
-                    "max_vertices": 25000,
-                    "output_path": output_path
-                }
-                result = prediction_pipeline.generate_and_predict(input, options)
-                print(result.keys())
-
-                vf = result["v_phase"]["11"]
-                cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][11]["mean_chord_length"]
-                cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][4]["mean_chord_length"]
-                clr = cl_11 / cl_4
-
-                # For CTE
-                if property_name == 'thermal_expansion':
-                    output_value = result["mean"]
-
-                # For the rest
-                else:
-                    output_value = result["homogenization"][property_dict[property_name]]["value"]
-
-                Xc = np.array([vf,clr]).reshape(1,-1)
-                Yc = np.array([output_value]).reshape(1,-1)
-
-                # Check for Mapdl error
-                if output_stream.error_detected:
-                    # Reset error flag
-                    output_stream.error_detected = False
-                    raise Exception("Error detected during operation: Mapdl")
+                point = (XC[0][0], XC[0][1])
+                X, Y = generate_candidate_point(point, simulation_options, property_name, output_stream,
+                                                runpath, "adaptive_points")
+                Xc = np.array(X).reshape(1, -1)
+                Yc = np.array(Y).reshape(1, -1)
 
                 # Find distance between requested candidate XC and generated point Xc
                 dist = weighted_distance(XC[0], Xc[0], weights)
@@ -205,16 +159,16 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
                     print(f"Excluding point from future sampling: {str(XC[0])}")
                     exclusion_zone = (XC[0], 0.05)
                     exclusion_zones.append(exclusion_zone)
-                    continue
-
-                print(f"Error at {str(counter)} iteration at size {str(len(gp.yt))}")
-                print(f"Error: {e}")
+                else:
+                    print(f"Error at {str(counter)} iteration at size {str(len(gp.yt))}")
+                    print(f"Error: {e}")
                 continue
         else:
             print("Something went wrong, no candidate point was found.")
             print("\n")
             continue
 
+        # Maintain generated points for future candidate exclusion
         generated_points_history = np.vstack([generated_points_history, XC[0]])
 
         if Yc.size == 0:
@@ -258,7 +212,6 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
             print("Relative change is below set threshold. Adjusting TOLAcqui.")
 
         # Check number of points
-
         if len(gp.yt) >= 150:
             print("--- Maximum number of points reached")
             plot_global_errors(global_errors)
@@ -268,8 +221,8 @@ def adapt_inc(gp, parameterranges, TOL, TOLAcqui, TOLrelchange, epsphys, X_test,
         if len(gp.yt) % 5 == 0:
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
-            joblib.dump(gp, f"adapt/{property_name}_{str(len(gp.yt))}_gp.joblib")
-
+            filename = f"{property_name}_{str(len(gp.yt))}_gp.joblib"
+            joblib.dump(gp, execpath / filename)
         Nmax = 50
         N = gp.getdata[0]
         if N < Nmax:
