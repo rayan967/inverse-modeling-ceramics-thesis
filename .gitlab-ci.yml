@@ -38,7 +38,7 @@ flake8:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run flake8 --max-line-length=120 --format=html --htmldir=flake-report --exclude=simlopt
+    - poetry run flake8
   artifacts:
     paths:
       - flake-report
