@@ -7,7 +7,7 @@ The completed thesis can be viewed [here](thesis/Rayan_Thesis_InverseGPR.pdf).
 
 ### Installation
 The app and all required dependencies can be cloned from the Gitlab Package registry:
-Update ```console
+```console
 git clone --recurse-submodules https://oauth2:<your_personal_token>@gitlab.cc-asp.fraunhofer.de/simulation-htl/inverse-modeling-ceramics-thesis.git
 ```
 Once you have a copy of the source, you can install it in a ``poetry`` environment using:
