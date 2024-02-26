@@ -331,7 +331,7 @@ def main(config_path):
 
     if compute:
         # Generate initial design points (border points) as training data
-        for i, point in enumerate(initial_design_points[:4]):
+        for i, point in enumerate(initial_design_points):
             try:
                 print(f"--- Initial Iteration {i}")
                 X, Y = generate_candidate_point(
