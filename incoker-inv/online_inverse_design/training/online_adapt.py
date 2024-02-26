@@ -41,6 +41,8 @@ def adapt_inc(
     output_stream,
     property_name,
     simulation_options,
+    output_freq,
+    max_samples,
     iter_count=None,
 ):
     """
@@ -60,6 +62,8 @@ def adapt_inc(
         output_stream: Output stream for logging.
         property_name (str): Name of the property being optimized.
         simulation_options (dict): Simulations options to be passed to pipeline.
+        output_freq (int): Frequency of saving models.
+        max_samples (int): Maximum number of points.
         iter_count (int): Current iteration (for restarted runs).
 
     Returns:
@@ -239,13 +243,13 @@ def adapt_inc(
             print("Relative change is below set threshold. Adjusting TOLAcqui.")
 
         # Check number of points
-        if len(gp.yt) >= 150:
+        if len(gp.yt) >= max_samples:
             print("--- Maximum number of points reached")
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
             return gp
 
-        if len(gp.yt) % 5 == 0:
+        if len(gp.yt) % output_freq == 0:
             plot_global_errors(global_errors)
             plot_accuracy(accuracies)
             filename = f"{property_name}_{str(len(gp.yt))}_gp.joblib"

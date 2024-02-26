@@ -268,6 +268,8 @@ def main(config_path):
     simulation_options["material_property"] = property_dict_category[property_name]
     adaptive_phase_parameters = config["adaptive_phase_parameters"]
     validation_data_path = Path(config["validation_data_path"])
+    output_freq = config["output_freq"]
+    max_samples = config["max_samples"]
 
     # Convert the parameter ranges to a numpy array if needed
     parameterranges = np.array(
@@ -411,6 +413,8 @@ def main(config_path):
             output_stream,
             property_name,
             simulation_options,
+            output_freq,
+            max_samples
         )
 
     # Pass iteration number for failed run
@@ -429,6 +433,8 @@ def main(config_path):
             output_stream,
             property_name,
             simulation_options,
+            output_freq,
+            max_samples,
             iter_count,
         )
 
