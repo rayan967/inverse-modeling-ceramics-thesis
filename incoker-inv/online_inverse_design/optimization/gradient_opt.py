@@ -11,7 +11,7 @@ Usage:
   young_modulus and poisson_ratio.
 
 Example:
-  python online_inverse_training/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
+  python online_inverse_training/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value> [--uncertainty_scale <scale_value>]
 """
 
 import argparse
@@ -50,7 +50,7 @@ def find_closest_point(Xt, point, selected_indices):
             distances[index] = np.inf
 
 
-def objective_function(x, desired_property, pipe, callback=None):
+def objective_function(x, desired_property, pipe, scale=0, callback=None):
     """
     Defines the objective function for the optimization problem.
 
@@ -58,21 +58,22 @@ def objective_function(x, desired_property, pipe, callback=None):
     - x (numpy.ndarray): Current solution vector.
     - desired_property (float): The target value for the property being optimized.
     - pipe (sklearn.pipeline.Pipeline): The prediction pipeline.
-    - property_name (str): The name of the property being optimized.
+    - scale: A scaling factor for the uncertainty
     - callback (function, optional): A callback function to execute additional procedures at each iteration.
 
     Returns:
-    - float: The squared discrepancy between the predicted property value and the desired property value.
+    - float: The squared discrepancy between the predicted property value and the desired property value added with the
+    uncertainty at that point.
     """
     if callback is not None:
         callback(x)
-    predicted_property = pipe.predict(x.reshape(1, -1))
+    predicted_property, uncertainty = pipe.predict(x.reshape(1, -1), return_std=True)
     discrepancy = predicted_property - desired_property
 
-    return discrepancy**2  # + uncertainty[0]*0.01
+    return (discrepancy**2) + (uncertainty[0] * scale)
 
 
-def objective_gradient(x, desired_property, pipe):
+def objective_gradient(x, desired_property, pipe, scale=0):
     """
     Computes the gradient of the objective function.
 
@@ -80,15 +81,14 @@ def objective_gradient(x, desired_property, pipe):
     - x (numpy.ndarray): Current solution vector.
     - desired_property (float): The target value for the property being optimized.
     - pipe (sklearn.pipeline.Pipeline): The prediction pipeline.
-    - property_name (str): The name of the property being optimized.
+    - scale: A scaling factor for the uncertainty
 
     Returns:
     - numpy.ndarray: The gradient of the objective function with respect to the solution vector.
     """
-    (
-        predicted_property,
-        gpr_grad,
-    ) = pipe.predict(x.reshape(1, -1), return_mean_grad=True)
+    predicted_property, std, gpr_grad, gpr_var_grad = pipe.predict(
+        x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+    )
     discrepancy = predicted_property - desired_property
 
     # Retrieve standard deviation from the StandardScaler
@@ -97,14 +97,16 @@ def objective_gradient(x, desired_property, pipe):
 
     # Adjust gradients
     adjusted_gpr_grad = gpr_grad / std_dev
+    adjusted_gpr_var_grad = gpr_var_grad / std_dev
 
-    return 2 * discrepancy * adjusted_gpr_grad  # + adjusted_gpr_var_grad*0.01
-    # 0.0008 for TC
-    # 0.01 for YM, TE, PR
+    return (2 * discrepancy * adjusted_gpr_grad) + (adjusted_gpr_var_grad * scale)
+
+    # s = 0.0008 for TC
+    # s = 0.01 for YM, TE, PR
 
 
 def optimise_for_value(
-    prop, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold
+    prop, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold, u_scale
 ):
     """
     Optimizes microstructure for a given property value using gradient-based optimization.
@@ -135,12 +137,12 @@ def optimise_for_value(
 
         def callback(x):
             current_iterates.append(np.copy(x))
-            f_val = objective_function(x, prop, pipe)
+            f_val = objective_function(x, prop, pipe, u_scale)
             current_f_values.append(f_val)
 
         res = minimize(
-            fun=lambda x: objective_function(x, prop, pipe, callback),
-            jac=lambda x: objective_gradient(x, prop, pipe),
+            fun=lambda x: objective_function(x, prop, pipe, u_scale, callback),
+            jac=lambda x: objective_gradient(x, prop, pipe, u_scale),
             x0=initial_point,
             bounds=bounds,
             method="L-BFGS-B",
@@ -183,7 +185,7 @@ def optimise_for_value(
 
         predictions = []
         for feature in feature_grid:
-            value = objective_function(feature, prop, pipe)
+            value = objective_function(feature, prop, pipe, u_scale)
             predictions.append(value)
 
         predictions = np.array(predictions)
@@ -217,7 +219,7 @@ def optimise_for_value(
         for solution in all_solutions:
             x_val, y_val = solution[0], solution[1]
             predicted_value, std_dev = pipe.predict([[x_val, y_val]], return_std=True)
-            z_val = objective_function(solution.reshape(1, -1), prop, pipe)
+            z_val = objective_function(solution.reshape(1, -1), prop, pipe, u_scale)
             ax.scatter(x_val, y_val, z_val, color="red", s=20)  # Red color for the solutions
         # Show the plot
         plt.show()
@@ -235,6 +237,7 @@ def inverse_validate(
     property_ax_dict,
     initial_points,
     minima_threshold,
+    u_scale
 ):
     """
     Validates and optimizes the inverse problem for a given material property across a range of target values.
@@ -272,8 +275,8 @@ def inverse_validate(
 
         for initial_point in initial_points:
             res = minimize(
-                fun=lambda x: objective_function(x, prop, pipe),
-                jac=lambda x: objective_gradient(x, prop, pipe),
+                fun=lambda x: objective_function(x, prop, pipe, u_scale),
+                jac=lambda x: objective_gradient(x, prop, pipe, u_scale),
                 x0=initial_point,
                 bounds=bounds,
                 method="L-BFGS-B",
@@ -380,6 +383,8 @@ def main():
         help="Name of the property to optimize",
     )
     parser.add_argument("--property_value", type=float, required=True, help="Target value for the property")
+    parser.add_argument("--uncertainty_scale", type=float, required=False, default=0.0, help="Uncertainty scaling "
+                                                                                             "factor")
 
     args = parser.parse_args()
 
@@ -387,6 +392,7 @@ def main():
 
     property_name = args.property_name
     property_value = args.property_value
+    u_scale = args.uncertainty_scale
     model_file = args.model_file
 
     property_ax_dict = {
@@ -443,7 +449,8 @@ def main():
 
     # Optimize desired value
     optimise_for_value(
-        property_value, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold
+        property_value, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold,
+        u_scale
     )
 
     # Validate inverse design over a range of values
@@ -459,6 +466,7 @@ def main():
         property_ax_dict,
         initial_points,
         minima_threshold,
+        u_scale
     )
 
 
