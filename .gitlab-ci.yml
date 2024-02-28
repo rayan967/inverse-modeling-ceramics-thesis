@@ -1,0 +1,80 @@
+default:
+  tags:
+    - bay-013-srv-035
+
+# Used to prevent merge requests from triggering a second pipeline.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE != 'merge_request_event'
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_FORCE_HTTPS: "true"
+
+stages:
+  - Static Analysis
+
+before_script:
+  # Print out python version for debugging.
+  - python -V
+  - python --version
+  - pip --version
+  - pip install poetry
+  - poetry --version
+  - poetry env remove --all
+  - poetry env use python
+  - poetry config virtualenvs.create true --local
+  - poetry config virtualenvs.in-project true --local # used to create the virtual environment in .venv
+  - poetry env list
+  - poetry env info
+
+# Run static code analysis.
+# By default, this will check whether your code confirms to PEP8 code style guideline
+# (https://www.python.org/dev/peps/pep-0008/) and the docstring format matches numpy's proposed
+# docstring style (https://numpydoc.readthedocs.io/en/latest/format.html).
+# It will also publish a report file highlighting problems in the code.
+flake8:
+  stage: Static Analysis
+  allow_failure: true
+  script:
+    - poetry install --with analysis
+    - poetry run flake8 --max-line-length=120
+  artifacts:
+    paths:
+      - flake-report
+    when: on_failure
+
+# Run pylint.
+# Measures quality of code by checking, if conventions are not broken in the code.
+# Will output an .html with a list of warnings as an artifact.
+pylint:
+  stage: Static Analysis
+  allow_failure: true
+  script:
+    - poetry install --with analysis
+    - poetry run pylint src/ || EXIT_CODE=$?
+    - poetry run pylint-json2html -o pylint_result.html pylint_result.json
+    - poetry run python -c "import re;import pathlib;import anybadge;v=float(re.search(r'Your code has been rated at (\d+\.\d+)',pathlib.Path('pylint_result.txt').read_text())[1]);anybadge.Badge('pylint',v,thresholds={2:'red',4:'orange',8:'yellow',10:'green'}).write_badge(f'pylint.svg')"
+  artifacts:
+    paths:
+      - pylint_result.html
+      - pylint.svg
+    when: on_success
+
+isort:
+  stage: Static Analysis
+  allow_failure: true
+  script:
+    - poetry install --with analysis
+    - poetry run isort . --check
+
+black:
+  stage: Static Analysis
+  allow_failure: true
+  script:
+    - poetry install --with analysis
+    - poetry run black . --check --verbose --diff --color > black_result.txt
+  artifacts:
+    paths:
+      - black_result.txt
+    when: always

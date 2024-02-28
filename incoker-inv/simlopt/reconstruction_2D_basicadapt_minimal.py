@@ -4,6 +4,11 @@ import time
 import io
 import math
 
+current_directory = os.path.dirname(os.path.abspath(__file__))
+parent_directory = os.path.dirname(current_directory)
+sys.path.append(parent_directory)
+
+
 import time
 import random
 
@@ -30,6 +35,7 @@ from optimization.testcases import *
 
 plt.close('all')
 plt.ioff()
+
 
 def main():
 

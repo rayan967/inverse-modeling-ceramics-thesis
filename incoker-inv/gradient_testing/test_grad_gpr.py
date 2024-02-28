@@ -1,146 +1,231 @@
 import pathlib
 
-from scipy.linalg import cho_solve
-from scipy.optimize import check_grad
+import joblib
+from matplotlib import pyplot as plt
+from pyDOE import lhs
+from scipy.optimize import check_grad, approx_fprime
 import numpy as np
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel, Matern
 
 
-def gpr_mean_grad(X_test, gpr):
-    X_train = gpr.X_train_
-    kernel = gpr.kernel_
+def objective_function(x, desired_property, models, property_name, callback=None):
+    if callback is not None:
+        callback(x)
+    predicted_property, uncertainty = models[property_name]["pipe"].predict(x.reshape(1, -1), return_std=True)
+    discrepancy = predicted_property - desired_property
 
-    kernel_1, white = kernel.k1, kernel.k2
-    alpha = gpr.alpha_
-    gradients = []
-    for x_star in X_test:
-        # Compute the gradient for x_star across all training data
-        # Only need grad of kernel_1, white is constant
-        k_gradient_matrix = kernel_1.gradient_x(x_star, X_train)
-
-        # Multiply the gradient matrix with alpha and sum across training data
-        grad_sum = np.dot(alpha, k_gradient_matrix)
-
-        # Adjust for normalization
-        grad_sum_adjusted = grad_sum * gpr._y_train_std
-
-        gradients.append(grad_sum_adjusted)
-
-    return np.array(gradients).ravel()
+    return (discrepancy**2) + uncertainty[0] * 0.1
 
 
-def gpr_variance_grad(X_test, gpr):
-    X_train = gpr.X_train_
-    kernel = gpr.kernel_
+def objective_gradient(x, desired_property, models, property_name):
 
-    # Decompose the kernel into its constituent parts
-    kernel_1, white = kernel.k1, kernel.k2
+    predicted_property, std, gpr_grad, gpr_var_grad = models[property_name]["pipe"].predict(
+        x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+    )
+    discrepancy = predicted_property - desired_property
 
-    # Compute the noise term from the WhiteKernel
-    sigma2 = white.noise_level
-    # Adjust K_inv to account for the noise term
-    L_inv = np.linalg.inv(gpr.L_)
-    K_inv = L_inv.T.dot(L_inv)
+    # Retrieve standard deviation from the StandardScaler
+    scaler = pipe.named_steps["standardscaler"]
+    std_dev = scaler.scale_
 
-    gradients = []
-    for x_star in X_test:
-        dk_xx = kernel_1.gradient_x(x_star, x_star.reshape(1, -1))
-        # Compute the kernel vector k(x_star)
-        k_x_star = kernel_1(x_star.reshape(1, -1), X_train).ravel()
-        # Compute the gradient of kernel vector
-        dk_x_star = kernel_1.gradient_x(x_star, X_train)
+    # Adjust gradients
+    adjusted_gpr_grad = gpr_grad / std_dev
+    adjusted_gpr_var_grad = gpr_var_grad / std_dev
 
-        # Gradient of the variance using the product rule
-        grad_variance = dk_xx - (np.dot(dk_x_star.T, np.dot(K_inv, k_x_star)) +
-                                 np.dot(k_x_star.T, np.dot(K_inv, dk_x_star)))
-
-        grad_variance_adjusted = grad_variance * gpr._y_train_std**2
-
-        gradients.append(grad_variance_adjusted)
-
-    return np.array(gradients).ravel()
+    return (2 * discrepancy * adjusted_gpr_grad) + adjusted_gpr_var_grad * 0.1
 
 
 considered_features = [
-    'volume_fraction_4', 'volume_fraction_1',
+    "volume_fraction_4",
+    "volume_fraction_1",
 ]
 
-training_data = pathlib.Path('data/training_data_rve_database.npy')
+training_data = pathlib.Path("data/training_data_rve_database.npy")
 if not training_data.exists():
     print(f"Error: training data path {training_data} does not exist.")
 
-if training_data.suffix == '.npy':
+if training_data.suffix == ".npy":
     data = np.load(training_data)
 else:
     print("Invalid data")
 
 print(f"loaded {data.shape[0]} training data pairs")
 
-data['thermal_expansion'] *= 1e6
+data["thermal_expansion"] *= 1e6
 considered_features = [
-    'volume_fraction_4', 'volume_fraction_1',
-    'chord_length_mean_4', 'chord_length_mean_10', ]
+    "volume_fraction_4",
+    "volume_fraction_1",
+    "chord_length_mean_4",
+    "chord_length_mean_10",
+]
 considered_properties = [
-    'thermal_conductivity',
-    'thermal_expansion',
-    'young_modulus',
-    'poisson_ratio',
+    "thermal_conductivity",
+    "thermal_expansion",
+    "young_modulus",
+    "poisson_ratio",
 ]
 X = np.vstack(tuple(data[f] for f in considered_features)).T
 Y = np.vstack(tuple(data[p] for p in considered_properties)).T
 assert Y.shape[0] == X.shape[0], "number of samples does not match"
 
 
+# Change next line for different feature sets from models folder
+models = joblib.load("models/2d_matern.joblib")["models"]
+property_name = "thermal_conductivity"
 
-# Objective function
-def objective(x):
-    x = x.reshape(1, -1)  # Reshape because sklearn expects 2D array
-    return gpr.predict(x)[0]
+X = models[property_name]["X_train"]
+X_test = models[property_name]["X_test"]
+Y = models[property_name]["y_train"]
+y_test = models[property_name]["y_test"]
 
-# Gradient function
-def gradient(x):
-    X = x.reshape(1, -1)
-    return gpr_mean_grad(X_scaled, gpr)
-
-
-y = Y[:, 1]
-y_float = np.array([float(val) if val != b'nan' else np.nan for val in y])
-
-# ignore NaNs in the data
-clean_indices = np.argwhere(~np.isnan(y_float))
-Y = y_float[clean_indices.flatten()]
-X = X[clean_indices.flatten()]
-
-kernel = Matern() + WhiteKernel()
-pipe = make_pipeline(
-    StandardScaler(),  # scaler for data normalization
-    GaussianProcessRegressor(kernel=kernel, normalize_y=True)
-)
-pipe.fit(X, Y)
-score = pipe.score(X, Y)
-print("Model R-squared score on training set:", score)
-
-scaler = pipe.named_steps['standardscaler']
-gpr = pipe.named_steps['gaussianprocessregressor']
-
+pipe = models[property_name]["pipe"]
+# Retrieve standard deviation from the StandardScaler
+scaler = pipe.named_steps["standardscaler"]
+std_dev = scaler.scale_
 
 random_index = np.random.randint(0, X.shape[0])
-x0 = X[2]
+x0 = X[11]
 print(x0)
 
 # Flatten x0 before passing it to check_grad
 x0_flat = x0.flatten()
+prop = 5.9
 
+
+print(pipe.predict(x0_flat.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True))
 # Make sure that the lambda functions inside check_grad also expect a flat 1D array
-error = check_grad(lambda x: gpr.predict(x.reshape(1, -1), return_std=True)[0],
-                   lambda x: gpr_mean_grad(x.reshape(1, -1), gpr),
-                   x0_flat)
+
+error = check_grad(
+    lambda x: models[property_name]["pipe"].predict(x.reshape(1, -1), return_mean_grad=True)[0],
+    lambda x: models[property_name]["pipe"].predict(x.reshape(1, -1), return_mean_grad=True)[1] / std_dev,
+    x0_flat,
+)
 print("Gradient error:", error)
 
-error_variance = check_grad(lambda x: gpr.predict(x.reshape(1, -1), return_std=True)[1]**2,
-                            lambda x: gpr_variance_grad(x.reshape(1, -1), gpr),
-                            x0_flat)
+error_variance = check_grad(
+    lambda x: models[property_name]["pipe"].predict(
+        x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+    )[1],
+    lambda x: (
+        models[property_name]["pipe"].predict(
+            x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+        )[3]
+        / std_dev
+    ),
+    x0_flat,
+)
 print("Variance gradient error:", error_variance)
+
+error_obj = check_grad(
+    lambda x: objective_function(x, prop, models, property_name),
+    lambda x: objective_gradient(x, prop, models, property_name),
+    x0_flat,
+)
+print("Variance gradient error:", error_obj)
+
+
+property_ax_dict = {
+    "thermal_conductivity": "CTC [W/(m*K)]",
+    "thermal_expansion": "CTE [ppm/K]",
+    "young_modulus": "Young's Modulus[GPa]",
+    "poisson_ratio": "Poisson Ratio",
+}
+
+property_dict = {
+    "thermal_conductivity": "CTC",
+    "thermal_expansion": "CTE",
+    "young_modulus": "Young's Modulus",
+    "poisson_ratio": "Poisson Ratio",
+}
+
+
+def find_closest_point(Xt, point, selected_indices):
+    distances = np.linalg.norm(Xt - point, axis=1)
+    while True:
+        index = np.argmin(distances)
+        if index not in selected_indices:
+            selected_indices.append(index)
+            return Xt[index], selected_indices
+        else:
+            distances[index] = np.inf
+
+
+# Compute the minimum and maximum values for each feature in the training data
+min_values = np.min(X, axis=0)
+max_values = np.max(X, axis=0)
+features = models[property_name]["features"]
+print("Features: ", str(features))
+
+# Define the search space dimensions based on the minimum and maximum values
+bounds = [(min_val, max_val) for min_val, max_val in zip(min_values, max_values)]
+num_samples = 30
+# LHS sampling for uniform starting points in multi-start optimization
+lhs_samples = lhs(len(bounds), samples=num_samples)
+for i in range(len(bounds)):
+    lhs_samples[:, i] = lhs_samples[:, i] * (bounds[i][1] - bounds[i][0]) + bounds[i][0]
+# Find the closest points in X to the LHS samples
+selected_indices = []
+
+Xt_initial = np.zeros((num_samples, X.shape[1]))  # Initialize closest points array
+for i in range(num_samples):
+    Xt_initial[i], selected_indices = find_closest_point(X, lhs_samples[i], selected_indices)
+initial_points = X[selected_indices]
+print(initial_points)
+exact_gradients = []
+approx_gradients = []
+for point in initial_points:
+    # Make sure that the lambda functions inside check_grad also expect a flat 1D array
+    error = check_grad(
+        lambda x: models[property_name]["pipe"].predict(x.reshape(1, -1), return_mean_grad=True)[0],
+        lambda x: models[property_name]["pipe"].predict(x.reshape(1, -1), return_mean_grad=True)[1] / std_dev,
+        point,
+    )
+    print("Gradient error:", error)
+
+    error_variance = check_grad(
+        lambda x: models[property_name]["pipe"].predict(
+            x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+        )[1],
+        lambda x: (
+            models[property_name]["pipe"].predict(
+                x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+            )[3]
+            / std_dev
+        ),
+        point,
+    )
+    print("Variance gradient error:", error_variance)
+
+    error_obj = check_grad(
+        lambda x: objective_function(x, prop, models, property_name),
+        lambda x: objective_gradient(x, prop, models, property_name),
+        point,
+    )
+    print("obj gradient error:", error_obj)
+
+    # Exact gradient of variance
+    _, _, mean_grad, std_grad = models[property_name]["pipe"].predict(
+        point.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+    )
+
+    exact_gradients.append(std_grad)
+
+    # Approximated gradient using numerical differentiation
+    fprime = lambda x: models[property_name]["pipe"].predict(
+        x.reshape(1, -1), return_mean_grad=True, return_std=True, return_std_grad=True
+    )[1]
+    approx_grad = approx_fprime(point.flatten(), fprime)
+    approx_gradients.append(approx_grad)
+
+# Convert lists to numpy arrays for plotting
+exact_gradients = np.array(exact_gradients)
+approx_gradients = np.array(approx_gradients)
+
+# Plotting
+plt.figure(figsize=(12, 6))
+plt.plot(initial_points, exact_gradients, label="Exact Gradient", color="blue")
+plt.plot(initial_points, approx_gradients, label="Approximated Gradient", color="red", linestyle="dashed")
+plt.xlabel("Input Point")
+plt.ylabel("Gradient")
+plt.title("Comparison of Exact and Approximated Variance Gradients in GPR")
+plt.legend()
+plt.show()
