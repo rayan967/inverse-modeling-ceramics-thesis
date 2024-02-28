@@ -96,7 +96,6 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
         # split in test and train data
         X_train, X_test, y_train, y_test = X_clean, X_clean, y_clean, y_clean
         pipe.fit(X_train, y_train)
-        print(f"alpha: {pipe.named_steps['gaussianprocessregressor'].alpha}")
 
         models[property_name] = {"pipe": pipe, "features": considered_features}
         models[property_name]["X_train"] = X_train
