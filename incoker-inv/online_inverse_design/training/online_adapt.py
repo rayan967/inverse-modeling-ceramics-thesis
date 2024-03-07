@@ -148,12 +148,30 @@ def adapt_inc(
 
             # Try to generate candidate XC add it to the GP model
             try:
+                num_generations = 5
+                yt_samples = []
+                generated_points = []
                 point = (XC[0][0], XC[0][1])
-                X, Y = generate_candidate_point(
-                    point, simulation_options, property_name, output_stream, runpath, "adaptive_points"
-                )
-                Xc = np.array(X).reshape(1, -1)
-                Yc = np.array(Y).reshape(1, -1)
+                for _ in range(num_generations):
+                    print(f"--- (Generation {_})")
+                    X, Y = generate_candidate_point(
+                        point, simulation_options, property_name, output_stream, runpath, "adaptive_points"
+                    )
+                    yt_samples.append(Y)
+                    generated_points.append(X)
+
+                yt_samples_array = np.array(yt_samples)
+                variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+
+                # Calculate weighted distances and select the best point
+                distances = [weighted_distance(XC[0], np.array(Xg), weights) for Xg in generated_points]
+                best_index = np.argmin(distances)
+                best_X = generated_points[best_index]
+                best_y = yt_samples[best_index]
+
+                Xc = np.array(best_X).reshape(1, -1)
+                Yc = np.array(best_y).reshape(1, -1)
+                epsXc = np.array(variance).reshape(1, -1)
 
                 # Find distance between requested candidate XC and generated point Xc
                 dist = weighted_distance(XC[0], Xc[0], weights)
@@ -206,7 +224,7 @@ def adapt_inc(
             continue
 
         # Use constant variance for current point
-        epsXc = 1e-4 * np.ones((1, XC.shape[0]))  # eps**2
+        #epsXc = 1e-4 * np.ones((1, XC.shape[0]))  # eps**2
 
         # Add point to GP
         gp.adddatapoint(Xc)
@@ -214,6 +232,7 @@ def adapt_inc(
         gp.addaccuracy(epsXc)
         print(" Found canditate point(s):            {}".format(XC[0]))
         print(f"Found Xc: {str(Xc)}, Yc: {str(Yc)}")
+        print(f"Found epsXt: {str(epsXc)}")
         print("Size of data: ", str(len(gp.yt)))
 
         # A posteriori MC global error estimation

@@ -327,30 +327,55 @@ def main(config_path):
     initial_design_points = create_initial_design_points(parameterranges)
     Xt_initial = []
     yt_initial = []
-
+    epsXt = []
     # If initial points are available or restarting a failed run, set compute = False
     compute = config["compute"]
 
     if compute:
         # Generate initial design points (border points) as training data
+        num_generations = 5
+        weights = calculate_weights(parameterranges)
+
         for i, point in enumerate(initial_design_points):
-            try:
-                print(f"--- Initial Iteration {i}")
-                X, Y = generate_candidate_point(
-                    point, simulation_options, property_name, output_stream, runpath, "initial_points"
-                )
-                Xt_initial.append(X)
-                yt_initial.append(Y)
+            yt_samples = []
+            generated_points = []
+            for _ in range(num_generations):
+                print(f"--- Initial Iteration {i} (Generation {_})")
+                try:
+                    X, Y = generate_candidate_point(
+                        point, simulation_options, property_name, output_stream, runpath, "initial_points"
+                    )
+                    yt_samples.append(Y)
+                    generated_points.append(X)
+
+                except Exception as e:
+                    print("Error generating candidate point:", e)
+                    continue
+
+            # Calculate variance and mean of outputs if we have enough samples
+            if len(yt_samples) >= 1:
+                yt_samples_array = np.array(yt_samples)
+                variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+
+                # Calculate weighted distances and select the best point
+                distances = [weighted_distance(point, np.array(Xg), weights) for Xg in generated_points]
+                best_index = np.argmin(distances)
+                best_X = generated_points[best_index]
+                best_y = yt_samples[best_index]
+
+                # Append the best point, its mean output, and variance to their respective lists
+                Xt_initial.append(best_X)
+                yt_initial.append(best_y)
+                epsXt.append(variance)
                 print(f"Initial point: {str(point)}")
-                print(f"Found point: {str(X)}")
-                print(f"Found value: {str(Y)}")
-            except Exception as e:
-                print("Skipping")
-                print(e)
-                continue
+                print(f"Found point: {str(best_X)}")
+                print(f"Found value: {str(best_y)}")
+                print(f"Found epsXt: {str(variance)}")
+
 
         Xt_initial = np.array(Xt_initial)
         yt_initial = np.array(yt_initial).reshape(-1, 1)
+        epsXt = np.array(epsXt).reshape(1, -1)
 
     # Restart failed run
     else:
@@ -365,7 +390,7 @@ def main(config_path):
     assert len(region) == dim, "Too much or fewer hyperparameters for the given problem dimension"
 
     # Create expected error for each initial point, constant error is passed but true error has to be implemented
-    epsXt, epsXgrad = createerror(Xt_initial, random=False, graddata=False)
+    #epsXt, epsXgrad = createerror(Xt_initial, random=False, graddata=False)
 
     print("Initial X")
     print(Xt_initial)
