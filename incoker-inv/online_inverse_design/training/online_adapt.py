@@ -43,6 +43,7 @@ def adapt_inc(
     simulation_options,
     output_freq,
     max_samples,
+    mul_generate_options,
     iter_count=None,
 ):
     """
@@ -64,6 +65,7 @@ def adapt_inc(
         simulation_options (dict): Simulations options to be passed to pipeline.
         output_freq (int): Frequency of saving models.
         max_samples (int): Maximum number of points.
+        mul_generate_options (dict): Multiple structure generation options to be passed.
         iter_count (int): Current iteration (for restarted runs).
 
     Returns:
@@ -148,7 +150,12 @@ def adapt_inc(
 
             # Try to generate candidate XC add it to the GP model
             try:
-                num_generations = 5
+
+                if mul_generate_options['usage']:
+                    num_generations = mul_generate_options['num_generations']
+                else:
+                    num_generations = 1
+
                 yt_samples = []
                 generated_points = []
                 point = (XC[0][0], XC[0][1])
@@ -161,7 +168,11 @@ def adapt_inc(
                     generated_points.append(X)
 
                 yt_samples_array = np.array(yt_samples)
-                variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+
+                if mul_generate_options['usage']:
+                    variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+                else:
+                    variance = 1E-4
 
                 # Calculate weighted distances and select the best point
                 distances = [weighted_distance(XC[0], np.array(Xg), weights) for Xg in generated_points]

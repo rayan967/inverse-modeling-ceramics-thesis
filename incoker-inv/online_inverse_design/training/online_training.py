@@ -330,12 +330,17 @@ def main(config_path):
     epsXt = []
     # If initial points are available or restarting a failed run, set compute = False
     compute = config["compute"]
+    mul_generate_options = config["multiple_generation_options"]
 
     if compute:
-        # Generate initial design points (border points) as training data
-        num_generations = 5
-        weights = calculate_weights(parameterranges)
 
+        if mul_generate_options['usage']:
+            num_generations = mul_generate_options['num_generations']
+        else:
+            num_generations = 1
+
+        weights = calculate_weights(parameterranges)
+        # Generate initial design points (border points) as training data
         for i, point in enumerate(initial_design_points):
             yt_samples = []
             generated_points = []
@@ -355,7 +360,11 @@ def main(config_path):
             # Calculate variance and mean of outputs if we have enough samples
             if len(yt_samples) >= 1:
                 yt_samples_array = np.array(yt_samples)
-                variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+
+                if mul_generate_options['usage']:
+                    variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+                else:
+                    variance = 1E-4
 
                 # Calculate weighted distances and select the best point
                 distances = [weighted_distance(point, np.array(Xg), weights) for Xg in generated_points]
@@ -439,7 +448,8 @@ def main(config_path):
             property_name,
             simulation_options,
             output_freq,
-            max_samples
+            max_samples,
+            mul_generate_options
         )
 
     # Pass iteration number for failed run
@@ -460,6 +470,7 @@ def main(config_path):
             simulation_options,
             output_freq,
             max_samples,
+            mul_generate_options,
             iter_count,
         )
 
