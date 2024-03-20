@@ -380,15 +380,13 @@ def main(config_path):
 
             # Calculate variance and mean of outputs if we have enough samples
             if len(yt_samples) >= 1:
-                yt_samples_array = np.array(yt_samples)
-
                 if mul_generate_options['usage']:
-                    variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+                    variance = np.var(yt_samples, ddof=1)  # Using sample variance
                 else:
                     variance = 1E-4
 
                 # Calculate weighted distances and select the best point
-                distances = [weighted_distance(point, np.array(Xg), weights) for Xg in generated_points]
+                distances = [weighted_distance(point, Xg, weights) for Xg in generated_points]
                 best_index = np.argmin(distances)
                 best_X = generated_points[best_index]
                 best_y = yt_samples[best_index]
