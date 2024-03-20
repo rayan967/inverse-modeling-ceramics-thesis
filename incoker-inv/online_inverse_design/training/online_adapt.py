@@ -156,26 +156,23 @@ def adapt_inc(
                 else:
                     num_generations = 1
 
-                yt_samples = []
-                generated_points = []
                 point = (XC[0][0], XC[0][1])
-                for _ in range(num_generations):
-                    print(f"--- (Generation {_})")
-                    X, Y = generate_candidate_point(
-                        point, simulation_options, property_name, output_stream, runpath, "adaptive_points"
-                    )
-                    yt_samples.append(Y)
-                    generated_points.append(X)
 
-                yt_samples_array = np.array(yt_samples)
+                generated_points, yt_samples = generate_candidate_point(
+                    point, simulation_options, property_name, output_stream, runpath, "adaptive_points", num_generations
+                )
 
+                # Calculate variance and mean of outputs if we have enough samples
                 if mul_generate_options['usage']:
-                    variance = np.var(yt_samples_array, ddof=1)  # Using sample variance
+                    variance = np.var(yt_samples, ddof=1)  # Using sample variance
+
+                    if len(yt_samples) == 1:
+                        variance = 1e-1
                 else:
                     variance = 1E-4
 
                 # Calculate weighted distances and select the best point
-                distances = [weighted_distance(XC[0], np.array(Xg), weights) for Xg in generated_points]
+                distances = [weighted_distance(point, Xg, weights) for Xg in generated_points]
                 best_index = np.argmin(distances)
                 best_X = generated_points[best_index]
                 best_y = yt_samples[best_index]
