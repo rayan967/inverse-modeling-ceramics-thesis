@@ -106,19 +106,40 @@ def load_test_data(base_path, prop_name):
     return np.array(X), np.array(y)
 
 
-def generate_candidate_point(input, simulation_options, property_name, output_stream, runpath, run_phase):
+def generate_candidate_point(input, simulation_options, property_name, output_stream, runpath, run_phase, num_generations):
     output_stream.error_detected = False  # Set error flag
-    output_path = pathlib.Path(runpath, run_phase, f"v={input[0]},r={input[1]}")
+    output_path = pathlib.Path(runpath, run_phase, f"v={input[0]:.2f},r={input[1]:.2f}")
     output_path.mkdir(parents=True, exist_ok=True)
     simulation_options["output_path"] = output_path
+    simulation_options["n_rves"] = num_generations
+    simulation_options["n_workers"] = max(min(num_generations, 16), 1)
 
-    result = prediction_pipeline.generate_and_predict(input, simulation_options)
-    output_value = get_output(result, property_name)
+    all_results = prediction_pipeline.generate_and_predict(input, simulation_options)
 
-    vf = result["v_phase"][str(phase_zirconia)]
-    cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][phase_zirconia]["mean_chord_length"]
-    cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][phase_alumina]["mean_chord_length"]
-    clr = cl_11 / cl_4
+    vfs = []
+    clrs = []
+    values = []
+    for rve_path, result in all_results.items():
+        output_value = get_output(result, property_name)
+
+        vf = result["v_phase"][str(phase_zirconia)]
+        cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][str(phase_zirconia)]["mean_chord_length"]
+        cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][str(phase_alumina)]["mean_chord_length"]
+        clr = cl_11 / cl_4
+
+        vfs.append(vf)
+        clrs.append(clr)
+        values.append(output_value)
+
+        print(f"vf:\t {vf:.2f}, clr:\t {clr:.2f}, v:\t {output_value:.2f}")
+
+    vfs = np.array(vfs)
+    clrs = np.array(clrs)
+    values = np.array(values)
+
+    print(f"volume fraction    : {vfs.mean():.2f} +- {vfs.std():.2f}")
+    print(f"chord length ratio : {clrs.mean():.2f} +- {clrs.std():.2f}")
+    print(f"material properties: {values.mean():.2f} +- {values.std():.2f}")
 
     # Check for Mapdl error
     if output_stream.error_detected:
@@ -126,7 +147,10 @@ def generate_candidate_point(input, simulation_options, property_name, output_st
         output_stream.error_detected = False
         raise Exception("Error detected during operation: Mapdl")
 
-    return [vf, clr], output_value
+    Xs = np.array([vfs, clrs]).T
+    Ys = values
+
+    return Xs, Ys
 
 
 def createerror(Xt, random=False, graddata=False):
