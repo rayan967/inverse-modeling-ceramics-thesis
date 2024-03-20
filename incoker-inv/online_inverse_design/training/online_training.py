@@ -409,8 +409,11 @@ def main(config_path):
     else:
         Xt_initial, yt_initial = load_test_data(Path(runpath) / "initial_points", property_name)
         yt_initial = np.array(yt_initial).reshape(-1, 1)
+        epsXt = np.ones(yt_initial.shape).T * 1e-1
         # Adjust iteration number for failed run
-        iter_count = Xt_initial.shape[0] - 8
+        #iter_count = Xt_initial.shape[0] - 8
+        # TODO: recheck
+        iter_count = Xt_initial.shape[0]
         print(f"Row count in Xt_initial: {iter_count}")
 
     # Initial hyperparameter parameters
