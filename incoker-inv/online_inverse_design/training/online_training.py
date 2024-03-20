@@ -86,7 +86,7 @@ def load_test_data(base_path, prop_name):
     Returns:
     - tuple: A tuple containing two numpy arrays, X (features) and y (target values).
     """
-    info_files = list(base_path.glob("**/info.json"))
+    info_files = list(base_path.rglob("info.json"))
 
     X = []
     y = []
@@ -96,7 +96,10 @@ def load_test_data(base_path, prop_name):
             continue
 
         vf = data["v_phase"][str(phase_zirconia)]
-        clr = data["chord_length_ratio"]
+        main_cl_11 = data["chord_length_analysis"]["phase_chord_lengths"]["11"]["mean_chord_length"]
+        main_cl_4 = data["chord_length_analysis"]["phase_chord_lengths"]["4"]["mean_chord_length"]
+        clr = main_cl_11 / main_cl_4
+
         X.append([vf, clr])
         y.append(get_output(data, prop_name))
 
