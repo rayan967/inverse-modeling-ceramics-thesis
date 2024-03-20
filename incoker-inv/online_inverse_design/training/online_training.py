@@ -369,20 +369,14 @@ def main(config_path):
         weights = calculate_weights(parameterranges)
         # Generate initial design points (border points) as training data
         for i, point in enumerate(initial_design_points):
-            yt_samples = []
-            generated_points = []
-            for _ in range(num_generations):
-                print(f"--- Initial Iteration {i} (Generation {_})")
-                try:
-                    X, Y = generate_candidate_point(
-                        point, simulation_options, property_name, output_stream, runpath, "initial_points"
-                    )
-                    yt_samples.append(Y)
-                    generated_points.append(X)
-
-                except Exception as e:
-                    print("Error generating candidate point:", e)
-                    continue
+            print(f"--- Initial Iteration {i} ---")
+            try:
+                generated_points, yt_samples = generate_candidate_point(
+                    point, simulation_options, property_name, output_stream, runpath, "initial_points", num_generations
+                )
+            except Exception as e:
+                print("Error generating candidate point:", e)
+                continue
 
             # Calculate variance and mean of outputs if we have enough samples
             if len(yt_samples) >= 1:
