@@ -137,9 +137,9 @@ def generate_candidate_point(input, simulation_options, property_name, output_st
     clrs = np.array(clrs)
     values = np.array(values)
 
-    print(f"volume fraction    : {vfs.mean():.2f} +- {vfs.std():.2f}")
-    print(f"chord length ratio : {clrs.mean():.2f} +- {clrs.std():.2f}")
-    print(f"material properties: {values.mean():.2f} +- {values.std():.2f}")
+    print(f"volume fraction    : {vfs.mean():.2f} +- {vfs.var():.2f}")
+    print(f"chord length ratio : {clrs.mean():.2f} +- {clrs.var():.2f}")
+    print(f"material properties: {values.mean():.2f} +- {values.var():.2f}")
 
     # Check for Mapdl error
     if output_stream.error_detected:

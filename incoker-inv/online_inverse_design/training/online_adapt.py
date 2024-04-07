@@ -211,7 +211,7 @@ def adapt_inc(
                 )
 
             except Exception as e:
-                if str(e) == "list index out of range":
+                if str(e) == "list index out of range" or str(e) == "Triangulation is invalid":
                     print(e)
                     print(f"Excluding point from future sampling: {str(XC[0])}")
                     exclusion_zone = (XC[0], 0.05)
