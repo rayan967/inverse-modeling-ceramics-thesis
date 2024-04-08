@@ -1,3 +1,5 @@
+"""Script for cleaning up directories for restarting failed runs of online inverse design training."""
+
 import json
 import pathlib
 import shutil

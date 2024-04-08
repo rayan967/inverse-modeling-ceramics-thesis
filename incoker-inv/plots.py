@@ -1,4 +1,4 @@
-"""Plots for prediocted subspace for 2d model"""
+"""Plot the predicted subspace for 2d model."""
 
 import joblib
 import numpy as np
