@@ -52,7 +52,7 @@ pylint:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run pylint src/ || EXIT_CODE=$?
+    - poetry run pylint incoker-inv || EXIT_CODE=$?
     - poetry run pylint-json2html -o pylint_result.html pylint_result.json
     - poetry run python -c "import re;import pathlib;import anybadge;v=float(re.search(r'Your code has been rated at (\d+\.\d+)',pathlib.Path('pylint_result.txt').read_text())[1]);anybadge.Badge('pylint',v,thresholds={2:'red',4:'orange',8:'yellow',10:'green'}).write_badge(f'pylint.svg')"
   artifacts:
