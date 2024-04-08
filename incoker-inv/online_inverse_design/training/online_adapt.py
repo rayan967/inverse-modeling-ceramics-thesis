@@ -151,8 +151,8 @@ def adapt_inc(
             # Try to generate candidate XC add it to the GP model
             try:
 
-                if mul_generate_options['usage']:
-                    num_generations = mul_generate_options['num_generations']
+                if mul_generate_options["usage"]:
+                    num_generations = mul_generate_options["num_generations"]
                 else:
                     num_generations = 1
 
@@ -163,13 +163,13 @@ def adapt_inc(
                 )
 
                 # Calculate variance and mean of outputs if we have enough samples
-                if mul_generate_options['usage']:
+                if mul_generate_options["usage"]:
                     variance = np.var(yt_samples, ddof=1)  # Using sample variance
 
                     if len(yt_samples) == 1:
                         variance = 1e-1
                 else:
-                    variance = 1E-4
+                    variance = 1e-4
 
                 # Calculate weighted distances and select the best point
                 distances = [weighted_distance(point, Xg, weights) for Xg in generated_points]
@@ -232,7 +232,7 @@ def adapt_inc(
             continue
 
         # Use constant variance for current point
-        #epsXc = 1e-4 * np.ones((1, XC.shape[0]))  # eps**2
+        # epsXc = 1e-4 * np.ones((1, XC.shape[0]))  # eps**2
 
         # Add point to GP
         gp.adddatapoint(Xc)

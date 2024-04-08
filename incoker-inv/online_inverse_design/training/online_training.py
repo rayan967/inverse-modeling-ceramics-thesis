@@ -148,7 +148,7 @@ def load_data_for_restart(base_path, prop_name):
 
         # Compute variance of y_values if not empty
         if y_values and X_values:
-            variance = np.var(y_values, ddof=1) if len(y_values) > 1 else 1E-4
+            variance = np.var(y_values, ddof=1) if len(y_values) > 1 else 1e-4
             epsXt.append(variance)
 
             # Use first RVE y_value for yt_initial
@@ -158,7 +158,9 @@ def load_data_for_restart(base_path, prop_name):
     return np.array(Xt), np.array(yt).reshape(-1, 1), np.array(epsXt).reshape(1, -1)
 
 
-def generate_candidate_point(input, simulation_options, property_name, output_stream, runpath, run_phase, num_generations):
+def generate_candidate_point(
+    input, simulation_options, property_name, output_stream, runpath, run_phase, num_generations
+):
     output_stream.error_detected = False  # Set error flag
     output_path = pathlib.Path(runpath, run_phase, f"v={input[0]:.2f},r={input[1]:.2f}")
     output_path.mkdir(parents=True, exist_ok=True)
@@ -400,8 +402,8 @@ def main(config_path):
 
     if compute:
 
-        if mul_generate_options['usage']:
-            num_generations = mul_generate_options['num_generations']
+        if mul_generate_options["usage"]:
+            num_generations = mul_generate_options["num_generations"]
         else:
             num_generations = 1
 
@@ -419,10 +421,10 @@ def main(config_path):
 
             # Calculate variance and mean of outputs if we have enough samples
             if len(yt_samples) >= 1:
-                if mul_generate_options['usage']:
+                if mul_generate_options["usage"]:
                     variance = np.var(yt_samples, ddof=1)  # Using sample variance
                 else:
-                    variance = 1E-4
+                    variance = 1e-4
 
                 # Calculate weighted distances and select the best point
                 distances = [weighted_distance(point, Xg, weights) for Xg in generated_points]
@@ -439,7 +441,6 @@ def main(config_path):
                 print(f"Found value: {str(best_y)}")
                 print(f"Found epsXt: {str(variance)}")
 
-
         Xt_initial = np.array(Xt_initial)
         yt_initial = np.array(yt_initial).reshape(-1, 1)
         epsXt = np.array(epsXt).reshape(1, -1)
@@ -449,7 +450,7 @@ def main(config_path):
     else:
         Xt_initial, yt_initial, epsXt = load_data_for_restart(Path(runpath) / "initial_points", property_name)
         # Adjust iteration number for failed run
-        #iter_count = Xt_initial.shape[0] - 8
+        # iter_count = Xt_initial.shape[0] - 8
         # TODO: recheck
         iter_count = Xt_initial.shape[0]
         print(f"Row count in Xt_initial: {iter_count}")
@@ -459,7 +460,7 @@ def main(config_path):
     assert len(region) == dim, "Too much or fewer hyperparameters for the given problem dimension"
 
     # Create expected error for each initial point, constant error is passed but true error has to be implemented
-    #epsXt, epsXgrad = createerror(Xt_initial, random=False, graddata=False)
+    # epsXt, epsXgrad = createerror(Xt_initial, random=False, graddata=False)
 
     # Train initial GPR
     gp = GPR(Xt_initial, yt_initial, None, None, epsXt, None)

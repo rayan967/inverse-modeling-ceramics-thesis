@@ -237,7 +237,7 @@ def inverse_validate(
     property_ax_dict,
     initial_points,
     minima_threshold,
-    u_scale
+    u_scale,
 ):
     """
     Validates and optimizes the inverse problem for a given material property across a range of target values.
@@ -383,8 +383,9 @@ def main():
         help="Name of the property to optimize",
     )
     parser.add_argument("--property_value", type=float, required=True, help="Target value for the property")
-    parser.add_argument("--uncertainty_scale", type=float, required=False, default=0.0, help="Uncertainty scaling "
-                                                                                             "factor")
+    parser.add_argument(
+        "--uncertainty_scale", type=float, required=False, default=0.0, help="Uncertainty scaling " "factor"
+    )
 
     args = parser.parse_args()
 
@@ -449,8 +450,16 @@ def main():
 
     # Optimize desired value
     optimise_for_value(
-        property_value, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold,
-        u_scale
+        property_value,
+        X,
+        property_name,
+        pipe,
+        bounds,
+        features,
+        property_ax_dict,
+        initial_points,
+        minima_threshold,
+        u_scale,
     )
 
     # Validate inverse design over a range of values
@@ -466,7 +475,7 @@ def main():
         property_ax_dict,
         initial_points,
         minima_threshold,
-        u_scale
+        u_scale,
     )
 
 
