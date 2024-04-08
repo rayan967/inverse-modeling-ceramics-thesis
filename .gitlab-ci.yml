@@ -66,14 +66,14 @@ isort:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run isort . --check
+    - poetry run isort incoker-inv --check
 
 black:
   stage: Static Analysis
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run black . --check --verbose --diff --color --exclude='/incoker-micro-sims|/simlopt' > black_result.txt
+    - poetry run black incoker-inv --check --verbose --diff --color --exclude='/incoker-micro-sims|/simlopt' > black_result.txt
   artifacts:
     paths:
       - black_result.txt
