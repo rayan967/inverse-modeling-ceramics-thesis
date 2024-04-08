@@ -106,6 +106,58 @@ def load_test_data(base_path, prop_name):
     return np.array(X), np.array(y)
 
 
+def load_data_for_restart(base_path, prop_name):
+    """
+    Load data for restarting a failed run. Iterates through each parameter set directory
+    within `base_path`, then iterates through RVE subdirectories to compile y values
+    and compute variance. Uses data from the first RVE subdirectory for X values.
+
+    Parameters:
+    - base_path (Path): Base directory path containing parameter set directories.
+    - phase_zirconia (int): ID for zirconia phase.
+    - phase_alumina (int): ID for alumina phase.
+
+    Returns:
+    - Xt (numpy.ndarray): Loaded X values (features).
+    - yt (numpy.ndarray): Loaded y values (target values).
+    - epsXt (numpy.ndarray): Estimated variances of y values for each parameter set.
+    """
+    parameter_set_dirs = [x for x in base_path.iterdir() if x.is_dir()]
+    Xt = []
+    yt = []
+    epsXt = []
+    for param_dir in parameter_set_dirs:
+        y_values = []
+        X_values = []
+        for i, rve_dir in enumerate(param_dir.iterdir()):
+            if rve_dir.is_dir():
+                info_path = rve_dir / "info.json"
+                if info_path.exists():
+                    with open(info_path, "r") as f:
+                        data = json.load(f)
+                        if not (("homogenization" in data or "mean" in data) and "v_phase" in data):
+                            continue
+                        y = get_output(data, prop_name)
+                        y_values.append(y)
+
+                        vf = data["v_phase"][str(phase_zirconia)]
+                        main_cl_11 = data["chord_length_analysis"]["phase_chord_lengths"]["11"]["mean_chord_length"]
+                        main_cl_4 = data["chord_length_analysis"]["phase_chord_lengths"]["4"]["mean_chord_length"]
+                        clr = main_cl_11 / main_cl_4
+                        X_values.append([vf, clr])
+
+        # Compute variance of y_values if not empty
+        if y_values and X_values:
+            variance = np.var(y_values, ddof=1) if len(y_values) > 1 else 1E-4
+            epsXt.append(variance)
+
+            # Use first RVE y_value for yt_initial
+            yt.append(y_values[0])
+            Xt.append(X_values[0])
+
+    return np.array(Xt), np.array(yt).reshape(-1, 1), np.array(epsXt).reshape(1, -1)
+
+
 def generate_candidate_point(input, simulation_options, property_name, output_stream, runpath, run_phase, num_generations):
     output_stream.error_detected = False  # Set error flag
     output_path = pathlib.Path(runpath, run_phase, f"v={input[0]:.2f},r={input[1]:.2f}")
@@ -313,19 +365,6 @@ def main(config_path):
     output_stream = DualOutputStream(execpath / "terminal_output.txt")
     sys.stdout = output_stream
 
-    """
-    # Load validation data
-    if property_name == 'thermal_expansion':
-        X_test, y_test = load_test_data_CTE(
-            f'/data/ray29582/adaptive_gp_InCoKer/validation_data/test_data_32_{property_dict_category[property_name]}')
-    elif property_name == 'thermal_conductivity':
-        X_test, y_test = load_test_data(
-            f'/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_{property_dict_category[property_name]}', property_dict[property_name])
-    else:
-        X_test, y_test = load_test_data(
-            f'/data/ray29582/adaptive_gp_InCoKer/validation_data/test_data_32_{property_dict_category[property_name]}', property_dict[property_name])
-    """
-
     X_test, y_test = load_test_data(validation_data_path, property_name)
     assert y_test.shape[0] == X_test.shape[0], "number of samples does not match"
     y_test = y_test.reshape(-1, 1)
@@ -404,12 +443,11 @@ def main(config_path):
         Xt_initial = np.array(Xt_initial)
         yt_initial = np.array(yt_initial).reshape(-1, 1)
         epsXt = np.array(epsXt).reshape(1, -1)
+        iter_count = i
 
     # Restart failed run
     else:
-        Xt_initial, yt_initial = load_test_data(Path(runpath) / "initial_points", property_name)
-        yt_initial = np.array(yt_initial).reshape(-1, 1)
-        epsXt = np.ones(yt_initial.shape).T * 1e-1
+        Xt_initial, yt_initial, epsXt = load_data_for_restart(Path(runpath) / "initial_points", property_name)
         # Adjust iteration number for failed run
         #iter_count = Xt_initial.shape[0] - 8
         # TODO: recheck
@@ -422,11 +460,6 @@ def main(config_path):
 
     # Create expected error for each initial point, constant error is passed but true error has to be implemented
     #epsXt, epsXgrad = createerror(Xt_initial, random=False, graddata=False)
-
-    print("Initial X")
-    print(Xt_initial)
-    print("Initial Y")
-    print(yt_initial)
 
     # Train initial GPR
     gp = GPR(Xt_initial, yt_initial, None, None, epsXt, None)
@@ -454,47 +487,25 @@ def main(config_path):
     print("RMSE: ", rmse)
     print("Accuracy: ", accuracy_test(gp, X_test, y_test))
 
-    if compute:
-        GP_adapted = adapt_inc(
-            gp,
-            parameterranges,
-            TOL,
-            TOLAcqui,
-            TOLrelchange,
-            epsphys,
-            X_test,
-            y_test,
-            execpath,
-            runpath,
-            output_stream,
-            property_name,
-            simulation_options,
-            output_freq,
-            max_samples,
-            mul_generate_options
-        )
-
-    # Pass iteration number for failed run
-    else:
-        GP_adapted = adapt_inc(
-            gp,
-            parameterranges,
-            TOL,
-            TOLAcqui,
-            TOLrelchange,
-            epsphys,
-            X_test,
-            y_test,
-            execpath,
-            runpath,
-            output_stream,
-            property_name,
-            simulation_options,
-            output_freq,
-            max_samples,
-            mul_generate_options,
-            iter_count,
-        )
+    GP_adapted = adapt_inc(
+        gp,
+        parameterranges,
+        TOL,
+        TOLAcqui,
+        TOLrelchange,
+        epsphys,
+        X_test,
+        y_test,
+        execpath,
+        runpath,
+        output_stream,
+        property_name,
+        simulation_options,
+        output_freq,
+        max_samples,
+        mul_generate_options,
+        iter_count,
+    )
 
     print("-----Adaptive run complete:-----")
 
