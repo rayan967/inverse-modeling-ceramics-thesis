@@ -2,9 +2,9 @@ import json
 import pathlib
 
 import joblib
-import tqdm
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import tqdm
 from matplotlib import cm
 from sklearn import metrics
 

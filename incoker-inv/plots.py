@@ -4,7 +4,6 @@ import joblib
 import numpy as np
 from matplotlib import pyplot as plt
 
-
 considered_properties = [
     "thermal_conductivity",
     "thermal_expansion",

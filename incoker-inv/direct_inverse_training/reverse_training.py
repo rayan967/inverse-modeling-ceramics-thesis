@@ -15,16 +15,16 @@ command to execute the script:
 
 import argparse
 import pathlib
+
 import joblib
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import metrics
-from sklearn.preprocessing import StandardScaler
+from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
-from sklearn.gaussian_process import GaussianProcessRegressor
-from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF
-
+from sklearn.preprocessing import StandardScaler
+from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 
 considered_features = [
     "volume_fraction_4",
@@ -178,9 +178,10 @@ def main(train_data_file, export_model_file):
         best_models[property_name] = {"model": best_model, "model_type": best_model_name, "score": best_score}
 
         if export_model_file is not None:
-            from datetime import date
-            import pkg_resources
             import sys
+            from datetime import date
+
+            import pkg_resources
 
             installed_packages = pkg_resources.working_set
             installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])

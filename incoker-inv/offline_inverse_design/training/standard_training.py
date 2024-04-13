@@ -8,17 +8,22 @@ parent_directory = os.path.dirname(current_directory)
 sys.path.append(parent_directory)
 import argparse
 import pathlib
+
 import joblib
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn import metrics
-from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import make_scorer, mean_squared_error, r2_score
 from sklearn.model_selection import cross_validate
-from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.pipeline import make_pipeline
-
-from skopt.learning.gaussian_process.kernels import WhiteKernel, RBF, Matern, RationalQuadratic, DotProduct
-from sklearn.metrics import make_scorer
+from sklearn.preprocessing import StandardScaler
+from skopt.learning.gaussian_process.kernels import (
+    RBF,
+    DotProduct,
+    Matern,
+    RationalQuadratic,
+    WhiteKernel,
+)
 
 considered_features = [
     "volume_fraction_4",
@@ -203,9 +208,10 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
 
     # export model for use in other projects
     if export_model_file is not None:
-        from datetime import date
-        import pkg_resources
         import sys
+        from datetime import date
+
+        import pkg_resources
 
         installed_packages = pkg_resources.working_set
         installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])

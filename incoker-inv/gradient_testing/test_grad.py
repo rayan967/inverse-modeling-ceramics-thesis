@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import check_grad
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.metrics import mean_squared_error
-from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel, Matern
+from skopt.learning.gaussian_process.kernels import RBF, Matern, WhiteKernel
 
 
 def gpr_mean_grad(X_test, gpr):

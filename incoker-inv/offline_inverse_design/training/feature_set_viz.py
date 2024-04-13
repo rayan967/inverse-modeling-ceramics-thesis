@@ -1,11 +1,18 @@
 import pathlib
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern, RBF, DotProduct, WhiteKernel, RationalQuadratic
+from sklearn.gaussian_process.kernels import (
+    RBF,
+    DotProduct,
+    Matern,
+    RationalQuadratic,
+    WhiteKernel,
+)
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 

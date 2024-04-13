@@ -16,16 +16,16 @@ Example:
 
 import argparse
 import statistics
+import time
 
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.optimize
-from sklearn.metrics import mean_squared_error, r2_score
 from pyDOE import lhs
-from scipy.optimize import minimize, brute
-import matplotlib.pyplot as plt
-import time
+from scipy.optimize import brute, minimize
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 def find_closest_point(Xt, point, selected_indices):

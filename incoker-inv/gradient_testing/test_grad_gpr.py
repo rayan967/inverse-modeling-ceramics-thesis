@@ -1,10 +1,10 @@
 import pathlib
 
 import joblib
+import numpy as np
 from matplotlib import pyplot as plt
 from pyDOE import lhs
-from scipy.optimize import check_grad, approx_fprime
-import numpy as np
+from scipy.optimize import approx_fprime, check_grad
 
 
 def objective_function(x, desired_property, models, property_name, callback=None):

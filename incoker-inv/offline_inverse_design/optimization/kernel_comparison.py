@@ -1,11 +1,12 @@
+import time
+
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import mean_squared_error, r2_score
 from pyDOE import lhs
-from scipy.optimize import minimize, brute
-import matplotlib.pyplot as plt
-import time
+from scipy.optimize import brute, minimize
+from sklearn.metrics import mean_squared_error, r2_score
 
 K_inv = None
 

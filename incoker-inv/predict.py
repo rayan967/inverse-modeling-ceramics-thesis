@@ -10,10 +10,10 @@ Usage:
 """
 
 import argparse
+import json
 
 import joblib
 import numpy as np
-import json
 
 
 def main(microstructure, model_file):

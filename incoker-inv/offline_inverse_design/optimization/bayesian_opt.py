@@ -1,24 +1,18 @@
 import argparse
 import pathlib
-
-import joblib
-import numpy as np
-from matplotlib import pyplot as plt
-from sklearn.metrics import mean_squared_error, r2_score
-
-from skopt import Optimizer, gp_minimize
-from scipy.optimize import minimize, LinearConstraint
 import statistics
+import time
 
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.optimize
-from sklearn.metrics import mean_squared_error, r2_score
+from matplotlib import pyplot as plt
 from pyDOE import lhs
-from scipy.optimize import minimize, brute
-import matplotlib.pyplot as plt
-import time
+from scipy.optimize import LinearConstraint, brute, minimize
+from sklearn.metrics import mean_squared_error, r2_score
+from skopt import Optimizer, gp_minimize
 
 
 def find_closest_point(Xt, point, selected_indices):

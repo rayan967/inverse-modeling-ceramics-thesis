@@ -1,5 +1,6 @@
 import os
 import sys
+
 import numpy as np
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
@@ -81,8 +82,8 @@ def main():
     plt.show()
 
 
-import matplotlib.pyplot as plt
 import joblib
+import matplotlib.pyplot as plt
 
 
 def plot_design_space():

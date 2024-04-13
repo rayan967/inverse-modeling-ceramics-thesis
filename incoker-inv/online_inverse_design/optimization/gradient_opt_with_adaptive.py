@@ -1,36 +1,29 @@
 """Deprecated: use gradient_opt with adaptive GPR refactored to skopt instead."""
 
+import os
 import statistics
 import sys
-import os
 import time
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.append(parent_directory)
-import joblib
-import numpy as np
-from sklearn.metrics import mean_squared_error, r2_score
-from pyDOE import lhs
-
-from scipy.optimize import minimize
-import matplotlib.pyplot as plt
+import argparse
 import pathlib
 
 import joblib
-from sklearn import metrics
-from simlopt.gpr.gaussianprocess import *
-
-
+import matplotlib.pyplot as plt
 import numpy as np
-import argparse
 from adapt import *
+from pyDOE import lhs
+from scipy.optimize import minimize
+from simlopt.basicfunctions.utils.createfolderstructure import *
+from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.gpr.gaussianprocess import *
 from simlopt.hyperparameter.utils.crossvalidation import *
-from simlopt.basicfunctions.utils.creategrid import createPD
-from pyDOE import lhs
+from sklearn import metrics
+from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from simlopt.basicfunctions.utils.createfolderstructure import *
 
 
 def find_closest_point(Xt, point, selected_indices):

@@ -10,26 +10,28 @@ Modules:
 - Custom modules (online_adapt, simlopt): For adaptive GPR.
 """
 
-import sys
 import json
-import joblib
+import sys
 from pathlib import Path
+
+import joblib
 from sklearn import metrics
 
 # Add incoker-inv to sys path
 current_file = Path(__file__).resolve()
 run_directory = current_file.parent.parent.parent
 sys.path.append(str(run_directory))
-import numpy as np
 import argparse
+
+import numpy as np
+import yaml
+from online_adapt import *
+from pyDOE import lhs
+from simlopt.basicfunctions.utils.createfolderstructure import *
+from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.gpr.gaussianprocess import *
 from simlopt.hyperparameter.utils.crossvalidation import *
-from simlopt.basicfunctions.utils.creategrid import createPD
-from pyDOE import lhs
 from sklearn.model_selection import train_test_split
-from simlopt.basicfunctions.utils.createfolderstructure import *
-from online_adapt import *
-import yaml
 
 plt.close("all")
 plt.ioff()
