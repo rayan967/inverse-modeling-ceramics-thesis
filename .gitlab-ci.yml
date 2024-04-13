@@ -72,6 +72,7 @@ black:
   stage: Static Analysis
   allow_failure: true
   script:
+    - export TMPDIR=/tmp
     - poetry install --with analysis
     - poetry run black incoker-inv --check --verbose --diff --color > black_result.txt
   artifacts:
