@@ -48,9 +48,24 @@ build-backend = "poetry.core.masonry.api"
 target-version = ['py38', 'py39', 'py310', 'py311']
 line-length = 120
 include_trailing_comma = false
+exclude = '/incoker-inv/simlopt|/incoker-inv/incoker-micro-sims|\.venv|\.pytest_cache|build|builds|\.eggs'
+
+[tool.isort]
+profile = "black"
+skip = [
+    'incoker-inv/simlopt',
+    'incoker-inv/incoker-micro-sims',
+    '.venv',
+    '.pytest_cache',
+    'build',
+    'builds',
+    '.eggs'
+]
 
 [tool.pylint]
 ignore-paths = [
+    'incoker-inv/simlopt',
+    'incoker-inv/incoker-micro-sims',
     '.venv',
     '.pytest_cache',
     'build',

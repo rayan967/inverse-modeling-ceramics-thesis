@@ -73,7 +73,7 @@ black:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run black incoker-inv --check --verbose --diff --color --exclude='/incoker-micro-sims|/simlopt' > black_result.txt
+    - poetry run black incoker-inv --check --verbose --diff --color > black_result.txt
   artifacts:
     paths:
       - black_result.txt
