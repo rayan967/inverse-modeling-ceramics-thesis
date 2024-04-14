@@ -1,7 +1,9 @@
 """
 Train an adaptive GP using online simulations.
 
-This script is designed for the inverse design of ZTA ceramic microstructures using Gaussian Process Regression (GPR) models. It includes functionalities for loading and preprocessing data, performing hyperparameter optimization, adaptive sampling, and model evaluation.
+This script is designed for the inverse design of ZTA ceramic microstructures using Gaussian Process Regression (GPR)
+models. It includes functionalities for loading and preprocessing data, performing hyperparameter optimization, adaptive
+sampling, and model evaluation.
 
 Modules:
 - pathlib, sys, os, json, joblib: For file operations and system interactions.
@@ -15,7 +17,6 @@ import sys
 from pathlib import Path
 
 import joblib
-from sklearn import metrics
 
 current_file = Path(__file__).resolve()
 run_directory = current_file.parent.parent.parent
@@ -25,11 +26,9 @@ import numpy as np
 import yaml
 from generate_predict import (
     accuracy_test,
-    considered_properties,
     generate_candidate_point,
     get_output,
     phase_zirconia,
-    property_dict,
     property_dict_category,
 )
 from online_adapt import adapt_inc, calculate_weights, weighted_distance
@@ -198,6 +197,11 @@ def create_initial_design_points(parameterranges):
             [min_x, max_y],
             [max_x, min_y],
             [max_x, max_y],
+            [min_x, mid_y],
+            [max_x, mid_y],
+            [mid_x, min_y],
+            [mid_x, max_y],
+            [mid_x, mid_y],
         ]
     )
     return points
@@ -235,7 +239,7 @@ class DualOutputStream:
 
 def main(config_path):
     """
-    Setup and begin adaptive GP training.
+    Set up and begin the adaptive GP training.
 
     This function manages the workflow of the script, including loading data,
     setting up the GPR model, performing adaptive sampling, and evaluating model performance.
