@@ -1,5 +1,4 @@
-"""
-online_adapt.py
+"""Find training points for the GPR in an adaptive manner iteratively.
 
 This script contains functions for adaptive sampling and optimization
 using a Gaussian Process surrogate model. It is designed to iteratively
@@ -17,19 +16,15 @@ import numpy as np
 current_file = Path(__file__).resolve()
 run_directory = current_file.parent.parent.parent
 sys.path.append(str(run_directory))
-import pathlib
-
 import matplotlib.pyplot as plt
-from incoker_micro_sims import prediction_pipeline
-from online_training import accuracy_test, generate_candidate_point
+from generate_predict import accuracy_test, generate_candidate_point
 from simlopt.basicfunctions.utils.creategrid import createPD
-from simlopt.gpr.gaussianprocess import *
 from simlopt.optimization.errormodel_new import (
     MCGlobalEstimate,
     acquisitionfunction,
     estiamteweightfactors,
 )
-from simlopt.optimization.utilities import *
+from simlopt.optimization.utilities import plotiteration
 
 
 def adapt_inc(

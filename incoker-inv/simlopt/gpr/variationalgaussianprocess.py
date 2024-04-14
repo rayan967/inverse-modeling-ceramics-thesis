@@ -3,8 +3,6 @@ import jax.numpy as jnp
 import jax.scipy as jsp
 
 from jax import random, jit, value_and_grad
-from jax.config import config
-
 
 def kernel(X1, X2, theta):
     """

@@ -1,5 +1,5 @@
 """
-online_training.py
+Train an adaptive GP using online simulations.
 
 This script is designed for the inverse design of ZTA ceramic microstructures using Gaussian Process Regression (GPR) models. It includes functionalities for loading and preprocessing data, performing hyperparameter optimization, adaptive sampling, and model evaluation.
 
@@ -17,50 +17,30 @@ from pathlib import Path
 import joblib
 from sklearn import metrics
 
-# Add incoker-inv to sys path
 current_file = Path(__file__).resolve()
 run_directory = current_file.parent.parent.parent
 sys.path.append(str(run_directory))
-import argparse
-
+import matplotlib.pyplot as plt
 import numpy as np
 import yaml
-from online_adapt import *
-from pyDOE import lhs
-from simlopt.basicfunctions.utils.createfolderstructure import *
-from simlopt.basicfunctions.utils.creategrid import createPD
-from simlopt.gpr.gaussianprocess import *
-from simlopt.hyperparameter.utils.crossvalidation import *
-from sklearn.model_selection import train_test_split
+from generate_predict import (
+    accuracy_test,
+    considered_properties,
+    generate_candidate_point,
+    get_output,
+    phase_zirconia,
+    property_dict,
+    property_dict_category,
+)
+from online_adapt import adapt_inc, calculate_weights, weighted_distance
+from simlopt.basicfunctions.utils.createfolderstructure import (
+    createfoldername,
+    createfolders,
+)
+from simlopt.gpr.gaussianprocess import GPR
 
 plt.close("all")
 plt.ioff()
-
-# material properties to consider in training
-considered_properties = [
-    "thermal_conductivity",
-    "thermal_expansion",
-    "young_modulus",
-    "poisson_ratio",
-]
-
-# For result indexing
-property_dict = {
-    "thermal_conductivity": "Thermal conductivity",
-    "thermal_expansion": "Thermal expansion",
-    "young_modulus": "Young modulus",
-    "poisson_ratio": "Poisson ratio",
-}
-
-# For simulation options
-property_dict_category = {
-    "thermal_conductivity": "thermal_conductivity",
-    "thermal_expansion": "thermal_expansion",
-    "young_modulus": "elasticity",
-    "poisson_ratio": "elasticity",
-}
-phase_zirconia = 11
-phase_alumina = 4
 
 
 def load_config(config_path):
@@ -89,7 +69,6 @@ def load_test_data(base_path, prop_name):
     - tuple: A tuple containing two numpy arrays, X (features) and y (target values).
     """
     info_files = list(base_path.rglob("info.json"))
-
     X = []
     y = []
     for file in info_files:
@@ -110,6 +89,8 @@ def load_test_data(base_path, prop_name):
 
 def load_data_for_restart(base_path, prop_name):
     """
+    Load restart data from JSON files within a specified directory.
+
     Load data for restarting a failed run. Iterates through each parameter set directory
     within `base_path`, then iterates through RVE subdirectories to compile y values
     and compute variance. Uses data from the first RVE subdirectory for X values.
@@ -160,55 +141,6 @@ def load_data_for_restart(base_path, prop_name):
     return np.array(Xt), np.array(yt).reshape(-1, 1), np.array(epsXt).reshape(1, -1)
 
 
-def generate_candidate_point(
-    input, simulation_options, property_name, output_stream, runpath, run_phase, num_generations
-):
-    output_stream.error_detected = False  # Set error flag
-    output_path = pathlib.Path(runpath, run_phase, f"v={input[0]:.2f},r={input[1]:.2f}")
-    output_path.mkdir(parents=True, exist_ok=True)
-    simulation_options["output_path"] = output_path
-    simulation_options["n_rves"] = num_generations
-    simulation_options["n_workers"] = max(min(num_generations, 16), 1)
-
-    all_results = prediction_pipeline.generate_and_predict(input, simulation_options)
-
-    vfs = []
-    clrs = []
-    values = []
-    for rve_path, result in all_results.items():
-        output_value = get_output(result, property_name)
-
-        vf = result["v_phase"][str(phase_zirconia)]
-        cl_11 = result["chord_length_analysis"]["phase_chord_lengths"][str(phase_zirconia)]["mean_chord_length"]
-        cl_4 = result["chord_length_analysis"]["phase_chord_lengths"][str(phase_alumina)]["mean_chord_length"]
-        clr = cl_11 / cl_4
-
-        vfs.append(vf)
-        clrs.append(clr)
-        values.append(output_value)
-
-        print(f"vf:\t {vf:.2f}, clr:\t {clr:.2f}, v:\t {output_value:.2f}")
-
-    vfs = np.array(vfs)
-    clrs = np.array(clrs)
-    values = np.array(values)
-
-    print(f"volume fraction    : {vfs.mean():.2f} +- {vfs.var():.2f}")
-    print(f"chord length ratio : {clrs.mean():.2f} +- {clrs.var():.2f}")
-    print(f"material properties: {values.mean():.2f} +- {values.var():.2f}")
-
-    # Check for Mapdl error
-    if output_stream.error_detected:
-        # Reset error flag
-        output_stream.error_detected = False
-        raise Exception("Error detected during operation: Mapdl")
-
-    Xs = np.array([vfs, clrs]).T
-    Ys = values
-
-    return Xs, Ys
-
-
 def createerror(Xt, random=False, graddata=False):
     """
     Create error estimates for the input data.
@@ -241,30 +173,10 @@ def createerror(Xt, random=False, graddata=False):
     return epsXt, epsXgrad
 
 
-def accuracy_test(model, X_test, y_test, tolerance=1e-2):
-    """
-    Calculate the accuracy of the model on test data.
-
-    Parameters:
-    - model: Trained GPR model.
-    - X_test (numpy.ndarray): Test data features.
-    - y_test (numpy.ndarray): Test data target values.
-    - tolerance (float, optional): Tolerance for accuracy. Defaults to 1E-2.
-
-    Returns:
-    - float: Accuracy score.
-    """
-    # Predict mean for test data
-    y_pred = model.predictmean(X_test)
-
-    # Calculate whether each prediction is within the tolerance of the true value
-    score = metrics.r2_score(y_true=y_test, y_pred=y_pred) * 100
-
-    return score
-
-
 def create_initial_design_points(parameterranges):
     """
+    Create design points in the initial phase for adaptive GP.
+
     Creates 9 design points in a 2D parameter space including corners,
     midpoints of boundaries, and the center.
 
@@ -286,25 +198,9 @@ def create_initial_design_points(parameterranges):
             [min_x, max_y],
             [max_x, min_y],
             [max_x, max_y],
-            [min_x, mid_y],
-            [max_x, mid_y],
-            [mid_x, min_y],
-            [mid_x, max_y],
-            [mid_x, mid_y],
         ]
     )
     return points
-
-
-def get_output(result, property_name):
-    # For CTE
-    if property_name == "thermal_expansion":
-        output_value = result["mean"]
-
-    # For the rest
-    else:
-        output_value = result["homogenization"][property_dict[property_name]]["value"]
-    return output_value
 
 
 class DualOutputStream:
@@ -318,10 +214,12 @@ class DualOutputStream:
     """
 
     def __init__(self, filename):
+        """Initiate the output stream variables."""
         self.terminal = sys.stdout
         self.log = open(filename, "a")
 
     def write(self, message):
+        """Write output error when certain error strings are read."""
         self.terminal.write(message)
         self.log.write(message)
 
@@ -331,14 +229,14 @@ class DualOutputStream:
             self.error_detected = True
 
     def flush(self):
-        # This flush method is needed for Python 3 compatibility.
-        # This handles the flush command by doing nothing.
-        # You might want to extend this method in the future.
+        """Flush the output stream."""
         pass
 
 
 def main(config_path):
     """
+    Setup and begin adaptive GP training.
+
     This function manages the workflow of the script, including loading data,
     setting up the GPR model, performing adaptive sampling, and evaluating model performance.
     """
@@ -384,9 +282,9 @@ def main(config_path):
     print(f"Parameter ranges: {parameterranges}")
 
     # Parameters for adaptive phase from config file
-    totalbudget = adaptive_phase_parameters["totalbudget"]
-    incrementalbudget = adaptive_phase_parameters["incrementalbudget"]
-    TOLFEM = adaptive_phase_parameters["TOLFEM"]
+    # totalbudget = adaptive_phase_parameters["totalbudget"]
+    # incrementalbudget = adaptive_phase_parameters["incrementalbudget"]
+    # TOLFEM = adaptive_phase_parameters["TOLFEM"]
     TOLAcqui = adaptive_phase_parameters["TOLAcqui"]
     TOLrelchange = adaptive_phase_parameters["TOLrelchange"]
 

@@ -1,9 +1,9 @@
-"""
-Performs inverse optimization for material properties using gradient-based methods. This script
-utilizes a pre-trained machine learning surrogate model to predict material properties from microstructural
-features and iteratively adjusts these features to meet a target property value. It supports
-optimization for properties such as thermal conductivity, thermal expansion, Young's modulus,
-and Poisson's ratio.
+"""Perform inverse optimization for material properties using gradient-based methods.
+
+This script utilizes a pre-trained machine learning surrogate model to predict material properties
+from microstructural features and iteratively adjusts these features to meet a target property value.
+It supports optimization for properties such as thermal conductivity, thermal expansion, Young's
+modulus, and Poisson's ratio.
 
 Usage:
   Run this script from the command line, specifying the model file, property name, and target
@@ -11,26 +11,24 @@ Usage:
   young_modulus and poisson_ratio.
 
 Example:
-  python offline_inverse_training/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value>
+  python offline_inverse_training/gradient_opt.py --model_file <path_to_surrogate_model.joblib>
+  --property_name <property_name> --property_value <desired_value>
 """
 
 import argparse
-import statistics
 import time
 
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import scipy.optimize
 from pyDOE import lhs
-from scipy.optimize import brute, minimize
+from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error, r2_score
 
 
 def find_closest_point(Xt, point, selected_indices):
     """
-    Finds the closest point in Xt to a given point that has not been selected yet.
+    Find the closest point in Xt to a given point that has not been selected yet.
 
     Parameters:
     - Xt (numpy.ndarray): The array of points to search through.
@@ -52,7 +50,7 @@ def find_closest_point(Xt, point, selected_indices):
 
 def objective_function(x, desired_property, pipe, scale=0.01, callback=None):
     """
-    Defines the objective function for the optimization problem.
+    Define the objective function for the optimization problem.
 
     Parameters:
     - x (numpy.ndarray): Current solution vector.
@@ -75,7 +73,7 @@ def objective_function(x, desired_property, pipe, scale=0.01, callback=None):
 
 def objective_gradient(x, desired_property, pipe, scale=0.01):
     """
-    Computes the gradient of the objective function.
+    Compute the gradient of the objective function.
 
     Parameters:
     - x (numpy.ndarray): Current solution vector.
@@ -109,7 +107,7 @@ def optimise_for_value(
     prop, X, property_name, pipe, bounds, features, property_ax_dict, initial_points, minima_threshold
 ):
     """
-    Optimizes microstructure for a given property value using gradient-based optimization.
+    Optimize microstructure for a given property value using gradient-based optimization.
 
     Parameters:
     - prop (float): Target property value.
@@ -244,7 +242,7 @@ def inverse_validate(
     minima_threshold,
 ):
     """
-    Validates and optimizes the inverse problem for a given material property across a range of target values.
+    Validate and optimizes the inverse problem for a given material property across a range of target values.
 
     Parameters:
     - X (numpy.ndarray): Dataset of microstructural features.
@@ -261,7 +259,7 @@ def inverse_validate(
 
     Runs the optimization for a range of target property values and visualizes the results.
     """
-    ## Now optimizing for range of values
+    # Now optimizing for range of values
 
     # Grid of 100 points across property bounds for plot
     num_points = 20
@@ -383,6 +381,7 @@ def inverse_validate(
 
 
 def main():
+    """Execute the main functionality of the script that performs inverse optimization for material properties."""
     parser = argparse.ArgumentParser(description="Inverse Validation and Optimization for Material Properties")
     parser.add_argument("--model_file", type=str, required=True, help="Path to the model file")
     parser.add_argument(
@@ -422,7 +421,7 @@ def main():
     X = models[property_name]["X_train"]
     Y = models[property_name]["y_train"]
 
-    ## Preprocess parameters for optimization
+    # Preprocess parameters for optimization
 
     # Compute the minimum and maximum values for each feature in the training data
     min_values = np.min(X, axis=0)

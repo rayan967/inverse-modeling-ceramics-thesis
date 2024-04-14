@@ -1,3 +1,5 @@
+# flake8: noqa
+
 import argparse
 import pathlib
 import statistics

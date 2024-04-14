@@ -1,15 +1,30 @@
+"""Visualize the design space and predictions of adaptive GP model."""
+
 import os
 import sys
-
-import numpy as np
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
 parent_directory = os.path.dirname(current_directory)
 sys.path.append(parent_directory)
-from training.online_training import *
+import joblib
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def predict_property(microstructure):
+    """
+    Predict a material property from given microstructure features using a pre-loaded Gaussian Process Regressor.
+
+    Parameters:
+    ----------
+    microstructure : dict
+        A dictionary containing key features such as volume fraction and chord length ratio necessary for prediction.
+
+    Returns:
+    -------
+    float
+        The predicted property value as determined by the Gaussian Process model.
+    """
     model = joblib.load(gp_file)
     features = ["volume_fraction_4", "chord_length_ratio"]
     microstructure_features = [microstructure[feature] for feature in features]
@@ -21,6 +36,19 @@ def predict_property(microstructure):
 
 
 def convert_x_to_microstructure(x):
+    """
+    Convert a set of design variables into a structured microstructure representation.
+
+    Parameters:
+    ----------
+    x : array_like
+        An array of design variables.
+
+    Returns:
+    -------
+    dict
+        A dictionary representing the structured microstructure with specific feature keys.
+    """
     volume_fraction_4 = x[0]
     chord_length_ratio = x[1]
 
@@ -34,8 +62,8 @@ def convert_x_to_microstructure(x):
 
 
 def main():
+    """Prediction and visualize using the specified GP model."""
     gp = joblib.load(gp_file)
-    features = ["volume_fraction_4", "chord_length_ratio"]
 
     v2_values = np.linspace(0.1, 0.9, num=100)
     rho_values = np.linspace(0.3, 4.0, num=100)
@@ -82,11 +110,8 @@ def main():
     plt.show()
 
 
-import joblib
-import matplotlib.pyplot as plt
-
-
 def plot_design_space():
+    """Visualize the design space using training data points to understand variable distribution and range."""
     # Load the Gaussian Process model
     gp = joblib.load(gp_file)
 
@@ -115,16 +140,13 @@ def plot_design_space():
 
 
 def plot_training_data():
+    """Display model predictions to assess model performance and accuracy."""
     # Load the Gaussian Process model
     gp = joblib.load(gp_file)
 
     # Extract the training data points
     X = gp.X
     y_pred = gp.predictmean(X)
-
-    # Design space limits
-    x_min, x_max = 0.1, 0.9  # First dimension limits
-    y_min, y_max = 0.3, 5.0  # Second dimension limits
 
     # Create the scatter plot
     plt.figure(figsize=(8, 6))
@@ -147,16 +169,7 @@ def plot_training_data():
 
 
 if __name__ == "__main__":
-    gp_file = "adapt/7_gp.joblib"
-    # parser = argparse.ArgumentParser(description='Predict property')
-    # parser.add_argument('prop1', type=float,
-    # help='Expected property in JSON format')
-    # parser.add_argument('prop2', type=float,
-    # help='Expected property in JSON format')
-    # args = parser.parse_args()
-    # arr = np.array([args.prop1,args.prop2])
+    gp_file = "adapt/40_gp.joblib"
     plot_training_data()
     plot_design_space()
-    # microstr = convert_x_to_microstructure(arr)
-    # predict_property(microstr)
     main()

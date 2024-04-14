@@ -1,11 +1,18 @@
-import os
-import sys
+"""Train machine learning models to predict material properties from microstructural features.
 
-from skopt.learning import GaussianProcessRegressor
+This script reads training data for Representative Volume Elements (RVEs) and uses it to train Gaussian Process
+Regressors. The models can predict various material properties such as thermal conductivity, thermal expansion, Young's
+modulus, and Poisson's ratio. The script supports varying numbers of features and allows for the exporting of trained
+models.
 
-current_directory = os.path.dirname(os.path.abspath(__file__))
-parent_directory = os.path.dirname(current_directory)
-sys.path.append(parent_directory)
+Usage:
+  Run this script from the command line, specifying the path to the training data and the number of features.
+  Optionally, specify a path to export the trained models.
+
+Example:
+  python train_models.py train_data.npy --number_of_features 8 --export_model_file trained_models.joblib
+"""
+
 import argparse
 import pathlib
 
@@ -17,13 +24,8 @@ from sklearn.metrics import make_scorer, mean_squared_error, r2_score
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from skopt.learning.gaussian_process.kernels import (
-    RBF,
-    DotProduct,
-    Matern,
-    RationalQuadratic,
-    WhiteKernel,
-)
+from skopt.learning import GaussianProcessRegressor
+from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 
 considered_features = [
     "volume_fraction_4",
@@ -44,16 +46,24 @@ considered_properties = [
     "poisson_ratio",
 ]
 
-BEST_PARAMETERS = {
-    "thermal_expansion": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-    "thermal_conductivity": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-    "young_modulus": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-    "poisson_ratio": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-}
-
 
 def main(train_data_file, export_model_file, number_of_features, plots=False):
+    """
+    Train and evaluate machine learning models based on provided training data.
 
+    Load training data from the specified file, train Gaussian Process Regressors for
+    selected material properties, and optionally export the trained models. Optionally
+    generate and display plots of model predictions.
+
+    Parameters:
+        train_data_file (Path): Path to the file containing training data.
+        export_model_file (Path, optional): Path where the trained models will be exported.
+        number_of_features (int): Specifies the number of features used in the model.
+        plots (bool): If True, generate plots showing model predictions and actual data.
+
+    Returns:
+        dict: A dictionary containing the trained models, their metadata, and performance metrics.
+    """
     training_data = pathlib.Path(train_data_file)
     if not training_data.exists():
         print(f"Error: training data path {training_data} does not exist.")
@@ -89,11 +99,6 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
         clean_indices = np.argwhere(~np.isnan(y_float))
         y_clean = y_float[clean_indices.flatten()]
         X_clean = X[clean_indices.flatten()]
-
-        # create a pipeline object for training
-        best_params = BEST_PARAMETERS[property_name]
-        kernel = best_params["kernel"]
-        alpha = best_params["alpha"]
 
         # create a pipeline object for training using the best parameters
         pipe = make_pipeline(StandardScaler(), GaussianProcessRegressor(kernel=RBF() + WhiteKernel(), normalize_y=True))
@@ -235,7 +240,6 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
 
 def extract_XY_2(data):
     """Use for 2 features."""
-
     filtered_indices = np.where(data["volume_fraction_1"] == 0.0)
 
     chord_length_ratio = data["chord_length_mean_4"][filtered_indices] / data["chord_length_mean_10"][filtered_indices]
@@ -255,7 +259,6 @@ def extract_XY_2(data):
 
 def extract_XY_3(data):
     """Use for 3 features."""
-
     chord_length_ratio = data["chord_length_mean_4"] / data["chord_length_mean_10"]
     X = np.vstack((data["volume_fraction_4"], data["volume_fraction_1"], chord_length_ratio)).T
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
@@ -268,41 +271,10 @@ def extract_XY_3(data):
 
 def extract_XY(data):
     """Use for 8 features."""
-
     X = np.vstack(tuple(data[f] for f in considered_features)).T
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
 
     return X, Y
-
-
-def accuracy_test(model, X_test, y_test, tolerance=1):
-    """
-    Parameters
-    ----------
-    model : GPR model
-    X_test : np.array
-        Test data (features).
-    y_test : np.array
-        Test data (true values).
-    tolerance : float
-        Tolerance for the accuracy score.
-
-    Returns
-    -------
-    score : float
-        Accuracy score between 0 and 100.
-    """
-
-    # Predict mean for test data
-    y_pred = model.predict(X_test)
-
-    # Calculate whether each prediction is within the tolerance of the true value
-    correct = np.abs(y_test - y_pred) <= tolerance
-
-    # Calculate the accuracy score
-    score = np.mean(correct) * 100
-
-    return score
 
 
 if __name__ == "__main__":
