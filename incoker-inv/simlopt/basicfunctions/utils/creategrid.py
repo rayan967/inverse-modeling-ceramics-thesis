@@ -72,22 +72,21 @@ def createPD(nbofpoints, dim, gtype, ranges, exclusion_zones=None):
 
         return grid
 
-
     elif gtype == "grid":
         # Calculate the number of points along each dimension
         points_per_dim = int(np.ceil(nbofpoints ** (1 / dim)))
 
         # Generate grid
-        grid = np.meshgrid(*[np.linspace(ranges[i, 0], ranges[i, 1], points_per_dim) for i in range(dim)])
-        grid = np.vstack(map(np.ravel, grid)).T
-
+        grid = [np.linspace(ranges[i, 0], ranges[i, 1], points_per_dim) for i in range(dim)]
+        meshed_grid = np.meshgrid(*grid)
+        grid_flat = [g.ravel() for g in meshed_grid]
+        grid = np.vstack(grid_flat).T
 
         if exclusion_zones:
             filtered_grid = []
             for point in grid:
                 if not is_within_exclusion_zone(point, exclusion_zones, weights):
                     filtered_grid.append(point)
-
             grid = np.array(filtered_grid)
 
         return grid
