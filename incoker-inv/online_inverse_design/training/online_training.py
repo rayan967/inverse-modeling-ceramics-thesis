@@ -31,7 +31,7 @@ from generate_predict_utils import (
     phase_zirconia,
     property_dict_category,
 )
-from online_adapt import adapt_inc, calculate_weights, weighted_distance
+from online_adapt import adapt_inc
 from simlopt.basicfunctions.utils.createfolderstructure import (
     createfoldername,
     createfolders,
@@ -320,6 +320,10 @@ def main(config_path):
                     parameterranges,
                 )
 
+                # Append the best point, its mean output, and variance to their respective lists
+                Xt_initial.append(best_X)
+                yt_initial.append(best_y)
+                epsXt.append(variance)
                 print(f"Initial point: {str(point)}")
                 print(f"Found point: {str(best_X)}")
                 print(f"Found value: {str(best_y)}")
