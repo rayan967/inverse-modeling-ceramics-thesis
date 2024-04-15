@@ -17,7 +17,12 @@ current_file = Path(__file__).resolve()
 run_directory = current_file.parent.parent.parent
 sys.path.append(str(run_directory))
 import matplotlib.pyplot as plt
-from generate_predict import accuracy_test, generate_candidate_point
+from generate_predict_utils import (
+    accuracy_test,
+    calculate_weights,
+    generate_candidate_point,
+    weighted_distance,
+)
 from simlopt.basicfunctions.utils.creategrid import createPD
 from simlopt.optimization.errormodel_new import (
     MCGlobalEstimate,
@@ -150,32 +155,18 @@ def adapt_inc(
 
             # Try to generate candidate XC add it to the GP model
             try:
-
-                if mul_generate_options["usage"]:
-                    num_generations = mul_generate_options["num_generations"]
-                else:
-                    num_generations = 1
-
                 point = (XC[0][0], XC[0][1])
 
-                generated_points, yt_samples = generate_candidate_point(
-                    point, simulation_options, property_name, output_stream, runpath, "adaptive_points", num_generations
+                best_X, best_y, variance = generate_candidate_point(
+                    point,
+                    simulation_options,
+                    property_name,
+                    output_stream,
+                    runpath,
+                    "initial_points",
+                    mul_generate_options,
+                    parameterranges,
                 )
-
-                # Calculate variance and mean of outputs if we have enough samples
-                if mul_generate_options["usage"]:
-                    variance = np.var(yt_samples, ddof=1)  # Using sample variance
-
-                    if len(yt_samples) == 1:
-                        variance = 1e-1
-                else:
-                    variance = 1e-4
-
-                # Calculate weighted distances and select the best point
-                distances = [weighted_distance(point, Xg, weights) for Xg in generated_points]
-                best_index = np.argmin(distances)
-                best_X = generated_points[best_index]
-                best_y = yt_samples[best_index]
 
                 Xc = np.array(best_X).reshape(1, -1)
                 Yc = np.array(best_y).reshape(1, -1)
@@ -333,29 +324,3 @@ def plot_accuracy(accuracies):
     plt.title("Accuracy per Iteration")
     plt.grid(True)
     plt.savefig("accuracy_plot.png")
-
-
-def calculate_weights(parameterranges):
-    """
-    Calculate weights for each parameter inversely proportional to their range.
-
-    :param parameterranges: Array of parameter ranges.
-    :return: Array of weights.
-    """
-    ranges = parameterranges[:, 1] - parameterranges[:, 0]
-    weights = 1 / ranges
-    return weights
-
-
-def weighted_distance(point_a, point_b, weights):
-    """
-    Calculate the weighted Euclidean distance between two points.
-
-    :param point_a: First point (array-like).
-    :param point_b: Second point (array-like).
-    :param weights: Weights for each dimension (array-like).
-    :return: Weighted distance.
-    """
-    diff = np.array(point_a) - np.array(point_b)
-    weighted_diff = diff * weights
-    return np.sqrt(np.sum(weighted_diff**2))

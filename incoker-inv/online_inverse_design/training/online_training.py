@@ -24,7 +24,7 @@ sys.path.append(str(run_directory))
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
-from generate_predict import (
+from generate_predict_utils import (
     accuracy_test,
     generate_candidate_point,
     get_output,
@@ -305,45 +305,29 @@ def main(config_path):
     mul_generate_options = config["multiple_generation_options"]
 
     if compute:
-
-        if mul_generate_options["usage"]:
-            num_generations = mul_generate_options["num_generations"]
-        else:
-            num_generations = 1
-
-        weights = calculate_weights(parameterranges)
         # Generate initial design points (border points) as training data
         for i, point in enumerate(initial_design_points):
             print(f"--- Initial Iteration {i} ---")
             try:
-                generated_points, yt_samples = generate_candidate_point(
-                    point, simulation_options, property_name, output_stream, runpath, "initial_points", num_generations
+                best_X, best_y, variance = generate_candidate_point(
+                    point,
+                    simulation_options,
+                    property_name,
+                    output_stream,
+                    runpath,
+                    "initial_points",
+                    mul_generate_options,
+                    parameterranges,
                 )
-            except Exception as e:
-                print("Error generating candidate point:", e)
-                continue
 
-            # Calculate variance and mean of outputs if we have enough samples
-            if len(yt_samples) >= 1:
-                if mul_generate_options["usage"]:
-                    variance = np.var(yt_samples, ddof=1)  # Using sample variance
-                else:
-                    variance = 1e-4
-
-                # Calculate weighted distances and select the best point
-                distances = [weighted_distance(point, Xg, weights) for Xg in generated_points]
-                best_index = np.argmin(distances)
-                best_X = generated_points[best_index]
-                best_y = yt_samples[best_index]
-
-                # Append the best point, its mean output, and variance to their respective lists
-                Xt_initial.append(best_X)
-                yt_initial.append(best_y)
-                epsXt.append(variance)
                 print(f"Initial point: {str(point)}")
                 print(f"Found point: {str(best_X)}")
                 print(f"Found value: {str(best_y)}")
                 print(f"Found epsXt: {str(variance)}")
+
+            except Exception as e:
+                print("Error generating candidate point:", e)
+                continue
 
         Xt_initial = np.array(Xt_initial)
         yt_initial = np.array(yt_initial).reshape(-1, 1)

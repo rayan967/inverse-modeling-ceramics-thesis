@@ -39,9 +39,14 @@ property_dict_category = {
 
 
 def generate_candidate_point(
-    input, simulation_options, property_name, output_stream, runpath, run_phase, num_generations
+    input, simulation_options, property_name, output_stream, runpath, run_phase, mul_generate_options, parameterranges
 ):
     """Generate and predict material property of a candidate structure."""
+    if mul_generate_options["usage"]:
+        num_generations = mul_generate_options["num_generations"]
+    else:
+        num_generations = 1
+
     output_stream.error_detected = False  # Set error flag
     output_path = Path(runpath, run_phase, f"v={input[0]:.2f},r={input[1]:.2f}")
     output_path.mkdir(parents=True, exist_ok=True)
@@ -82,10 +87,31 @@ def generate_candidate_point(
         output_stream.error_detected = False
         raise Exception("Error detected during operation: Mapdl")
 
-    Xs = np.array([vfs, clrs]).T
-    Ys = values
+    generated_points = np.array([vfs, clrs]).T
+    yt_samples = values
+    weights = calculate_weights(parameterranges)
 
-    return Xs, Ys
+    # Calculate variance and mean of outputs if we have enough samples
+    if len(yt_samples) >= 1:
+        # Calculate variance and mean of outputs if we have enough samples
+        if mul_generate_options["usage"]:
+            if len(yt_samples) == 1:
+                variance = 1e-1
+            else:
+                variance = np.var(yt_samples, ddof=1)  # Using sample variance
+        else:
+            variance = 1e-4
+
+        # Calculate weighted distances and select the best point
+        distances = [weighted_distance(input, Xg, weights) for Xg in generated_points]
+        best_index = np.argmin(distances)
+        best_X = generated_points[best_index]
+        best_y = yt_samples[best_index]
+
+    else:
+        raise Exception("Not enough samples were generated.")
+
+    return best_X, best_y, variance
 
 
 def get_output(result, property_name):
@@ -120,3 +146,29 @@ def accuracy_test(model, X_test, y_test, tolerance=1e-2):
     score = metrics.r2_score(y_true=y_test, y_pred=y_pred) * 100
 
     return score
+
+
+def calculate_weights(parameterranges):
+    """
+    Calculate weights for each parameter inversely proportional to their range.
+
+    :param parameterranges: Array of parameter ranges.
+    :return: Array of weights.
+    """
+    ranges = parameterranges[:, 1] - parameterranges[:, 0]
+    weights = 1 / ranges
+    return weights
+
+
+def weighted_distance(point_a, point_b, weights):
+    """
+    Calculate the weighted Euclidean distance between two points.
+
+    :param point_a: First point (array-like).
+    :param point_b: Second point (array-like).
+    :param weights: Weights for each dimension (array-like).
+    :return: Weighted distance.
+    """
+    diff = np.array(point_a) - np.array(point_b)
+    weighted_diff = diff * weights
+    return np.sqrt(np.sum(weighted_diff**2))
