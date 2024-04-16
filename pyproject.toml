@@ -40,6 +40,16 @@ anybadge = "^1.14.0"
 isort = "^5.13.2"
 black = "^24.1.0"
 
+[tool.poetry.group.test.dependencies]
+mock = "^5.1.0"
+pytest = "^7.4.2"
+pytest-mock = "^3.11.1"
+pytest-cov = "^4.1.0"
+coverage = "^7.3.2"
+pytest-console-scripts = "^1.4.1"
+anybadge = "^1.14.0"
+pytest-retry = "^1.5.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -103,3 +113,19 @@ exclude = [
 ]
 format = "html"
 htmldir = "flake-report"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-s --junitxml=report.xml --cov=incoker_micro_sims --cov-report xml --cov-report html --cov-report term --cov-report json --cov-config=.coveragerc --color=yes"
+testpaths = [
+    "tests"
+]
+markers = [
+# to run only tests of one marker use: pytest -m <markname> tests/testfile.py
+# all tests regarding generate_and_predict function.
+"online_training",
+]
+retries = 2
+retry_delay = 1
+cumulative_timing = false
+

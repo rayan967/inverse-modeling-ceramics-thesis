@@ -25,4 +25,5 @@ execpath: './adapt'
 validation_data_path: "/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_thermal_conductivity"
 compute: true     # If initial points are available or restarting a failed run, set compute = False
 output_freq: 5
+initial_samples: 9 # Only change for pytest, default initial samples should be 9.
 max_samples: 150

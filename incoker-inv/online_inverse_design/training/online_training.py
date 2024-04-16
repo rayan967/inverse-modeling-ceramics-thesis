@@ -237,16 +237,13 @@ class DualOutputStream:
         pass
 
 
-def main(config_path):
+def main(config):
     """
     Set up and begin the adaptive GP training.
 
     This function manages the workflow of the script, including loading data,
     setting up the GPR model, performing adaptive sampling, and evaluating model performance.
     """
-    # Load the configuration file
-    config = load_config(config_path)
-
     # Use the loaded configuration
     property_name = config["property_name"]
     simulation_options = config["simulation_options"]
@@ -255,6 +252,7 @@ def main(config_path):
     validation_data_path = Path(config["validation_data_path"])
     output_freq = config["output_freq"]
     max_samples = config["max_samples"]
+    initial_samples = config["initial_samples"]
 
     # Convert the parameter ranges to a numpy array if needed
     parameterranges = np.array(
@@ -306,7 +304,7 @@ def main(config_path):
 
     if compute:
         # Generate initial design points (border points) as training data
-        for i, point in enumerate(initial_design_points):
+        for i, point in enumerate(initial_design_points[:initial_samples]):
             print(f"--- Initial Iteration {i} ---")
             try:
                 best_X, best_y, variance = generate_candidate_point(
@@ -420,4 +418,6 @@ if __name__ == "__main__":
     current_file = Path(__file__).resolve()
     file_directory = current_file.parent
     config_path = file_directory / "config.yaml"
-    main(config_path)
+    # Load the configuration file
+    config = load_config(config_path)
+    main(config)
