@@ -1,3 +1,5 @@
+"""Perform grid-search to find optimal parameters for GP for multiphase ceramics data."""
+
 import pathlib
 
 import matplotlib.pyplot as plt
@@ -13,7 +15,6 @@ from sklearn.gaussian_process.kernels import (
     RationalQuadratic,
     WhiteKernel,
 )
-from sklearn.metrics import make_scorer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 
@@ -38,7 +39,6 @@ considered_properties = [
 
 def extract_XY_2(data):
     """Use for 2 features."""
-
     filtered_indices = np.where(data["volume_fraction_1"] == 0.0)
 
     chord_length_ratio = data["chord_length_mean_4"][filtered_indices] / data["chord_length_mean_10"][filtered_indices]
@@ -58,7 +58,6 @@ def extract_XY_2(data):
 
 def extract_XY_3(data):
     """Use for 3 features."""
-
     chord_length_ratio = data["chord_length_mean_4"] / data["chord_length_mean_10"]
     X = np.vstack((data["volume_fraction_4"], data["volume_fraction_1"], chord_length_ratio)).T
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
@@ -71,7 +70,6 @@ def extract_XY_3(data):
 
 def extract_XY(data):
     """Use for 8 features."""
-
     X = np.vstack(tuple(data[f] for f in considered_features)).T
     Y = np.vstack(tuple(data[p] for p in considered_properties)).T
 

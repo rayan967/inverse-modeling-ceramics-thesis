@@ -1,3 +1,5 @@
+"""Visualize the evolution of the GP model through the adaptive phases."""
+
 import json
 import pathlib
 
@@ -10,6 +12,16 @@ from sklearn import metrics
 
 
 def load_test_data(base_path):
+    """
+    Load test data from JSON files within a specified directory.
+
+    Parameters:
+    - base_path (pathlib.Path): Directory path to load data from.
+    - prop_name (str): Material property considered.
+
+    Returns:
+    - tuple: A tuple containing two numpy arrays, X (features) and y (target values).
+    """
     base_path = pathlib.Path(base_path)
     info_files = list(base_path.glob("**/info.json"))
 
@@ -27,24 +39,18 @@ def load_test_data(base_path):
     return np.array(X), np.array(y)
 
 
-def accuracy_test(model, X_test, y_test, tolerance=1e-2):
+def accuracy_test(model, X_test, y_test):
     """
-    Parameters
-    ----------
-    model : GPR model
-    X_test : np.array
-        Test data (features).
-    y_test : np.array
-        Test data (true values).
-    tolerance : float
-        Tolerance for the accuracy score.
+    Calculate the accuracy of the model on test data.
 
-    Returns
-    -------
-    score : float
-        Accuracy score between 0 and 100.
+    Parameters:
+    - model: Trained GPR model.
+    - X_test (numpy.ndarray): Test data features.
+    - y_test (numpy.ndarray): Test data target values.
+
+    Returns:
+    - float: Accuracy score.
     """
-
     # Predict mean for test data
     y_pred = model.predictmean(X_test)
 
@@ -54,7 +60,7 @@ def accuracy_test(model, X_test, y_test, tolerance=1e-2):
     return score
 
 
-gp_models = list(sorted(pathlib.Path("adapt").glob("*.joblib"), key=lambda x: int(x.name.split("_")[2])))[:50][::2]
+gp_models = list(sorted(pathlib.Path("../adapt").glob("*.joblib"), key=lambda x: int(x.name.split("_")[2])))[:50][::2]
 
 cm_subsection = np.linspace(0.1, 1, len(gp_models))
 colors = [cm.binary(x) for x in cm_subsection]
@@ -64,7 +70,8 @@ model_size = []
 
 
 X_test, y_test = load_test_data(
-    "/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/test_data_32_thermal_conductivity"
+    "/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean/"
+    "test_data_32_thermal_conductivity"
 )
 
 

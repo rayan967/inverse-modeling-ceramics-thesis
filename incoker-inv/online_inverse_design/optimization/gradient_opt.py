@@ -11,7 +11,8 @@ Usage:
   young_modulus and poisson_ratio.
 
 Example:
-  python online_inverse_training/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value> [--uncertainty_scale <scale_value>]
+  python online_inverse_training/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name
+  <property_name> --property_value <desired_value> [--uncertainty_scale <scale_value>]
 """
 
 import argparse

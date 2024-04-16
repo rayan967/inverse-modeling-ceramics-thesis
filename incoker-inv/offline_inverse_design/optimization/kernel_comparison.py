@@ -1,17 +1,29 @@
+"""Compare performances of each kernel for multiphase ceramics data."""
+
 import time
 
 import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pyDOE import lhs
-from scipy.optimize import brute, minimize
+from scipy.optimize import minimize
 from sklearn.metrics import mean_squared_error, r2_score
 
 K_inv = None
 
 
 def find_closest_point(Xt, point, selected_indices):
+    """
+    Find the closest point in Xt to a given point that has not been selected yet.
+
+    Parameters:
+    - Xt (numpy.ndarray): The array of points to search through.
+    - point (numpy.ndarray): The target point to find the closest point to.
+    - selected_indices (list): Indices of points that have already been selected.
+
+    Returns:
+    - tuple: The closest point to the given point and the updated list of selected indices.
+    """
     distances = np.linalg.norm(Xt - point, axis=1)
     while True:
         index = np.argmin(distances)
@@ -23,6 +35,7 @@ def find_closest_point(Xt, point, selected_indices):
 
 
 def convert_x_to_microstructure(x, features):
+    """Convert microstructure array representation to dict."""
     if len(features) == 9:
         volume_fraction_4 = x[0]
         volume_fraction_10 = x[1]
@@ -91,7 +104,21 @@ def convert_x_to_microstructure(x, features):
     return microstructure
 
 
-def objective_function(x, desired_property, pipe, property_name, rho, callback=None):
+def objective_function(x, desired_property, pipe, rho, callback=None):
+    """
+    Define the objective function for the optimization problem.
+
+    Parameters:
+    - x (numpy.ndarray): Current solution vector.
+    - desired_property (float): The target value for the property being optimized.
+    - pipe (sklearn.pipeline.Pipeline): The prediction pipeline.
+    - scale: A scaling factor for the uncertainty
+    - callback (function, optional): A callback function to execute additional procedures at each iteration.
+
+    Returns:
+    - float: The squared discrepancy between the predicted property value and the desired property value added with the
+    uncertainty at that point.
+    """
     if callback is not None:
         callback(x)
     # predicted_property, std  = pipe.predict(x.reshape(1, -1), return_std=True)
@@ -104,7 +131,19 @@ def objective_function(x, desired_property, pipe, property_name, rho, callback=N
     return (discrepancy**2) + std[0] * rho
 
 
-def objective_gradient(x, desired_property, pipe, property_name, rho):
+def objective_gradient(x, desired_property, pipe, rho):
+    """
+    Compute the gradient of the objective function.
+
+    Parameters:
+    - x (numpy.ndarray): Current solution vector.
+    - desired_property (float): The target value for the property being optimized.
+    - pipe (sklearn.pipeline.Pipeline): The prediction pipeline.
+    - scale: A scaling factor for the uncertainty
+
+    Returns:
+    - numpy.ndarray: The gradient of the objective function with respect to the solution vector.
+    """
     global predicted_property, std, gpr_grad, gpr_var_grad
     discrepancy = predicted_property - desired_property
     # print("Objective Gradient: ", str(2 * discrepancy * gpr_grad))
@@ -203,7 +242,7 @@ for kernel_name in modelnames:
             Xt_initial[i], selected_indices = find_closest_point(X, lhs_samples[i], selected_indices)
         initial_points = X[selected_indices]
 
-        ## Now optimizing subspace
+        # Now optimizing subspace
         # Grid of 100 points across property bounds for plot
         num_points = 20
         prop_values = np.linspace(prop_bounds[0], prop_bounds[1], num_points)
@@ -228,7 +267,7 @@ for kernel_name in modelnames:
         iteration_counts = []
 
         def iteration_callback(x):
-            """Callback function to track iterations."""
+            """Track iterations in the optimization steps."""
             if "current_count" not in iteration_callback.__dict__:
                 iteration_callback.current_count = 0
             iteration_callback.current_count += 1
@@ -295,6 +334,7 @@ for kernel_name in modelnames:
         num_sol = count / 20
 
         def count_unique_elements_rounded(solutions):
+            """Count number of unique solutions."""
             # Rounding each element to three decimal places
             rounded_solutions = [tuple(np.round(element, 5)) for element in solutions]
             # Counting unique elements

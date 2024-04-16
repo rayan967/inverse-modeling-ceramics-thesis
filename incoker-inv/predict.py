@@ -1,7 +1,7 @@
-"""
-This module is designed to predict material properties based on microstructure features using pre-trained Gaussian
-Process Regression (GPR) models. It loads a specified model and its associated features, extracts the necessary
-features from the provided microstructure data, and uses the model to predict the material property.
+"""Predict material properties based on microstructure using pre-trained Gaussian Process Regression (GPR) models.
+
+It loads a specified model and its associated features, extracts the necessary features from the provided
+microstructure data, and uses the model to predict the material property.
 
 Usage:
     Run this script from the command line, providing the microstructure information in JSON format as an argument.

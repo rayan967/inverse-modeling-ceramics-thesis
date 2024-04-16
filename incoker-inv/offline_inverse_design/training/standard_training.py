@@ -208,7 +208,8 @@ def main(train_data_file, export_model_file, number_of_features, plots=False):
     for prop in ["young_modulus", "poisson_ratio", "thermal_conductivity", "thermal_expansion"]:
         if prop in models:
             print(
-                f"{prop}: {models[prop]['cv_score_mean']:.3e}, {models[prop]['cv_score_std']:.1e}, {models[prop]['rmse']:.1e}"
+                f"{prop}: {models[prop]['cv_score_mean']:.3e}, {models[prop]['cv_score_std']:.1e},"
+                f" {models[prop]['rmse']:.1e}"
             )
 
     # export model for use in other projects

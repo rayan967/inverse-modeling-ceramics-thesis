@@ -1,3 +1,12 @@
+"""
+Convert an adaptive Gaussian Process (GP) model from simlopt's implementation to the Scikit-learn GP framework.
+
+This script takes a trained adaptive GP model file as input, transforms it for compatibility with Scikit-learn,
+and evaluates its performance using standard metrics. It also provides functionality for visualizing model predictions
+and exporting the converted model for future use. The script is designed to handle command-line arguments to facilitate
+easy interaction and automation.
+"""
+
 import os
 import sys
 
@@ -19,16 +28,24 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 
-BEST_PARAMETERS = {
-    "thermal_expansion": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-    "thermal_conductivity": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-    "young_modulus": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-    "poisson_ratio": {"alpha": 1e-10, "kernel": RBF(length_scale=1) + WhiteKernel(noise_level=1)},
-}
-
 
 def main(adapt_model, export_model_file, property_name, plots=False):
+    """
+    Convert and evaluate an adaptive GP model using Scikit-learn's GaussianProcessRegressor.
 
+    Load a model trained with a specialized GP implementation, preprocess the data, fit a Scikit-learn Gaussian Process
+    model, and evaluate its performance using various metrics. Optionally, generate plots to visualize the model's
+    predictions. If specified, export the converted model for future use.
+
+    Args:
+        adapt_model (pathlib.Path): Path to the adaptive GP model file.
+        export_model_file (pathlib.Path): Optional path to save the converted GP model.
+        property_name (str): Material property to model, used to label outputs.
+        plots (bool): Flag to indicate whether to produce visualization plots of the model performance.
+
+    Returns:
+        dict: A dictionary containing details and performance metrics of the trained Scikit-learn GP model.
+    """
     models = {}
 
     considered_features = ["volume_fraction_4", "chord_length_ratio"]
@@ -153,7 +170,8 @@ def main(adapt_model, export_model_file, property_name, plots=False):
     for prop in ["young_modulus", "poisson_ratio", "thermal_conductivity", "thermal_expansion"]:
         if prop in models:
             print(
-                f"{prop}: {models[prop]['cv_score_mean']:.3f}, {models[prop]['cv_score_std']:.1e}, {models[prop]['rmse']:.1e}"
+                f"{prop}: {models[prop]['cv_score_mean']:.3f}, {models[prop]['cv_score_std']:.1e}, "
+                f"{models[prop]['rmse']:.1e}"
             )
 
     # export model for use in other projects
@@ -181,36 +199,6 @@ def main(adapt_model, export_model_file, property_name, plots=False):
         }
         joblib.dump(exported_model, export_model_file)
     return models
-
-
-def accuracy_test(model, X_test, y_test, tolerance=1):
-    """
-    Parameters
-    ----------
-    model : GPR model
-    X_test : np.array
-        Test data (features).
-    y_test : np.array
-        Test data (true values).
-    tolerance : float
-        Tolerance for the accuracy score.
-
-    Returns
-    -------
-    score : float
-        Accuracy score between 0 and 100.
-    """
-
-    # Predict mean for test data
-    y_pred = model.predict(X_test)
-
-    # Calculate whether each prediction is within the tolerance of the true value
-    correct = np.abs(y_test - y_pred) <= tolerance
-
-    # Calculate the accuracy score
-    score = np.mean(correct) * 100
-
-    return score
 
 
 if __name__ == "__main__":

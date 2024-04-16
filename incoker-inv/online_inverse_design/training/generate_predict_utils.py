@@ -126,7 +126,7 @@ def get_output(result, property_name):
     return output_value
 
 
-def accuracy_test(model, X_test, y_test, tolerance=1e-2):
+def accuracy_test(model, X_test, y_test):
     """
     Calculate the accuracy of the model on test data.
 
@@ -134,7 +134,6 @@ def accuracy_test(model, X_test, y_test, tolerance=1e-2):
     - model: Trained GPR model.
     - X_test (numpy.ndarray): Test data features.
     - y_test (numpy.ndarray): Test data target values.
-    - tolerance (float, optional): Tolerance for accuracy. Defaults to 1E-2.
 
     Returns:
     - float: Accuracy score.
