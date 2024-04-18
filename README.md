@@ -24,7 +24,7 @@ source $(poetry env info --path)/bin/activate
 
 You can then move directory to the internal project files:
 ```console
-cd incoker-inv
+cd incoker_inverse
 ```
 Additionally, MercuryDPM is used as part of the structure generator, which is required for running online simulations. To 
 initialize the module, run the following commands:
@@ -40,7 +40,7 @@ cd ../../..
 
 ### Online Training and Optimization
 
-The files for an online training run are located at the directory ``incoker-inv/online_inverse_design/training``. To start an
+The files for an online training run are located at the directory ``incoker_inverse/online_inverse_design/training``. To start an
 online adaptive training, run the script:
 
 ```console
@@ -48,15 +48,15 @@ python online_inverse_design/training/online_training.py
 ```
 
 This will start an interative GPR training for the desired material property. The parameters for training can be set
-through the configuration file located at ``incoker-inv/online_inverse_design/training/config.yaml``. Once training is complete (typically 12 hours), 
-the model files and iterative plots will be stored at the directory ``incoker-inv/adapt``. The saved GPR can then be refactored into the skopt GPR 
+through the configuration file located at ``incoker_inverse/online_inverse_design/training/config.yaml``. Once training is complete (typically 12 hours), 
+the model files and iterative plots will be stored at the directory ``incoker_inverse/adapt``. The saved GPR can then be refactored into the skopt GPR 
 using the ``adapt_to_standard.py`` script as:
 
 ```console
 python online_inverse_design/training/adapt_to_standard.py adapt/model_name.joblib --property_name <property_name> --export_model_file models/model_name.joblib
 ```
 
-Using this model, inverse design can be performed using the scripts under the directory ``incoker-inv/online_inverse_design/optimization``. To 
+Using this model, inverse design can be performed using the scripts under the directory ``incoker_inverse/online_inverse_design/optimization``. To 
 perform validation designs, run the script:
 
 ```console
@@ -66,7 +66,7 @@ python online_inverse_design/optimization/gradient_opt.py --model_file <path_to_
 
 ### Offline Inverse Design
 
-Using pregenerated offline data, many of the initial tests were performed. The relevant files are located at the directory ``incoker-inv/offline_inverse_design``.
+Using pregenerated offline data, many of the initial tests were performed. The relevant files are located at the directory ``incoker_inverse/offline_inverse_design``.
 
 To run the grid search for finding optimal hyperparameters for each property run the script:
 
@@ -97,8 +97,8 @@ python offline_inverse_design/optimization/kernel_comparison.py
 
 ### Direct Inverse Training
 
-The DIT described in the thesis can be performed and evaluated using the files located at the directory ``incoker-inv/direct_inverse_training``.
-To run the training script (``incoker-inv/direct_inverse_training/reverse_training.py``), you need a dataset file (in .npy format) containing the RVE structure-property
+The DIT described in the thesis can be performed and evaluated using the files located at the directory ``incoker_inverse/direct_inverse_training``.
+To run the training script (``incoker_inverse/direct_inverse_training/reverse_training.py``), you need a dataset file (in .npy format) containing the RVE structure-property
 data. You can specify an export file path to save the trained models. Use the following
 command to execute the script:
 

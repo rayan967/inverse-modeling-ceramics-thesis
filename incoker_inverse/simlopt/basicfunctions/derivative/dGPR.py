@@ -1,5 +1,5 @@
 import numpy as np
-from simlopt.basicfunctions.covariance.cov import *
+from incoker_inverse.simlopt.basicfunctions.covariance.cov import *
 
 
 def dGPR(X, Xt, KXY, L):

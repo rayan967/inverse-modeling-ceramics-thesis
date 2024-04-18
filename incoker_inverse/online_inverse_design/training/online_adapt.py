@@ -7,29 +7,24 @@ to optimize a given property.
 """
 
 import os
-import sys
-from pathlib import Path
 
 import joblib
 import numpy as np
 
-current_file = Path(__file__).resolve()
-run_directory = current_file.parent.parent.parent
-sys.path.append(str(run_directory))
 import matplotlib.pyplot as plt
-from generate_predict_utils import (
+from incoker_inverse.online_inverse_design.training.generate_predict_utils import (
     accuracy_test,
     calculate_weights,
     generate_candidate_point,
     weighted_distance,
 )
-from simlopt.basicfunctions.utils.creategrid import createPD
-from simlopt.optimization.errormodel_new import (
+from incoker_inverse.simlopt.basicfunctions.utils.creategrid import createPD
+from incoker_inverse.simlopt.optimization.errormodel_new import (
     MCGlobalEstimate,
     acquisitionfunction,
     estiamteweightfactors,
 )
-from simlopt.optimization.utilities import plotiteration
+from incoker_inverse.simlopt.optimization.utilities import plotiteration
 
 
 def adapt_inc(

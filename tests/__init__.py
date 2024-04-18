@@ -1,1 +1,1 @@
-"""Unit test package for incoker-inv."""
+"""Unit test package for incoker_inverse."""

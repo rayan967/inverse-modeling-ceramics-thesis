@@ -1,16 +1,7 @@
-"""Tests for `incoker-inv` package."""
-
-import os
-import sys
+"""Tests for `incoker_inverse` package."""
 
 import pytest
-
-current_directory = os.path.dirname(os.path.abspath(__file__))
-project_root_directory = os.path.dirname(current_directory)
-online_inv_directory = os.path.join(project_root_directory, "incoker-inv/online_inverse_design/training")
-sys.path.append(online_inv_directory)
-
-from online_training import main
+from incoker_inverse.online_inverse_design.training.online_training import main
 
 
 @pytest.fixture

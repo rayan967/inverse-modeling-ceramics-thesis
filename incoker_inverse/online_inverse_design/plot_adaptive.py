@@ -1,11 +1,5 @@
 """Visualize the design space and predictions of adaptive GP model."""
 
-import os
-import sys
-
-current_directory = os.path.dirname(os.path.abspath(__file__))
-parent_directory = os.path.dirname(current_directory)
-sys.path.append(parent_directory)
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np

@@ -1,13 +1,8 @@
 """Generate and predict material properties using incoker-micro-sims package."""
 
-import sys
 from pathlib import Path
-
 from sklearn import metrics
 
-current_file = Path(__file__).resolve()
-run_directory = current_file.parent.parent.parent
-sys.path.append(str(run_directory))
 import numpy as np
 from incoker_micro_sims import prediction_pipeline
 

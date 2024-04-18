@@ -1,7 +1,7 @@
 from timeit import default_timer as timer
 
 import numpy as np
-from simlopt.basicfunctions.covariance.cov import *
+from incoker_inverse.simlopt.basicfunctions.covariance.cov import *
 
 
 def mse(Xt,Xgrad,yt,ygrad,hyperparameter,epsXt,epsXgrad,xs,fun,verbose = False):

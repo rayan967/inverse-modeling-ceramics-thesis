@@ -5,20 +5,20 @@ import pathlib
 
 from os import path
 
-from simlopt.basicfunctions.covariance.cov import *
-from simlopt.basicfunctions.derivative.dGPR import *
-from simlopt.basicfunctions.utils.creategrid import *
+from incoker_inverse.simlopt.basicfunctions.covariance.cov import *
+from incoker_inverse.simlopt.basicfunctions.derivative.dGPR import *
+from incoker_inverse.simlopt.basicfunctions.utils.creategrid import *
 
-from simlopt.hyperparameter.hyperparameteroptimization import *
-from simlopt.hyperparameter.utils.setstartvalues import *
-from simlopt.hyperparameter.utils.crossvalidation import*
+from incoker_inverse.simlopt.hyperparameter.hyperparameteroptimization import *
+from incoker_inverse.simlopt.hyperparameter.utils.setstartvalues import *
+from incoker_inverse.simlopt.hyperparameter.utils.crossvalidation import*
 
-from simlopt.basicfunctions.utils.creategrid import *
+from incoker_inverse.simlopt.basicfunctions.utils.creategrid import *
 
 from sklearn import preprocessing
 from sklearn.preprocessing import StandardScaler
 
-from simlopt.gpr.variationalgaussianprocess import *
+from incoker_inverse.simlopt.gpr.variationalgaussianprocess import *
 
 class ShapeError(Exception):
 

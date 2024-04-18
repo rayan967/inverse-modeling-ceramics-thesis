@@ -12,31 +12,28 @@ Modules:
 - Custom modules (online_adapt, simlopt): For adaptive GPR.
 """
 
-import json
 import sys
+import json
+
 from pathlib import Path
 
 import joblib
-
-current_file = Path(__file__).resolve()
-run_directory = current_file.parent.parent.parent
-sys.path.append(str(run_directory))
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
-from generate_predict_utils import (
+from incoker_inverse.online_inverse_design.training.generate_predict_utils import (
     accuracy_test,
     generate_candidate_point,
     get_output,
     phase_zirconia,
     property_dict_category,
 )
-from online_adapt import adapt_inc
-from simlopt.basicfunctions.utils.createfolderstructure import (
+from incoker_inverse.online_inverse_design.training.online_adapt import adapt_inc
+from incoker_inverse.simlopt.basicfunctions.utils.createfolderstructure import (
     createfoldername,
     createfolders,
 )
-from simlopt.gpr.gaussianprocess import GPR
+from incoker_inverse.simlopt.gpr.gaussianprocess import GPR
 
 plt.close("all")
 plt.ioff()

@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "incoker-inv"
+name = "incoker_inverse"
 version = "0.1.0"
 description = ""
 authors = ["rayan967 <36110753+rayan967@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{include = "incoker-inv"}]
+packages = [{include = "incoker_inverse"}]
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.12"
@@ -22,9 +22,9 @@ tqdm = "^4.64.1"
 pandas = "^2.0.1"
 openpyxl = "^3.1.2"
 seaborn = "^0.13.2"
-mpaut = {path = "incoker-inv/incoker-micro-sims/mpaut", develop = true}
-mercdpm = {path = "incoker-inv/incoker-micro-sims/mercurydpm-structure-generation", develop = true}
-incoker-micro-sims = {path = "incoker-inv/incoker-micro-sims/", develop = true}
+mpaut = {path = "incoker_inverse/incoker-micro-sims/mpaut", develop = true}
+mercdpm = {path = "incoker_inverse/incoker-micro-sims/mercurydpm-structure-generation", develop = true}
+incoker-micro-sims = {path = "incoker_inverse/incoker-micro-sims/", develop = true}
 
 [tool.poetry.group.analysis]
 optional = true
@@ -58,15 +58,15 @@ build-backend = "poetry.core.masonry.api"
 target-version = ['py38', 'py39', 'py310', 'py311']
 line-length = 120
 include_trailing_comma = false
-exclude = '/incoker-inv/simlopt|/incoker-inv/incoker-micro-sims'
+exclude = '/incoker_inverse/simlopt|/incoker_inverse/incoker-micro-sims'
 
 [tool.isort]
 profile = "black"
 skip = [
-    'incoker-inv/simlopt',
-    'incoker-inv/incoker-micro-sims',
-    'incoker-inv/direct_inverse_training',
-    'incoker-inv/gradient_testing',
+    'incoker_inverse/simlopt',
+    'incoker_inverse/incoker-micro-sims',
+    'incoker_inverse/direct_inverse_training',
+    'incoker_inverse/gradient_testing',
     '.venv',
     '.pytest_cache',
     'build',
@@ -76,10 +76,10 @@ skip = [
 
 [tool.pylint]
 ignore-paths = [
-    'incoker-inv/simlopt',
-    'incoker-inv/incoker-micro-sims',
-    'incoker-inv/direct_inverse_training',
-    'incoker-inv/gradient_testing',
+    'incoker_inverse/simlopt',
+    'incoker_inverse/incoker-micro-sims',
+    'incoker_inverse/direct_inverse_training',
+    'incoker_inverse/gradient_testing',
     '.venv',
     '.pytest_cache',
     'build',
@@ -96,15 +96,14 @@ ignore = [
     'W503',
     'E203',
     'E701',
-    'E402'
 ]
 max-line-length = 120
 count = true
 exclude = [
-    'incoker-inv/simlopt',
-    'incoker-inv/incoker-micro-sims',
-    'incoker-inv/direct_inverse_training',
-    'incoker-inv/gradient_testing',
+    'incoker_inverse/simlopt',
+    'incoker_inverse/incoker-micro-sims',
+    'incoker_inverse/direct_inverse_training',
+    'incoker_inverse/gradient_testing',
     '.venv',
     '.pytest_cache',
     'build',
@@ -116,7 +115,7 @@ htmldir = "flake-report"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-s --junitxml=report.xml --cov=incoker_micro_sims --cov-report xml --cov-report html --cov-report term --cov-report json --cov-config=.coveragerc --color=yes"
+addopts = "-s --junitxml=report.xml --cov=incoker_inverse --cov-report xml --cov-report html --cov-report term --cov-report json --cov-config=.coveragerc --color=yes"
 testpaths = [
     "tests"
 ]

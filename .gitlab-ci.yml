@@ -34,7 +34,7 @@ before_script:
   - poetry env list
   - poetry env info
   # build mercurydpm structure generator
-  - cd incoker-inv/incoker-micro-sims/mercurydpm-structure-generation
+  - cd incoker_inverse/incoker-micro-sims/mercurydpm-structure-generation
   - mkdir -p build && cd build
   - cmake ..
   - cmake --build . -j 4 --target generate_structure
@@ -90,7 +90,7 @@ pylint:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run pylint incoker-inv || EXIT_CODE=$?
+    - poetry run pylint incoker_inverse || EXIT_CODE=$?
     - poetry run pylint-json2html -o pylint_result.html pylint_result.json
     - poetry run python -c "import re;import pathlib;import anybadge;v=float(re.search(r'Your code has been rated at (\d+\.\d+)',pathlib.Path('pylint_result.txt').read_text())[1]);anybadge.Badge('pylint',v,thresholds={2:'red',4:'orange',8:'yellow',10:'green'}).write_badge(f'pylint.svg')"
   artifacts:
@@ -104,14 +104,14 @@ isort:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run isort incoker-inv --check
+    - poetry run isort incoker_inverse --check
 
 black:
   stage: Static Analysis
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run black incoker-inv --check --verbose --diff --color > black_result.txt
+    - poetry run black incoker_inverse --check --verbose --diff --color > black_result.txt
   artifacts:
     paths:
       - black_result.txt

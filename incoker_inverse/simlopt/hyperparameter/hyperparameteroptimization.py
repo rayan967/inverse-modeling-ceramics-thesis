@@ -4,12 +4,12 @@ import numpy as np
 from scipy.optimize import *
 from scipy.optimize import minimize
 
-from simlopt.basicfunctions.covariance.cov import *
-from simlopt.basicfunctions.derivative.dGPR import *
-from simlopt.basicfunctions.utils.creategrid import *
+from incoker_inverse.simlopt.basicfunctions.covariance.cov import *
+from incoker_inverse.simlopt.basicfunctions.derivative.dGPR import *
+from incoker_inverse.simlopt.basicfunctions.utils.creategrid import *
 
-from simlopt.hyperparameter.utils.logmarginal import *
-from simlopt.hyperparameter.utils.setstartvalues import*
+from incoker_inverse.simlopt.hyperparameter.utils.logmarginal import *
+from incoker_inverse.simlopt.hyperparameter.utils.setstartvalues import*
 
 def optimizehyperparameters(Xt, Xgrad, yt, ygrad, epsXt, epsXgrad, region, startvaluescheme):
     """
