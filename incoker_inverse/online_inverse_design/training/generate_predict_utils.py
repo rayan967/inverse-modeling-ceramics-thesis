@@ -1,10 +1,10 @@
 """Generate and predict material properties using incoker-micro-sims package."""
 
 from pathlib import Path
-from sklearn import metrics
 
 import numpy as np
 from incoker_micro_sims import prediction_pipeline
+from sklearn import metrics
 
 phase_zirconia = 11
 phase_alumina = 4

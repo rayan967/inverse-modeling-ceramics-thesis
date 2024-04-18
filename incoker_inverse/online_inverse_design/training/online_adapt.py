@@ -9,9 +9,9 @@ to optimize a given property.
 import os
 
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 
-import matplotlib.pyplot as plt
 from incoker_inverse.online_inverse_design.training.generate_predict_utils import (
     accuracy_test,
     calculate_weights,

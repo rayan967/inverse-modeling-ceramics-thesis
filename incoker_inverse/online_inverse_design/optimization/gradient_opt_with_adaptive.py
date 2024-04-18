@@ -15,13 +15,14 @@ import pathlib
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
-from adapt import *
 from pyDOE import lhs
 from scipy.optimize import minimize
 from simlopt.basicfunctions.utils.createfolderstructure import *
 from simlopt.gpr.gaussianprocess import *
 from simlopt.hyperparameter.utils.crossvalidation import *
 from sklearn.metrics import mean_squared_error, r2_score
+
+from adapt import *
 
 
 def find_closest_point(Xt, point, selected_indices):

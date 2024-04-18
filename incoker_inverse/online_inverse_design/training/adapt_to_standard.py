@@ -7,14 +7,6 @@ and exporting the converted model for future use. The script is designed to hand
 easy interaction and automation.
 """
 
-import os
-import sys
-
-from skopt.learning import GaussianProcessRegressor
-
-current_directory = os.path.dirname(os.path.abspath(__file__))
-parent_directory = os.path.dirname(os.path.dirname(current_directory))
-sys.path.append(parent_directory)
 import argparse
 import pathlib
 
@@ -26,6 +18,7 @@ from sklearn.metrics import make_scorer, mean_squared_error, r2_score
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from skopt.learning import GaussianProcessRegressor
 from skopt.learning.gaussian_process.kernels import RBF, WhiteKernel
 
 

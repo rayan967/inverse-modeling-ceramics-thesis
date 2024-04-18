@@ -12,15 +12,15 @@ Modules:
 - Custom modules (online_adapt, simlopt): For adaptive GPR.
 """
 
-import sys
 import json
-
+import sys
 from pathlib import Path
 
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import yaml
+
 from incoker_inverse.online_inverse_design.training.generate_predict_utils import (
     accuracy_test,
     generate_candidate_point,
