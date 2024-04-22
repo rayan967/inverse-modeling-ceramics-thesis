@@ -1,0 +1,13 @@
+property_name: thermal_expansion
+
+simulation_options:
+  particle_quantity: 100
+  dim: 16
+  max_vertices: 10000
+
+parameterranges:
+  VolumeFractionZirconia: [0.15, 0.85]
+  ChordLengthRatio: [0.3, 4.0]
+
+grid_size: 100
+validation_data_path: "test_data_32"

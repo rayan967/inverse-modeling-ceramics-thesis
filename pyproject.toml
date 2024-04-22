@@ -123,6 +123,8 @@ markers = [
 # to run only tests of one marker use: pytest -m <markname> tests/testfile.py
 # all tests regarding generate_and_predict function.
 "online_training",
+"adapt_standard",
+"gradient_opt",
 ]
 retries = 2
 retry_delay = 1

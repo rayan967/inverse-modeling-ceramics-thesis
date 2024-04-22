@@ -380,27 +380,8 @@ def inverse_validate(
     plt.show()
 
 
-def main():
+def main(property_name, property_value, model_file):
     """Execute the main functionality of the script that performs inverse optimization for material properties."""
-    parser = argparse.ArgumentParser(description="Inverse Validation and Optimization for Material Properties")
-    parser.add_argument("--model_file", type=str, required=True, help="Path to the model file")
-    parser.add_argument(
-        "--property_name",
-        type=str,
-        choices=["thermal_conductivity", "thermal_expansion", "young_modulus", "poisson_ratio"],
-        required=True,
-        help="Name of the property to optimize",
-    )
-    parser.add_argument("--property_value", type=float, required=True, help="Target value for the property")
-
-    args = parser.parse_args()
-
-    print("Starting optimization")
-
-    property_name = args.property_name
-    property_value = args.property_value
-    model_file = args.model_file
-
     property_ax_dict = {
         "thermal_conductivity": "CTC [W/(m*K)]",
         "thermal_expansion": "CTE [ppm/K]",
@@ -475,4 +456,23 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Inverse Validation and Optimization for Material Properties")
+    parser.add_argument("--model_file", type=str, required=True, help="Path to the model file")
+    parser.add_argument(
+        "--property_name",
+        type=str,
+        choices=["thermal_conductivity", "thermal_expansion", "young_modulus", "poisson_ratio"],
+        required=True,
+        help="Name of the property to optimize",
+    )
+    parser.add_argument("--property_value", type=float, required=True, help="Target value for the property")
+
+    args = parser.parse_args()
+
+    print("Starting optimization")
+
+    property_name = args.property_name
+    property_value = args.property_value
+    model_file = args.model_file
+
+    main(property_name, property_value, model_file)

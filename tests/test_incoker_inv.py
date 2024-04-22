@@ -1,6 +1,15 @@
 """Tests for `incoker_inverse` package."""
 
+import pathlib
+
 import pytest
+
+from incoker_inverse.online_inverse_design.optimization.gradient_opt import (
+    main as opt_main,
+)
+from incoker_inverse.online_inverse_design.training.adapt_to_standard import (
+    main as adapt_main,
+)
 from incoker_inverse.online_inverse_design.training.online_training import main
 
 
@@ -35,3 +44,20 @@ def test_online_training_with_custom_config(custom_config):
     """Test the main function of online training with a custom configuration."""
     # Pass the custom configuration directly to the main function
     main(custom_config)
+
+
+@pytest.mark.adapt_standard
+def test_adapt_to_standard():
+    """Test the main function of adaot to standard script."""
+    adapt = pathlib.Path("adapt") / "final_gp_thermal_conductivity.joblib"
+    export = pathlib.Path("adapt") / "standard_gp.joblib"
+
+    adapt_main(adapt, export, "thermal_conductivity")
+
+
+@pytest.mark.gradient_opt
+def test_gradient_opt():
+    """Test the main function of optimization script."""
+    export = pathlib.Path("adapt") / "standard_gp.joblib"
+
+    opt_main("thermal_conductivity", 23, 0.008, export)
