@@ -370,7 +370,7 @@ def inverse_validate(
     plt.show()
 
 
-def main(property_name, property_value, u_scale, model_file):
+def main(property_name, property_value, model_file, u_scale=0,):
     """Execute the main functionality of the script that performs inverse optimization for material properties."""
     property_ax_dict = {
         "thermal_conductivity": "CTC [W/(m*K)]",
@@ -479,4 +479,4 @@ if __name__ == "__main__":
     u_scale = args.uncertainty_scale
     model_file = args.model_file
 
-    main(property_name, property_value, u_scale, model_file)
+    main(property_name, property_value, model_file, u_scale)

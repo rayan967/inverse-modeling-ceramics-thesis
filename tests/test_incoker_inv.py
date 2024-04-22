@@ -35,7 +35,7 @@ def custom_config():
         "compute": True,
         "output_freq": 5,
         "initial_samples": 3,
-        "max_samples": 4,
+        "max_samples": 5,
     }
 
 
@@ -60,4 +60,4 @@ def test_gradient_opt():
     """Test the main function of optimization script."""
     export = pathlib.Path("adapt") / "standard_gp.joblib"
 
-    opt_main("thermal_conductivity", 23, 0.008, export)
+    opt_main("thermal_conductivity", 23, export)
