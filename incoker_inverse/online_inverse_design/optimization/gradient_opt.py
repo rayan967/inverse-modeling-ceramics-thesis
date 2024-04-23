@@ -370,7 +370,13 @@ def inverse_validate(
     plt.show()
 
 
-def main(property_name, property_value, model_file, u_scale=0,):
+def main(
+    property_name,
+    property_value,
+    model_file,
+    multi_starts,
+    u_scale=0,
+):
     """Execute the main functionality of the script that performs inverse optimization for material properties."""
     property_ax_dict = {
         "thermal_conductivity": "CTC [W/(m*K)]",
@@ -405,7 +411,7 @@ def main(property_name, property_value, model_file, u_scale=0,):
     print("X Bounds: ", bounds)
 
     # Number of starting points for multi-start
-    num_samples = 30
+    num_samples = multi_starts
 
     prop_bounds = (min(Y), max(Y))
     print("Y Bounds", prop_bounds)
@@ -456,6 +462,14 @@ def main(property_name, property_value, model_file, u_scale=0,):
 
 
 if __name__ == "__main__":
+
+    def positive_int(value):
+        """Check whether the input is a positive non-zero."""
+        ivalue = int(value)
+        if ivalue <= 0:
+            raise argparse.ArgumentTypeError(f"{value} is an invalid positive int value")
+        return ivalue
+
     parser = argparse.ArgumentParser(description="Inverse Validation and Optimization for Material Properties")
     parser.add_argument("--model_file", type=str, required=True, help="Path to the model file")
     parser.add_argument(
@@ -466,6 +480,9 @@ if __name__ == "__main__":
         help="Name of the property to optimize",
     )
     parser.add_argument("--property_value", type=float, required=True, help="Target value for the property")
+    parser.add_argument(
+        "--multi_starts", type=positive_int, required=False, default=30, help="Number of starting points for MSO"
+    )
     parser.add_argument(
         "--uncertainty_scale", type=float, required=False, default=0.0, help="Uncertainty scaling " "factor"
     )
@@ -478,5 +495,6 @@ if __name__ == "__main__":
     property_value = args.property_value
     u_scale = args.uncertainty_scale
     model_file = args.model_file
+    multi_starts = args.multi_starts
 
-    main(property_name, property_value, model_file, u_scale)
+    main(property_name, property_value, model_file, multi_starts, u_scale)

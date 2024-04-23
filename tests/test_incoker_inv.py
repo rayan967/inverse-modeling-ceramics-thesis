@@ -43,12 +43,14 @@ def custom_config():
 def test_online_training_with_custom_config(custom_config):
     """Test the main function of online training with a custom configuration."""
     # Pass the custom configuration directly to the main function
+    print("---Beginning adaptive GP test---")
     main(custom_config)
 
 
 @pytest.mark.adapt_standard
 def test_adapt_to_standard():
     """Test the main function of adaot to standard script."""
+    print("---Beginning adaptive GP to sklearn conversion test---")
     adapt = pathlib.Path("adapt") / "final_gp_thermal_conductivity.joblib"
     export = pathlib.Path("adapt") / "standard_gp.joblib"
 
@@ -58,6 +60,7 @@ def test_adapt_to_standard():
 @pytest.mark.gradient_opt
 def test_gradient_opt():
     """Test the main function of optimization script."""
+    print("Beginning gradient optimization test")
     export = pathlib.Path("adapt") / "standard_gp.joblib"
 
-    opt_main("thermal_conductivity", 23, export)
+    opt_main(property_name="thermal_conductivity", property_value=23, model_file=export, multi_starts=5)

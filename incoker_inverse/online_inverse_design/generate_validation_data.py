@@ -36,7 +36,7 @@ for input in XGLEE:
     simulation_options["output_path"] = output_path
     try:
         result = generate_and_predict(input, simulation_options)
-    except Exception as e:
+    except Exception:
         print("error -> removing folder")
         shutil.rmtree(output_path)
         continue

@@ -60,7 +60,7 @@ Using this model, inverse design can be performed using the scripts under the di
 perform validation designs, run the script:
 
 ```console
-python online_inverse_design/optimization/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value> [--uncertainty_scale <scale_value>]
+python online_inverse_design/optimization/gradient_opt.py --model_file <path_to_surrogate_model.joblib> --property_name <property_name> --property_value <desired_value> [--uncertainty_scale <scale_value>] [--multi_starts <starts_value>]
 ```
 
 
