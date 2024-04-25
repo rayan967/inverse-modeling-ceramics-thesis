@@ -1,0 +1,9 @@
+{
+    "n_workers": 1,
+    "base_folder": "/home/ray29582/PycharmProjects/inverse-modeling-ceramics-thesis/incoker_inverse/test_data_32_thermal_expansion/v=0.46,r=4.00",
+    "voxsm_executable": null,
+    "max_vertices": 10000,
+    "mesh_output_format": "smesh",
+    "overwrite_existing": true,
+    "output_conta_targe": false
+}

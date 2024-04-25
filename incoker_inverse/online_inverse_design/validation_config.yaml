@@ -10,4 +10,4 @@ parameterranges:
   ChordLengthRatio: [0.3, 4.0]
 
 grid_size: 100
-validation_data_path: "test_data_32"
+validation_data_path: "data/test_data_322"

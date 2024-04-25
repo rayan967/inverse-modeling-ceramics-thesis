@@ -1,0 +1,407 @@
+{
+    "v_phase": {
+        "11": 0.4993867906755231,
+        "4": 0.5006132093244767,
+        "1": 0.0
+    },
+    "load_step_stresses_strains": {
+        "1": {
+            "sigma": {
+                "xx": 0.0003512291947063977,
+                "yy": 0.0007058887944732629,
+                "zz": 43.77040760505488,
+                "xy": -0.02015876238021559,
+                "yz": -0.061927907152579634,
+                "xz": 0.10274525267515325
+            },
+            "epsilon": {
+                "xx": -0.04170029747287592,
+                "yy": -0.042152625084837844,
+                "zz": 0.15,
+                "xy": 0.0007333990114701896,
+                "yz": 0.00018393061202265446,
+                "xz": 0.00044788348199807036
+            }
+        },
+        "2": {
+            "sigma": {
+                "xx": 0.0002916266974964961,
+                "yy": 43.68918602553335,
+                "zz": 0.0007623795104371959,
+                "xy": -0.013190245845350274,
+                "yz": 0.12444697621968001,
+                "xz": -0.030002284511826807
+            },
+            "epsilon": {
+                "xx": -0.04197395807541348,
+                "yy": 0.15,
+                "zz": -0.04207391237864783,
+                "xy": -0.0009736808780519775,
+                "yz": 0.0015407749216509383,
+                "xz": 0.0002135717571695895
+            }
+        },
+        "3": {
+            "sigma": {
+                "xx": 43.856451886174774,
+                "yy": 0.0006295839083468291,
+                "zz": 0.0008822789997769955,
+                "xy": 0.01958892623572859,
+                "yz": -0.006207738111107836,
+                "xz": -0.05135874647661549
+            },
+            "epsilon": {
+                "xx": 0.14999999999999997,
+                "yy": -0.04213358135259149,
+                "zz": -0.04178071663093914,
+                "xy": -0.0003623753457727309,
+                "yz": -0.0009643974242806807,
+                "xz": -0.0007027655522038374
+            }
+        },
+        "4": {
+            "sigma": {
+                "xx": -0.08397993102562146,
+                "yy": -0.1162753319974081,
+                "zz": -0.1261394690475205,
+                "xy": 11.425779264901964,
+                "yz": 0.0060226649601804435,
+                "xz": 0.12490241198847123
+            },
+            "epsilon": {
+                "xx": -0.00019366675396920125,
+                "yy": -0.00042908780297495105,
+                "zz": -6.058270806334437e-18,
+                "xy": 0.09999999999999998,
+                "yz": -0.0001387472381919708,
+                "xz": 0.0012056707518192863
+            }
+        },
+        "5": {
+            "sigma": {
+                "xx": -0.02633499420334453,
+                "yy": -0.02974574134292495,
+                "zz": 0.052222208280148584,
+                "xy": 0.13609318592000996,
+                "yz": -0.060060405317419685,
+                "xz": 11.341423009661113
+            },
+            "epsilon": {
+                "xx": -0.00017524844298768397,
+                "yy": 5.201311691730058e-18,
+                "zz": 0.00011072798080165415,
+                "xy": 0.0013391850027939264,
+                "yz": -0.0011425604853339667,
+                "xz": 0.09999999999999999
+            }
+        },
+        "6": {
+            "sigma": {
+                "xx": 0.16682012412095187,
+                "yy": 0.21991441462349795,
+                "zz": 0.1253269175021615,
+                "xy": 0.008754714031198579,
+                "yz": 11.336939718974772,
+                "xz": -0.0651143749457358
+            },
+            "epsilon": {
+                "xx": -4.19546006686623e-18,
+                "yy": 0.0006022796625734469,
+                "zz": 0.0002488748358188747,
+                "xy": -0.00010665934478802271,
+                "yz": 0.1,
+                "xz": -0.0011909242179234543
+            }
+        }
+    },
+    "stiffness_tensor": [
+        [
+            373384466252.04144,
+            145031599047.83496,
+            144557005943.0849,
+            431077211.3299598,
+            231411031.26969063,
+            505768618.92355573
+        ],
+        [
+            145031599047.83496,
+            372527423160.5555,
+            145008773309.4289,
+            -380321117.0402637,
+            -209086031.2586893,
+            701075682.5309607
+        ],
+        [
+            144557005943.0849,
+            145008773309.4289,
+            372740837625.5965,
+            -545484810.8602834,
+            353684905.74938476,
+            -356373665.89396846
+        ],
+        [
+            431077211.3299598,
+            -380321117.0402637,
+            -545484810.8602834,
+            113381892486.48436,
+            696715730.3039702,
+            206320426.95689294
+        ],
+        [
+            231411031.26969063,
+            -209086031.2586893,
+            353684905.74938476,
+            696715730.3039702,
+            113424335656.43672,
+            -141841664.5690353
+        ],
+        [
+            505768618.92355573,
+            701075682.5309607,
+            -356373665.89396846,
+            206320426.95689294,
+            -141841664.5690353,
+            114263588530.13521
+        ]
+    ],
+    "svd_ratio": 0.3125652485842705,
+    "voigt_avg": {
+        "Young modulus": {
+            "value": 291.3992519723855,
+            "units": "GPa"
+        },
+        "Bulk modulus": {
+            "value": 220.87194262654344,
+            "units": "GPa"
+        },
+        "Shear modulus": {
+            "value": 113.81765325046756,
+            "units": "GPa"
+        },
+        "Poisson ratio": {
+            "value": 0.2801144798299926,
+            "units": ""
+        }
+    },
+    "reuss_avg": {
+        "Young modulus": {
+            "value": 291.3864432605079,
+            "units": "GPa"
+        },
+        "Bulk modulus": {
+            "value": 220.87074707361623,
+            "units": "GPa"
+        },
+        "Shear modulus": {
+            "value": 113.81189679455865,
+            "units": "GPa"
+        },
+        "Poisson ratio": {
+            "value": 0.28012295492486294,
+            "units": ""
+        }
+    },
+    "hill_avg": {
+        "Young modulus": {
+            "value": 291.3928476164467,
+            "units": "GPa"
+        },
+        "Poisson ratio": {
+            "value": 0.2801187173774278,
+            "units": ""
+        },
+        "Bulk modulus": {
+            "value": 220.87134485007982,
+            "units": "GPa"
+        },
+        "Shear modulus": {
+            "value": 113.8147750225131,
+            "units": "GPa"
+        }
+    },
+    "homogenization": {
+        "Young modulus": {
+            "value": 291.274315,
+            "units": "GPa"
+        },
+        "Shear modulus": {
+            "value": 113.761340963686,
+            "units": "GPa"
+        },
+        "Bulk modulus": {
+            "value": 220.86216230165152,
+            "units": "GPa"
+        },
+        "Poisson ratio": {
+            "value": 0.28019902249999995,
+            "units": ""
+        }
+    },
+    "phase_material_parameters": {
+        "11": {
+            "phase_name": "ZrO2",
+            "emod": 212.75254213717025,
+            "pois": 0.32535556552510025,
+            "temperature": 25,
+            "source": "Jahm"
+        },
+        "4": {
+            "phase_name": "Al2O3",
+            "emod": 392.31568264526874,
+            "pois": 0.22807565481292644,
+            "temperature": 25,
+            "source": "Jahm"
+        },
+        "1": {
+            "phase_name": "Pores",
+            "emod": 1e-09,
+            "pois": 0.18,
+            "temperature": 25,
+            "source": "Jahm"
+        }
+    },
+    "simulation_options": {
+        "solver_tolerance": 1e-08,
+        "create_plots": false,
+        "n_procs": 1,
+        "n_workers": 1,
+        "input_cdb_volume_mesh_name": "volume_mesh.cdb",
+        "relaunch_mapdl_on_error": false,
+        "output_path": "/home/ray29582/PycharmProjects/inverse-modeling-ceramics-thesis/incoker_inverse/test_data_32_elasticity/v=0.46,r=1.94/rve_0/sim_0",
+        "homogenization_grid_resolution": 10,
+        "boundary_nodes_selection_tolerance": 0.005,
+        "delshi_factor": 0.00015,
+        "delrot_factor": 0.0001
+    },
+    "simulation_time": 118.613201379776,
+    "rve_dims": 16,
+    "object_analysis": {
+        "4": {
+            "object_type": "voronoi_polyeder",
+            "object_count": 88,
+            "shape_params": {
+                "radius": {
+                    "mean": 1.4742e-06,
+                    "variance": 1.0199e-13
+                },
+                "center_x": {
+                    "mean": 7.8592e-06,
+                    "variance": 4.5194e-06
+                },
+                "center_y": {
+                    "mean": 7.8769e-06,
+                    "variance": 4.6004e-06
+                },
+                "center_z": {
+                    "mean": 7.0515e-06,
+                    "variance": 4.4848e-06
+                }
+            }
+        },
+        "11": {
+            "object_type": "voronoi_polyeder",
+            "object_count": 12,
+            "shape_params": {
+                "radius": {
+                    "mean": 3.3832e-06,
+                    "variance": 9.303e-14
+                },
+                "center_x": {
+                    "mean": 8.9459e-06,
+                    "variance": 4.6519e-06
+                },
+                "center_y": {
+                    "mean": 6.8525e-06,
+                    "variance": 4.123e-06
+                },
+                "center_z": {
+                    "mean": 1.0265e-05,
+                    "variance": 3.9186e-06
+                }
+            }
+        }
+    },
+    "volume_fractions": {
+        "4": 0.51978,
+        "11": 0.48022
+    },
+    "chord_length_analysis": {
+        "phase_chord_lengths": {
+            "4": {
+                "volume_fraction": 0.51978,
+                "mean_chord_length": 2.3133e-06,
+                "variance": 9.6742e-07,
+                "particle_count": 2761
+            },
+            "11": {
+                "volume_fraction": 0.48022,
+                "mean_chord_length": 4.3486e-06,
+                "variance": 1.7999e-06,
+                "particle_count": 1357
+            }
+        },
+        "interface_fractions": {
+            "(4, 4)": 0.4507,
+            "(4, 11)": 0.43953,
+            "(11, 11)": 0.10976
+        },
+        "interface_per_volume_1/um": 0.67025
+    },
+    "3d_region_analysis": {
+        "4": {
+            "region_count": 140.0,
+            "total_anisotropy": 0.042442,
+            "region_volume_mean": 21.074,
+            "region_volume_variance": 6.6338,
+            "region_volume_min": 1.0,
+            "region_volume_max": 31.0,
+            "region_volume_um": 21.074,
+            "region_volume_um_variance": 6.6338,
+            "equiv_diam": 3.3692,
+            "equiv_diam_variance": 0.46678,
+            "surf_volume_ratio": 0.93659,
+            "surf_volume_ratio_variance": 0.04815,
+            "edge_surf_ratio": 1.3484,
+            "edge_surf_ratio_variance": 0.32893,
+            "corner_edge_ratio": 0.86132,
+            "corner_edge_ratio_variance": 0.17792,
+            "neighbor_count": 10.832,
+            "neighbor_count_variance": 2.3213,
+            "local_anisotropy": 0.44704,
+            "local_anisotropy_variance": 0.26588
+        },
+        "11": {
+            "region_count": 30.0,
+            "total_anisotropy": 0.056057,
+            "region_volume_mean": 119.6,
+            "region_volume_variance": 50.626,
+            "region_volume_min": 2.0,
+            "region_volume_max": 178.0,
+            "region_volume_um": 119.6,
+            "region_volume_um_variance": 50.626,
+            "equiv_diam": 5.9242,
+            "equiv_diam_variance": 1.1232,
+            "surf_volume_ratio": 0.68327,
+            "surf_volume_ratio_variance": 0.10715,
+            "edge_surf_ratio": 0.85671,
+            "edge_surf_ratio_variance": 0.23734,
+            "corner_edge_ratio": 0.73408,
+            "corner_edge_ratio_variance": 0.37577,
+            "neighbor_count": 19.956,
+            "neighbor_count_variance": 6.6507,
+            "local_anisotropy": 0.40239,
+            "local_anisotropy_variance": 0.28197
+        }
+    },
+    "mesh": {
+        "fQ_min": 0.03902732,
+        "fQ_max": 0.4370516,
+        "eL_min": 1.078779e-07,
+        "eL_max": 3.974801e-06,
+        "fA_min": 3.733616e-15,
+        "fA_max": 3.352862e-12,
+        "n_faces": 23190,
+        "n_vertices": 9686,
+        "rve_meshing_time": 12.67871642112732
+    }
+}
