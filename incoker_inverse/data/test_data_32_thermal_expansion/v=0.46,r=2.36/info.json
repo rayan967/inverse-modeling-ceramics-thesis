@@ -1,0 +1,121 @@
+{
+    "rve_dims": 16,
+    "object_analysis": {
+        "4": {
+            "object_type": "voronoi_polyeder",
+            "object_count": 93,
+            "shape_params": {
+                "radius": {
+                    "mean": 1.4376e-06,
+                    "variance": 4.8455e-14
+                },
+                "center_x": {
+                    "mean": 8.4668e-06,
+                    "variance": 5.0042e-06
+                },
+                "center_y": {
+                    "mean": 8.852e-06,
+                    "variance": 4.4194e-06
+                },
+                "center_z": {
+                    "mean": 8.2715e-06,
+                    "variance": 3.9221e-06
+                }
+            }
+        },
+        "11": {
+            "object_type": "voronoi_polyeder",
+            "object_count": 7,
+            "shape_params": {
+                "radius": {
+                    "mean": 3.9973e-06,
+                    "variance": 4.5705e-14
+                },
+                "center_x": {
+                    "mean": 8.7937e-06,
+                    "variance": 3.6716e-06
+                },
+                "center_y": {
+                    "mean": 5.1421e-06,
+                    "variance": 4.0935e-06
+                },
+                "center_z": {
+                    "mean": 6.4749e-06,
+                    "variance": 4.7911e-06
+                }
+            }
+        }
+    },
+    "volume_fractions": {
+        "4": 0.52808,
+        "11": 0.47192
+    },
+    "chord_length_analysis": {
+        "phase_chord_lengths": {
+            "4": {
+                "volume_fraction": 0.52808,
+                "mean_chord_length": 2.2921e-06,
+                "variance": 9.7322e-07,
+                "particle_count": 2831
+            },
+            "11": {
+                "volume_fraction": 0.47192,
+                "mean_chord_length": 5.229e-06,
+                "variance": 2.1002e-06,
+                "particle_count": 1109
+            }
+        },
+        "interface_fractions": {
+            "(4, 4)": 0.52614,
+            "(4, 11)": 0.38477,
+            "(11, 11)": 0.089086
+        },
+        "interface_per_volume_1/um": 0.64128
+    },
+    "3d_region_analysis": {
+        "4": {
+            "region_count": 135.0,
+            "total_anisotropy": 0.05833,
+            "region_volume_mean": 21.226,
+            "region_volume_variance": 6.1221,
+            "region_volume_min": 1.0,
+            "region_volume_max": 29.0,
+            "region_volume_um": 21.226,
+            "region_volume_um_variance": 6.1221,
+            "equiv_diam": 3.3845,
+            "equiv_diam_variance": 0.43912,
+            "surf_volume_ratio": 0.93481,
+            "surf_volume_ratio_variance": 0.049195,
+            "edge_surf_ratio": 1.3637,
+            "edge_surf_ratio_variance": 0.32021,
+            "corner_edge_ratio": 0.88823,
+            "corner_edge_ratio_variance": 0.25767,
+            "neighbor_count": 11.119,
+            "neighbor_count_variance": 2.4439,
+            "local_anisotropy": 0.43422,
+            "local_anisotropy_variance": 0.27402
+        },
+        "11": {
+            "region_count": 23.0,
+            "total_anisotropy": 0.15635,
+            "region_volume_mean": 182.33,
+            "region_volume_variance": 89.327,
+            "region_volume_min": 1.0,
+            "region_volume_max": 284.0,
+            "region_volume_um": 182.33,
+            "region_volume_um_variance": 89.327,
+            "equiv_diam": 6.7644,
+            "equiv_diam_variance": 1.435,
+            "surf_volume_ratio": 0.62752,
+            "surf_volume_ratio_variance": 0.1248,
+            "edge_surf_ratio": 0.78278,
+            "edge_surf_ratio_variance": 0.31871,
+            "corner_edge_ratio": 0.76752,
+            "corner_edge_ratio_variance": 0.3194,
+            "neighbor_count": 21.788,
+            "neighbor_count_variance": 6.9331,
+            "local_anisotropy": 0.47091,
+            "local_anisotropy_variance": 0.32083
+        }
+    }
+}

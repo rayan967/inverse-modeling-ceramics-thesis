@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "incoker-inv"
+name = "incoker_inverse"
 version = "0.1.0"
 description = ""
 authors = ["rayan967 <36110753+rayan967@users.noreply.github.com>"]
 readme = "README.md"
-packages = [{include = "incoker-inv"}]
+packages = [{include = "incoker_inverse"}]
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.12"
@@ -22,9 +22,9 @@ tqdm = "^4.64.1"
 pandas = "^2.0.1"
 openpyxl = "^3.1.2"
 seaborn = "^0.13.2"
-mpaut = {path = "incoker-inv/incoker-micro-sims/mpaut", develop = true}
-mercdpm = {path = "incoker-inv/incoker-micro-sims/mercurydpm-structure-generation", develop = true}
-incoker-micro-sims = {path = "incoker-inv/incoker-micro-sims/", develop = true}
+mpaut = {path = "incoker_inverse/incoker-micro-sims/mpaut", develop = true}
+mercdpm = {path = "incoker_inverse/incoker-micro-sims/mercurydpm-structure-generation", develop = true}
+incoker-micro-sims = {path = "incoker_inverse/incoker-micro-sims/", develop = true}
 
 [tool.poetry.group.analysis]
 optional = true
@@ -40,6 +40,16 @@ anybadge = "^1.14.0"
 isort = "^5.13.2"
 black = "^24.1.0"
 
+[tool.poetry.group.test.dependencies]
+mock = "^5.1.0"
+pytest = "^7.4.2"
+pytest-mock = "^3.11.1"
+pytest-cov = "^4.1.0"
+coverage = "^7.3.2"
+pytest-console-scripts = "^1.4.1"
+anybadge = "^1.14.0"
+pytest-retry = "^1.5.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -48,9 +58,28 @@ build-backend = "poetry.core.masonry.api"
 target-version = ['py38', 'py39', 'py310', 'py311']
 line-length = 120
 include_trailing_comma = false
+exclude = '/incoker_inverse/simlopt|/incoker_inverse/incoker-micro-sims'
+
+[tool.isort]
+profile = "black"
+skip = [
+    'incoker_inverse/simlopt',
+    'incoker_inverse/incoker-micro-sims',
+    'incoker_inverse/direct_inverse_training',
+    'incoker_inverse/gradient_testing',
+    '.venv',
+    '.pytest_cache',
+    'build',
+    'builds',
+    '.eggs'
+]
 
 [tool.pylint]
 ignore-paths = [
+    'incoker_inverse/simlopt',
+    'incoker_inverse/incoker-micro-sims',
+    'incoker_inverse/direct_inverse_training',
+    'incoker_inverse/gradient_testing',
     '.venv',
     '.pytest_cache',
     'build',
@@ -64,13 +93,17 @@ max-line-length = 120
 
 [tool.flake8]
 ignore = [
-    'W503'
+    'W503',
+    'E203',
+    'E701',
 ]
 max-line-length = 120
 count = true
 exclude = [
-    'incoker-inv/simlopt',
-    'incoker-inv/incoker-micro-sims',
+    'incoker_inverse/simlopt',
+    'incoker_inverse/incoker-micro-sims',
+    'incoker_inverse/direct_inverse_training',
+    'incoker_inverse/gradient_testing',
     '.venv',
     '.pytest_cache',
     'build',
@@ -79,3 +112,21 @@ exclude = [
 ]
 format = "html"
 htmldir = "flake-report"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-s --junitxml=report.xml --cov=incoker_inverse --cov-report xml --cov-report html --cov-report term --cov-report json --cov-config=.coveragerc --color=yes"
+testpaths = [
+    "tests"
+]
+markers = [
+# to run only tests of one marker use: pytest -m <markname> tests/testfile.py
+# all tests regarding generate_and_predict function.
+"online_training",
+"adapt_standard",
+"gradient_opt",
+]
+retries = 2
+retry_delay = 1
+cumulative_timing = false
+

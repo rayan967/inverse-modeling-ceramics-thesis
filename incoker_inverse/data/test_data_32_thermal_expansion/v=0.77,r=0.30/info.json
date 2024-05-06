@@ -1,0 +1,131 @@
+{
+    "rve_dims": 16,
+    "object_analysis": {
+        "4": {
+            "object_type": "voronoi_polyeder",
+            "object_count": 1,
+            "shape_params": {
+                "radius": {
+                    "mean": 6.0978e-06,
+                    "variance": 2.7115e-14
+                },
+                "center_x": {
+                    "mean": 1.3372e-05,
+                    "variance": 1.0617e-13
+                },
+                "center_y": {
+                    "mean": 1.4599e-05,
+                    "variance": 3.1776e-14
+                },
+                "center_z": {
+                    "mean": 9.6556e-06,
+                    "variance": 7.6445e-14
+                }
+            }
+        },
+        "11": {
+            "object_type": "voronoi_polyeder",
+            "object_count": 99,
+            "shape_params": {
+                "radius": {
+                    "mean": 1.6153e-06,
+                    "variance": 7.5684e-14
+                },
+                "center_x": {
+                    "mean": 7.1697e-06,
+                    "variance": 4.2919e-06
+                },
+                "center_y": {
+                    "mean": 7.5732e-06,
+                    "variance": 4.1911e-06
+                },
+                "center_z": {
+                    "mean": 7.3784e-06,
+                    "variance": 4.9471e-06
+                }
+            }
+        }
+    },
+    "volume_fractions": {
+        "4": 0.24146,
+        "11": 0.75854
+    },
+    "chord_length_analysis": {
+        "phase_chord_lengths": {
+            "4": {
+                "volume_fraction": 0.24146,
+                "mean_chord_length": 8.287699999999999e-06,
+                "variance": 2.8828999999999995e-06,
+                "particle_count": 358
+            },
+            "11": {
+                "volume_fraction": 0.75854,
+                "mean_chord_length": 2.5252999999999998e-06,
+                "variance": 1.0421e-06,
+                "particle_count": 3691
+            }
+        },
+        "interface_fractions": {
+            "(4, 11)": 0.17683,
+            "(11, 11)": 0.82317
+        },
+        "interface_per_volume_1/um": 0.65902
+    },
+    "3d_region_analysis": {
+        "4": {
+            "region_count": 4.0,
+            "total_anisotropy": 1.3053,
+            "region_volume_mean": 434.03,
+            "region_volume_variance": 206.1,
+            "region_volume_min": 33.0,
+            "region_volume_max": 597.0,
+            "region_volume_um": 434.03,
+            "region_volume_um_variance": 206.1,
+            "equiv_diam": 9.0444,
+            "equiv_diam_variance": 1.8753,
+            "surf_volume_ratio": 0.50253,
+            "surf_volume_ratio_variance": 0.05504,
+            "edge_surf_ratio": 0.6739,
+            "edge_surf_ratio_variance": 0.2085,
+            "corner_edge_ratio": 0.53004,
+            "corner_edge_ratio_variance": 0.25422,
+            "neighbor_count": 32.402,
+            "neighbor_count_variance": 9.8389,
+            "local_anisotropy": 1.3359,
+            "local_anisotropy_variance": 0.11566
+        },
+        "11": {
+            "region_count": 167.0,
+            "total_anisotropy": 1.0753,
+            "region_volume_mean": 25.928,
+            "region_volume_variance": 8.512,
+            "region_volume_min": 1.0,
+            "region_volume_max": 37.0,
+            "region_volume_um": 25.928,
+            "region_volume_um_variance": 8.512,
+            "equiv_diam": 3.6041,
+            "equiv_diam_variance": 0.52391,
+            "surf_volume_ratio": 0.90119,
+            "surf_volume_ratio_variance": 0.055351,
+            "edge_surf_ratio": 1.3045,
+            "edge_surf_ratio_variance": 0.28047,
+            "corner_edge_ratio": 0.83906,
+            "corner_edge_ratio_variance": 0.20101,
+            "neighbor_count": 11.395,
+            "neighbor_count_variance": 2.4867,
+            "local_anisotropy": 0.40644,
+            "local_anisotropy_variance": 0.28301
+        }
+    },
+    "mesh": {
+        "fQ_min": 0.03107051,
+        "fQ_max": 0.434585,
+        "eL_min": 1.04362e-07,
+        "eL_max": 4.472322e-06,
+        "fA_min": 8.728774e-16,
+        "fA_max": 3.534189e-12,
+        "n_faces": 23508,
+        "n_vertices": 9828,
+        "rve_meshing_time": 16.397117376327515
+    }
+}

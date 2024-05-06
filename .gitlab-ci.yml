@@ -11,8 +11,14 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_SUBMODULE_FORCE_HTTPS: "true"
 
+cache:
+  paths:
+    - mercurydpm-structure-generation/build
+    - .venv/
+
 stages:
   - Static Analysis
+  - Test
 
 before_script:
   # Print out python version for debugging.
@@ -27,6 +33,38 @@ before_script:
   - poetry config virtualenvs.in-project true --local # used to create the virtual environment in .venv
   - poetry env list
   - poetry env info
+  # build mercurydpm structure generator
+  - cd incoker_inverse/incoker-micro-sims/mercurydpm-structure-generation
+  - mkdir -p build && cd build
+  - cmake ..
+  - cmake --build . -j 4 --target generate_structure
+  - cd ${CI_PROJECT_DIR}
+  - echo "done building."
+
+# Run tests on the code.
+# This will run the tests located in the tests/ directory of the project.
+# The pipeline will report failing tests and cancel the execution on any error.
+# In addition, a coverage report will be generated, detailing which parts
+# of the code are actually covered by tests.
+test:
+  stage: Test
+  # allow_failure: true
+  script:
+    - poetry install --with test
+    - poetry show --with test
+    - xvfb-run -a poetry run py.test
+    - poetry run python -c "import json;import pathlib;import anybadge;v=json.loads(pathlib.Path('coverage.json').read_text())['totals']['percent_covered_display'];anybadge.Badge('coverage',v,thresholds={2:'red',4:'orange',8:'yellow',10:'green'}).write_badge(f'coverage.svg')"
+  artifacts:
+    paths:
+      - htmlcov
+      - coverage.xml
+      - coverage.svg
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+      junit: report.xml
+    when: always
 
 # Run static code analysis.
 # By default, this will check whether your code confirms to PEP8 code style guideline
@@ -38,7 +76,7 @@ flake8:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run flake8 --max-line-length=120
+    - poetry run flake8
   artifacts:
     paths:
       - flake-report
@@ -52,7 +90,7 @@ pylint:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run pylint src/ || EXIT_CODE=$?
+    - poetry run pylint incoker_inverse || EXIT_CODE=$?
     - poetry run pylint-json2html -o pylint_result.html pylint_result.json
     - poetry run python -c "import re;import pathlib;import anybadge;v=float(re.search(r'Your code has been rated at (\d+\.\d+)',pathlib.Path('pylint_result.txt').read_text())[1]);anybadge.Badge('pylint',v,thresholds={2:'red',4:'orange',8:'yellow',10:'green'}).write_badge(f'pylint.svg')"
   artifacts:
@@ -66,14 +104,14 @@ isort:
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run isort . --check
+    - poetry run isort incoker_inverse --check
 
 black:
   stage: Static Analysis
   allow_failure: true
   script:
     - poetry install --with analysis
-    - poetry run black . --check --verbose --diff --color > black_result.txt
+    - poetry run black incoker_inverse --check --verbose --diff --color > black_result.txt
   artifacts:
     paths:
       - black_result.txt
