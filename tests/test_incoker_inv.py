@@ -17,7 +17,7 @@ from incoker_inverse.online_inverse_design.training.online_training import main
 def custom_config():
     """Return a custom configuration for testing."""
     return {
-        "property_name": "thermal_conductivity",
+        "property_name": "thermal_expansion",
         "simulation_options": {"particle_quantity": 100, "dim": 16, "max_vertices": 10000},
         "parameterranges": {"VolumeFractionZirconia": [0.15, 0.85], "ChordLengthRatio": [0.3, 4.0]},
         "adaptive_phase_parameters": {
@@ -30,8 +30,7 @@ def custom_config():
         },
         "multiple_generation_options": {"usage": False, "num_generations": 1},
         "execpath": "./adapt",
-        "validation_data_path": "/data/pirkelma/adaptive_gp_InCoKer/thermal_conductivity/20231215/validation_data/mean"
-        "/test_data_32_thermal_conductivity",
+        "validation_data_path": "./incoker_inverse/data/test_data_32_thermal_expansion",
         "compute": True,
         "output_freq": 5,
         "initial_samples": 3,
@@ -51,10 +50,10 @@ def test_online_training_with_custom_config(custom_config):
 def test_adapt_to_standard():
     """Test the main function of adaot to standard script."""
     print("---Beginning adaptive GP to sklearn conversion test---")
-    adapt = pathlib.Path("adapt") / "final_gp_thermal_conductivity.joblib"
+    adapt = pathlib.Path("adapt") / "final_gp_thermal_expansion.joblib"
     export = pathlib.Path("adapt") / "standard_gp.joblib"
 
-    adapt_main(adapt, export, "thermal_conductivity")
+    adapt_main(adapt, export, "thermal_expansion")
 
 
 @pytest.mark.gradient_opt
@@ -63,4 +62,4 @@ def test_gradient_opt():
     print("Beginning gradient optimization test")
     export = pathlib.Path("adapt") / "standard_gp.joblib"
 
-    opt_main(property_name="thermal_conductivity", property_value=23, model_file=export, multi_starts=5)
+    opt_main(property_name="thermal_expansion", property_value=5.9, model_file=export, multi_starts=5)
