@@ -62,4 +62,4 @@ def test_gradient_opt():
     print("Beginning gradient optimization test")
     export = pathlib.Path("adapt") / "standard_gp.joblib"
 
-    opt_main(property_name="young_modulus", property_value=5.9, model_file=export, multi_starts=5)
+    opt_main(property_name="young_modulus", property_value=250, model_file=export, multi_starts=5)
